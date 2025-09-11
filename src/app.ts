@@ -6,9 +6,10 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 
-import type MessageResponse from "./interfaces/message-response.js";
+import type MessageResponse from "@/interfaces/message-response.js";
 
-import api from "./api/index.js";
+import api from "@/api/index.js";
+
 import * as middlewares from "./middlewares.js";
 
 const app: Application = express();

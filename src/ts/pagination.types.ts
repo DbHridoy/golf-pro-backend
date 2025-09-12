@@ -1,8 +1,9 @@
-// file: src/types/pagination.types.ts
+/* eslint-disable ts/consistent-type-definitions */
+// file: src/ts/pagination.types.ts
 import type { Request } from "express";
 import type { AggregatePaginateModel, Document, PaginateModel } from "mongoose";
 
-export type CustomLabels = {
+export interface CustomLabels {
   totalDocs?: string;
   docs?: string;
   limit?: string;
@@ -14,9 +15,9 @@ export type CustomLabels = {
   hasPrevPage?: string;
   hasNextPage?: string;
   meta?: string;
-};
+}
 
-export type AggregatePaginateOptions = {
+export interface AggregatePaginateOptions {
   page?: number;
   limit?: number;
   offset?: number;
@@ -26,9 +27,9 @@ export type AggregatePaginateOptions = {
   allowDiskUse?: boolean;
   useFacet?: boolean;
   countQuery?: Record<string, any>;
-};
+}
 
-export type PaginateResult<T> = {
+export interface PaginateResult<T> {
   docs: T[];
   totalDocs: number;
   limit: number;
@@ -41,9 +42,9 @@ export type PaginateResult<T> = {
   hasNextPage: boolean;
   meta?: any;
   [customLabel: string]: T[] | number | boolean | null | undefined;
-};
+}
 
-export type AggregatePaginateResult<T> = {
+export interface AggregatePaginateResult<T> {
   docs: T[];
   totalDocs: number;
   limit: number;
@@ -54,9 +55,10 @@ export type AggregatePaginateResult<T> = {
   pagingCounter: number;
   hasPrevPage: boolean;
   hasNextPage: boolean;
-};
+}
 
-export type PaginationQuery = {
+// Enhanced: Better typing for pagination queries
+export interface PaginationQuery {
   page?: string | number;
   limit?: string | number;
   sort?: string;
@@ -64,13 +66,14 @@ export type PaginationQuery = {
   populate?: string;
   search?: string;
   [key: string]: any;
-};
+}
 
-export type PaginatedRequest = {
+export interface PaginatedRequest extends Request {
   query: PaginationQuery;
-} & Request;
+}
 
-export type PaginatedResponse<T> = {
+// Enhanced: More comprehensive response type
+export interface PaginatedResponse<T> {
   success: boolean;
   data: T[];
   pagination: {
@@ -83,7 +86,19 @@ export type PaginatedResponse<T> = {
     nextPage: number | null;
     prevPage: number | null;
   };
+  meta?: Record<string, any>;
   error?: string;
-};
+}
 
 export type CombinedPaginateModel<T extends Document> = PaginateModel<T> & AggregatePaginateModel<T>;
+
+// Additional utility types
+export interface SearchableFields {
+  [key: string]: string[];
+}
+
+export interface FilterOptions {
+  searchFields?: string[];
+  additionalFilters?: Record<string, any>;
+  defaultSort?: Record<string, number | "asc" | "desc">;
+}

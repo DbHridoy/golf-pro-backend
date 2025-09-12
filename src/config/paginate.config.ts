@@ -3,7 +3,7 @@ import type { PaginateOptions } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-import type { AggregatePaginateOptions, CustomLabels } from "@/types/pagination.types";
+import type { AggregatePaginateOptions, CustomLabels } from "@/ts/pagination.types";
 
 // Custom labels configuration
 const customLabels: CustomLabels = {

@@ -1,5 +1,4 @@
-// file: src/utils/pagination-helper.ts
-import type { PaginateOptions } from "mongoose";
+import type { PaginateOptions, PopulateOptions } from "mongoose";
 
 import type {
   AggregatePaginateOptions,
@@ -7,75 +6,103 @@ import type {
   PaginatedResponse,
   PaginateResult,
   PaginationQuery,
-} from "../types/pagination.types";
+} from "@/ts/pagination.types";
 
 export class PaginationHelper {
+  private static readonly DEFAULT_PAGE = 1;
+  private static readonly DEFAULT_LIMIT = 10;
+  private static readonly MAX_LIMIT = 100;
+
   static parsePaginationParams(query: PaginationQuery): PaginateOptions {
-    const page = Math.max(1, Number.parseInt(String(query.page)) || 1);
-    const limit = Math.min(Math.max(1, Number.parseInt(String(query.limit)) || 10), 100);
+    const page = Math.max(1, Number.parseInt(String(query.page)) || this.DEFAULT_PAGE);
+    const limit = Math.min(
+      Math.max(1, Number.parseInt(String(query.limit)) || this.DEFAULT_LIMIT),
+      this.MAX_LIMIT,
+    );
+
     const sort = query.sort ? this.parseSortString(String(query.sort)) : { createdAt: -1 };
-    const select = query.select ? String(query.select) : "";
-    const populate = query.populate ? String(query.populate) : ""; // Keep as string
+    const select = query.select ? String(query.select).trim() : "";
+    const populate = query.populate ? this.parsePopulateString(String(query.populate)) : [];
 
     return {
       page,
       limit,
       sort,
       select,
-      populate,
+      populate: populate.length > 0 ? populate : undefined,
     };
   }
 
   static parseSortString(sortString: string): Record<string, number | "asc" | "desc"> {
-    if (!sortString)
+    if (!sortString?.trim()) {
       return { createdAt: -1 };
+    }
 
     const sortObj: Record<string, number | "asc" | "desc"> = {};
-    const fields = sortString.split(",");
+    const fields = sortString.split(",").map(field => field.trim()).filter(Boolean);
 
-    fields.forEach((field) => {
-      field = field.trim();
+    for (const field of fields) {
       if (field.startsWith("-")) {
-        sortObj[field.substring(1)] = -1;
+        const fieldName = field.substring(1);
+        if (fieldName) {
+          sortObj[fieldName] = -1;
+        }
       }
-      else {
+      else if (field) {
         sortObj[field] = 1;
       }
-    });
+    }
 
-    return sortObj;
+    return Object.keys(sortObj).length > 0 ? sortObj : { createdAt: -1 };
   }
 
-  static parsePopulateString(populateString: string): Array<Record<string, any>> {
-    if (!populateString)
+  static parsePopulateString(populateString: string): PopulateOptions[] {
+    if (!populateString?.trim()) {
       return [];
+    }
 
-    return populateString.split(",").map(field => ({
-      path: field.trim(),
-    }));
+    return populateString
+      .split(",")
+      .map(field => field.trim())
+      .filter(Boolean)
+      .map((field) => {
+        // Support nested populate like "user.profile"
+        const parts = field.split(".");
+        if (parts.length > 1) {
+          return {
+            path: parts[0],
+            populate: { path: parts.slice(1).join(".") },
+          };
+        }
+        return { path: field };
+      });
   }
 
-  // Fixed: Handle undefined values with nullish coalescing
-  static formatResponse<T>(paginateResult: PaginateResult<T> | AggregatePaginateResult<T>): PaginatedResponse<T> {
+  static formatResponse<T>(
+    paginateResult: PaginateResult<T> | AggregatePaginateResult<T>,
+  ): PaginatedResponse<T> {
     return {
       success: true,
       data: paginateResult.docs,
       pagination: {
-        currentPage: paginateResult.page || 1,
+        currentPage: paginateResult.page ?? 1,
         totalPages: paginateResult.totalPages,
         totalItems: paginateResult.totalDocs,
         itemsPerPage: paginateResult.limit,
         hasNext: paginateResult.hasNextPage,
         hasPrev: paginateResult.hasPrevPage,
-        nextPage: paginateResult.nextPage ?? null, // Fixed: Use nullish coalescing
-        prevPage: paginateResult.prevPage ?? null, // Fixed: Use nullish coalescing
+        nextPage: paginateResult.nextPage ?? null,
+        prevPage: paginateResult.prevPage ?? null,
       },
     };
   }
 
   static getAggregateOptions(query: PaginationQuery): AggregatePaginateOptions {
-    const page = Math.max(1, Number.parseInt(String(query.page)) || 1);
-    const limit = Math.min(Math.max(1, Number.parseInt(String(query.limit)) || 10), 100);
+    const page = Math.max(1, Number.parseInt(String(query.page)) || this.DEFAULT_PAGE);
+    const limit = Math.min(
+      Math.max(1, Number.parseInt(String(query.limit)) || this.DEFAULT_LIMIT),
+      this.MAX_LIMIT,
+    );
     const sort = query.sort ? this.parseSortString(String(query.sort)) : { createdAt: -1 };
 
     return {
@@ -87,21 +114,56 @@ export class PaginationHelper {
     };
   }
 
-  static createSearchFilter(query: PaginationQuery, searchFields: string[] = []): Record<string, any> {
+  static createSearchFilter(
+    query: PaginationQuery,
+    searchFields: string[] = [],
+  ): Record<string, any> {
     const filter: Record<string, any> = {};
 
-    if (query.search && searchFields.length > 0) {
+    // Add search functionality
+    if (query.search?.trim() && searchFields.length > 0) {
+      const searchTerm = String(query.search).trim();
       filter.$or = searchFields.map(field => ({
-        [field]: { $regex: query.search, $options: "i" },
+        [field]: { $regex: searchTerm, $options: "i" },
       }));
     }
 
-    Object.keys(query).forEach((key) => {
-      if (!["page", "limit", "sort", "select", "populate", "search"].includes(key)) {
-        filter[key] = query[key];
+    // Add other filters
+    const excludedKeys = ["page", "limit", "sort", "select", "populate", "search"];
+
+    Object.entries(query).forEach(([key, value]) => {
+      if (!excludedKeys.includes(key) && value !== undefined && value !== null) {
+        // Handle boolean strings
+        if (typeof value === "string" && (value === "true" || value === "false")) {
+          filter[key] = value === "true";
+        }
+        else {
+          filter[key] = value;
+        }
       }
     });
 
     return filter;
+  }
+
+  // Utility method for creating aggregation pipelines with search
+  static createSearchPipeline(
+    query: PaginationQuery,
+    searchFields: string[] = [],
+    additionalFilters: Record<string, any> = {},
+  ): Array<Record<string, any>> {
+    const pipeline: Array<Record<string, any>> = [];
+
+    // Match stage
+    const matchFilter = {
+      ...this.createSearchFilter(query, searchFields),
+      ...additionalFilters,
+    };
+
+    if (Object.keys(matchFilter).length > 0) {
+      pipeline.push({ $match: matchFilter });
+    }
+
+    return pipeline;
   }
 }

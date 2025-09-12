@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { objectIdGeneric } from "@/utils/zod-scham.utils";
+import { objectIdGeneric } from "@/utils/schema-generic.utils";
 
 export const UserRoleEnum = z.enum(["golfer", "golf_club", "system_admin"]);
 
@@ -16,23 +16,31 @@ export const userSchemaGeneric = z.object({
   isEmailVerified: z.boolean().default(false).optional(),
 });
 
+// user create schema
 export const createUserSchema = z.object({
   body: userSchemaGeneric.omit({ isActive: true, isEmailVerified: true }),
 });
 
+// update user schema
 export const updateUserSchema = z.object({
-  body: userSchemaGeneric.partial().omit({ email: true, password: true, role: true }),
+  body: userSchemaGeneric
+    .partial()
+    .omit({ email: true, password: true, role: true })
+    .refine(data => Object.keys(data).length > 0, {
+      message: "At least one field must be provided for update",
+    }),
   params: z.object({
     id: objectIdGeneric,
   }),
 });
 
+// user password change schema
 export const changePasswordSchema = z.object({
   body: z.object({
     currentPassword: z.string().min(1, "Current password is required"),
     newPassword: z
       .string()
-      .min(8, "Password must be at least 8 characters"),
+      .min(4, "Password must be at least 4 characters"),
     confirmPassword: z.string().min(1, "Password confirmation is required"),
   }).refine(data => data.newPassword === data.confirmPassword, {
     message: "Password do not match",
@@ -46,16 +54,16 @@ export const changePasswordSchema = z.object({
 // get users schema
 export const getUsersSchema = z.object({
   query: z.object({
-    page: z.string().regex(/^\d+$/, "Page must be a number").optional(),
-    limit: z.string().regex(/^\d+$/, "Limit must be a number").optional(),
+    page: z.string().regex(/^\d+$/, "Page must be a number").transform(Number).optional(),
+    limit: z.string().regex(/^\d+$/, "Limit must be a number").transform(Number).optional(),
     sort: z.string().optional(),
-    search: z.string().optional(),
+    search: z.string().trim().min(1).optional(),
     role: UserRoleEnum.optional(),
-    isActive: z.string().regex(/^(true|false)$/, "isActive must be true or false").optional(),
+    isActive: z.enum(["true", "false"]).transform(val => val === "true").optional(),
   }).optional(),
 });
 
-// get user shcema
+// get user schema
 export const getUserByIdSchema = z.object({
   params: z.object({
     id: objectIdGeneric,

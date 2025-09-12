@@ -3,7 +3,7 @@ import type { Document } from "mongoose";
 
 import { model, Schema } from "mongoose";
 
-import type { CombinedPaginateModel } from "@/types/pagination.types";
+import type { CombinedPaginateModel } from "@/ts/pagination.types";
 
 import { mongooseAggregatePaginate, mongoosePaginate } from "@/config/paginate.config";
 

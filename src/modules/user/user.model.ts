@@ -1,5 +1,9 @@
 import { Schema } from "mongoose";
 
+import type { BaseDocument } from "@/utils/base-schema.utils";
+
+import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema.utils";
+
 const UserSchema = new Schema({
   email: {
     type: String,

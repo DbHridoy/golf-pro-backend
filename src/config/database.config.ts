@@ -9,7 +9,6 @@ async function connectDB(retries = 3, retryDelay = 5000) {
   const connectWithRetry = async () => {
     try {
       await mongoose.connect(env.MONGO_URI);
-      logger.info("Connected to MongoDB database");
     }
     catch (error) {
       attempt++;

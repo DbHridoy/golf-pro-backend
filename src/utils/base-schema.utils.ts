@@ -1,4 +1,4 @@
-// file: src/modules/models/base-schema.ts
+// file: src/utils/base-schema.utils.ts
 import type { Document } from "mongoose";
 
 import { model, Schema } from "mongoose";

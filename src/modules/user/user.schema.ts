@@ -16,9 +16,9 @@ export const userSchemaGeneric = z.object({
   isEmailVerified: z.boolean().default(false).optional(),
 });
 
-// user create schema
-export const createUserSchema = z.object({
-  body: userSchemaGeneric.omit({ isActive: true, isEmailVerified: true }),
+// Public user schema (without sensitive data)
+export const publicUserSchema = userSchemaGeneric.omit({
+  password: true,
 });
 
 // update user schema

@@ -5,18 +5,21 @@ import { ZodError } from "zod";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
+import { env } from "@/env";
 import { AppError } from "@/utils/app-error.utils";
-import {env} from "@/env"
 
 import { logger } from "./pino-logger.js";
 
+// Zod error formatter
 function formatZodError(res: Response, error: z.ZodError, requestId?: string) {
   const errors = error?.issues?.map(err => ({
     field: err.path.join("."),
     message: err.message,
     code: err.code,
   }));
+
   return res.status(HTTPSTATUS.BAD_REQUEST).json({
+    success: false,
     message: "Validation failed",
     errors,
     errorCode: ErrorCodeEnum.VALIDATION_ERROR,
@@ -24,7 +27,6 @@ function formatZodError(res: Response, error: z.ZodError, requestId?: string) {
     timestamp: new Date().toISOString(),
   });
 }
-
 // MongoDB error handler
 function handleMongoDBError(error: any, requestId?: string) {
   // Mongoose Validation Error
@@ -97,29 +99,88 @@ export const errorHandler: ErrorRequestHandler = (
       message: error.message,
       stack: env.NODE_ENV === "development" ? error.stack : undefined,
     },
-  });
+    body: req.body,
+    params: req.params,
+    query: req.query,
+  }, `Error occurred on ${req.method} ${req.path}`);
 
-  console.error(`Error Occured on PATH: ${req.path} `, error);
-
-  if (error instanceof SyntaxError) {
+  if (error instanceof SyntaxError && "body" in error) {
     return res.status(HTTPSTATUS.BAD_REQUEST).json({
-      message: "Invalid JSON format. Please check your request body.",
+      success: false,
+      message: "Invalid JSON format in request body",
+      errorCode: ErrorCodeEnum.VALIDATION_ERROR,
+      requestId,
+      timestamp: new Date().toISOString(),
     });
   }
 
   if (error instanceof ZodError) {
-    return formatZodError(res, error);
+    return formatZodError(res, error, String(requestId));
+  }
+
+  const mongoError = handleMongoDBError(error, String(requestId));
+  if (mongoError) {
+    return res.status(mongoError.statusCode).json({
+      success: false,
+      message: mongoError.message,
+      errors: mongoError.errors,
+      errorCode: mongoError.errorCode,
+      requestId: mongoError.requestId,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({
+      success: false,
       message: error.message,
       errorCode: error.errorCode,
+      requestId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  if (error.type === "entity.parse.failed") {
+    return res.status(HTTPSTATUS.BAD_REQUEST).json({
+      success: false,
+      message: "Invalid request body format",
+      errorCode: ErrorCodeEnum.VALIDATION_ERROR,
+      requestId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  if (error.type === "entity.too.large") {
+    return res.status(HTTPSTATUS.BAD_REQUEST).json({
+      success: false,
+      message: "Request body too large",
+      errorCode: ErrorCodeEnum.REQUEST_TOO_LARGE,
+      requestId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  if (error.status === 429) {
+    return res.status(HTTPSTATUS.TOO_MANY_REQUESTS).json({
+      success: false,
+      message: "Too many requests, please try again later",
+      errorCode: ErrorCodeEnum.AUTH_TOO_MANY_ATTEMPTS,
+      requestId,
+      timestamp: new Date().toISOString(),
     });
   }
 
   return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
-    message: "Internal Server Error",
-    error: error?.message || "Unknow error occurred",
+    success: false,
+    message: env.NODE_ENV === "development"
+      ? error.message || "Unknown error occurred"
+      : "Internal Server Error",
+    errorCode: ErrorCodeEnum.INTERNAL_SERVER_ERROR,
+    requestId,
+    timestamp: new Date().toISOString(),
+    ...(env.NODE_ENV === "development" && {
+      stack: error.stack,
+      originalError: error.message,
+    }),
   });
 };

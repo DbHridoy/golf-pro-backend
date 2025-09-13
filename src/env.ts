@@ -4,6 +4,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(3000),
   MONGO_URI: z.url().nonempty("MONGO_URI is required"),
+  JWT_SECRET: z.string().default("lp01yPo31ACozd4pDI9Z1DSD30A"),
+  JWT_REFRESH_SECRET: z.string().default("rwN17KgtvujqVe6jANmu3r5FIFY0jw"),
+  JWT_EXPIRY: z.string(),
+  JWT_REFRESH_EXPIRY: z.string(),
+  SALT_ROUNDS: z.coerce.number().default(12),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

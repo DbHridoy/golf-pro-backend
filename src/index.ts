@@ -1,11 +1,13 @@
-import app from "./app.js";
-import { env } from "./env.js";
+import app from "@/app.js";
+import { env } from "@/env.js";
+import { logger } from "@/middlewares/pino-logger.js";
+
+import { connectDB } from "./config/database.config";
 
 const port = env.PORT;
-const server = app.listen(port, () => {
-  /* eslint-disable no-console */
-  console.log(`Listening: http://localhost:${port}`);
-  /* eslint-enable no-console */
+const server = app.listen(port, async () => {
+  await connectDB();
+  logger.info(`Listening: http://localhost:${port}`);
 });
 
 server.on("error", (err) => {

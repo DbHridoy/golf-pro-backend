@@ -5,11 +5,13 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
+import "serve-favicon";
 
-import type MessageResponse from "./interfaces/message-response.js";
+import type MessageResponse from "@/interfaces/message-response.js";
 
-import api from "./api/index.js";
-import * as middlewares from "./middlewares.js";
+import api from "@/api/index.js";
+import { errorHandler } from "@/middlewares/error-handler.middleware";
+import { notFound } from "@/middlewares/not-found.middleware";
 
 const app: Application = express();
 
@@ -22,13 +24,13 @@ app.use(cors());
 
 app.get<object, MessageResponse>("/", (req, res) => {
   res.json({
-    message: "🦄🌈✨👋🌎🌍🌏✨🌈🦄",
+    message: "🦄R🌈A✨K👋I🌎B✨M🌈M🦄",
   });
 });
 
 app.use("/api/v1", api);
 
-app.use(middlewares.notFound);
-app.use(middlewares.errorHandler);
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

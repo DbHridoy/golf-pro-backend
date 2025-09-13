@@ -69,13 +69,13 @@ export class AuthRepository {
     return await this.updateUser(userId, { password: hashedPassword });
   }
 
-  /**
-   * Check if user email exists
-   */
-  async emailExists(email: string): Promise<boolean> {
-    const user = await UserModel.findOne({ email: email.toLowerCase() });
-    return !!user;
-  }
+  // /**
+  //  * Check if user email exists
+  //  */
+  // async emailExists(email: string): Promise<boolean> {
+  //   const user = await UserModel.findOne({ email: email.toLowerCase() });
+  //   return !!user;
+  // }
 
   /**
    * Check if user exists and is active

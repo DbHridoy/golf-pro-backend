@@ -8,7 +8,7 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().default("rwN17KgtvujqVe6jANmu3r5FIFY0jw"),
   JWT_EXPIRY: z.string(),
   JWT_REFRESH_EXPIRY: z.string(),
-  SALT_ROUNDS: z.number().default(12),
+  SALT_ROUNDS: z.coerce.number().default(12),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

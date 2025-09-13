@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
+import "serve-favicon";
 
 import type MessageResponse from "@/interfaces/message-response.js";
 

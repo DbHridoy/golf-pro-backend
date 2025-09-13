@@ -23,7 +23,7 @@ app.use(cors());
 
 app.get<object, MessageResponse>("/", (req, res) => {
   res.json({
-    message: "🦄🌈✨👋🌎🌍🌏✨🌈🦄",
+    message: "🦄R🌈A✨K👋I🌎B✨M🌈M🦄",
   });
 });
 

@@ -15,4 +15,5 @@ export function asyncHandler(controller: AsyncControllerType): AsyncControllerTy
       next(error);
     }
   };
+  
 }

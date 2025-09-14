@@ -16,6 +16,7 @@ export const registerSchema = z.object({
   body: userSchemaGeneric.omit({
     isActive: true,
     isEmailVerified: true,
+    handicapIndex: true,
   }),
 });
 

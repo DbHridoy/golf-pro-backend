@@ -2,6 +2,7 @@ import { z } from "zod/v4";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  BASE_URL: z.string().default("/api/v1"),
   PORT: z.coerce.number().default(3000),
   MONGO_URI: z.url().nonempty("MONGO_URI is required"),
   JWT_SECRET: z.string().default("lp01yPo31ACozd4pDI9Z1DSD30A"),

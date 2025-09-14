@@ -88,7 +88,7 @@ export class AuthService {
 
   // register service
   async register(registerData: RegisterInput["body"]): Promise<AuthResponse> {
-    const { email, password, role, handicapIndex } = registerData;
+    const { email, password, role } = registerData;
 
     const existingUser = await authRepository.findUserByEmail(email);
     if (existingUser) {
@@ -101,7 +101,6 @@ export class AuthService {
       email: email.toLowerCase(),
       password: hashedPassword,
       role,
-      handicapIndex,
       isActive: true,
       isEmailVerified: false,
     };

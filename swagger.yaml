@@ -1,0 +1,689 @@
+# eslint-disable yaml/plain-scalar
+openapi: 3.0.3
+info:
+  title: Golf Pro API
+  description: |
+    Golf Pro is a comprehensive golf management system that provides authentication and user management services for golfers, golf clubs, and system administrators.
+
+    ## Authentication
+    This API uses JWT (JSON Web Tokens) for authentication. Include the JWT token in the Authorization header as `Bearer <token>`.
+
+    ## User Roles
+    - **golfer**: Regular golf players
+    - **golf_club**: Golf club administrators
+    - **system_admin**: System administrators with full access
+
+  version: 1.0.0
+  contact:
+    name: Golf Pro API Support
+    email: support@golfpro.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.golfpro.com/api
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: |
+        Creates a new user account in the Golf Pro system. Users can register as golfers, golf clubs, or system administrators.
+        Upon successful registration, the user receives an access token and a refresh token (set as httpOnly cookie).
+      operationId: registerUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            examples:
+              golfer:
+                summary: Register as a golfer
+                value:
+                  email: "john.doe@example.com"
+                  password: "securePassword123"
+                  role: "golfer"
+                  handicapIndex: 12.5
+              golf_club:
+                summary: Register as a golf club
+                value:
+                  email: "admin@pinevalleygolf.com"
+                  password: "clubPassword456"
+                  role: "golf_club"
+      responses:
+        "201":
+          description: User registered successfully
+          headers:
+            Set-Cookie:
+              description: Refresh token set as httpOnly cookie
+              schema:
+                type: string
+                example: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict; Max-Age=604800
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              example:
+                success: true
+                data:
+                  user:
+                    id: "507f1f77bcf86cd799439011"
+                    email: "john.doe@example.com"
+                    role: "golfer"
+                    isActive: true
+                    isEmailVerified: false
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                message: "User registered successfully"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: |
+        Authenticates a user with email and password. Returns an access token for API requests and sets a refresh token as an httpOnly cookie.
+      operationId: loginUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "john.doe@example.com"
+              password: "securePassword123"
+      responses:
+        "200":
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: Refresh token set as httpOnly cookie
+              schema:
+                type: string
+                example: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict; Max-Age=604800
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              example:
+                success: true
+                data:
+                  user:
+                    id: "507f1f77bcf86cd799439011"
+                    email: "john.doe@example.com"
+                    role: "golfer"
+                    isActive: true
+                    isEmailVerified: true
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                message: "Login successful"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: |
+        Generates a new access token using the refresh token stored in httpOnly cookie.
+        Requires authentication and specific role authorization (golfer or system_admin).
+      operationId: refreshToken
+      parameters:
+        - in: cookie
+          name: jwt
+          required: true
+          schema:
+            type: string
+          description: JWT refresh token stored in httpOnly cookie
+      responses:
+        "200":
+          description: Token refreshed successfully
+          headers:
+            Set-Cookie:
+              description: New refresh token set as httpOnly cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshTokenResponse"
+              example:
+                success: true
+                data:
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                message: "Token refreshed successfully"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: |
+        Logs out the user by clearing the refresh token cookie. No authentication required.
+      operationId: logoutUser
+      security: []
+      responses:
+        "200":
+          description: Logout successful
+          headers:
+            Set-Cookie:
+              description: Clears the JWT cookie
+              schema:
+                type: string
+                example: jwt=; HttpOnly; Secure; SameSite=Strict; Max-Age=0
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Logged out successfully"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Password Management
+      summary: Request password reset
+      description: |
+        Initiates a password reset process by sending reset instructions to the user's email.
+        Currently returns a success message (implementation pending).
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+            example:
+              email: "john.doe@example.com"
+      responses:
+        "200":
+          description: Password reset instructions sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Password reset instructions sent to your email"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Password Management
+      summary: Reset password
+      description: |
+        Resets the user's password using a valid reset token and new password.
+        Currently returns a success message (implementation pending).
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+            example:
+              token: "reset_token_here"
+              newPassword: "newSecurePassword123"
+              confirmPassword: "newSecurePassword123"
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Password reset successfully"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Email Verification
+      summary: Verify email address
+      description: |
+        Verifies a user's email address using a verification token.
+        Currently returns a success message (implementation pending).
+      operationId: verifyEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+            example:
+              token: "email_verification_token_here"
+      responses:
+        "200":
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Email verified successfully"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/change-email:
+    post:
+      tags:
+        - Email Management
+      summary: Change email address
+      description: |
+        Allows authenticated users to change their email address. Requires current password for security.
+        Currently returns a success message (implementation pending).
+        Note: This endpoint should have authentication middleware (TODO in code).
+      operationId: changeEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeEmailRequest"
+            example:
+              newEmail: "newemail@example.com"
+              password: "currentPassword123"
+      responses:
+        "200":
+          description: Email change request sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Email change request sent. Please verify your new email."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token for authentication. Include in the Authorization header as `Bearer <token>`.
+
+        **How to get a token:**
+        1. Register a new account using `/auth/register`
+        2. Login using `/auth/login`
+        3. Use the returned `accessToken` in the Authorization header
+
+        **Token expiration:**
+        - Access tokens have a short lifespan (typically 15-30 minutes)
+        - Use `/auth/refresh` to get a new access token using the refresh token cookie
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+          example: "john.doe@example.com"
+        password:
+          type: string
+          minLength: 4
+          description: User's password (minimum 4 characters)
+          example: "securePassword123"
+        role:
+          type: string
+          enum: [golfer, golf_club, system_admin]
+          description: User's role in the system
+          example: "golfer"
+        handicapIndex:
+          type: number
+          minimum: 0
+          maximum: 54
+          description: Golf handicap index (optional, for golfers)
+          example: 12.5
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john.doe@example.com"
+        password:
+          type: string
+          description: User's password
+          example: "securePassword123"
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address to send reset instructions to
+          example: "john.doe@example.com"
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+        - confirmPassword
+      properties:
+        token:
+          type: string
+          description: Password reset token received via email
+          example: "reset_token_here"
+        newPassword:
+          type: string
+          minLength: 4
+          description: New password (minimum 4 characters)
+          example: "newSecurePassword123"
+        confirmPassword:
+          type: string
+          description: Confirmation of new password (must match newPassword)
+          example: "newSecurePassword123"
+
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Email verification token
+          example: "email_verification_token_here"
+
+    ChangeEmailRequest:
+      type: object
+      required:
+        - newEmail
+        - password
+      properties:
+        newEmail:
+          type: string
+          format: email
+          description: New email address
+          example: "newemail@example.com"
+        password:
+          type: string
+          description: Current password for verification
+          example: "currentPassword123"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+          example: "507f1f77bcf86cd799439011"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john.doe@example.com"
+        role:
+          type: string
+          enum: [golfer, golf_club, system_admin]
+          description: User's role in the system
+          example: "golfer"
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        isEmailVerified:
+          type: boolean
+          description: Whether the user's email has been verified
+          example: false
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            accessToken:
+              type: string
+              description: JWT access token for API authentication
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        message:
+          type: string
+          description: Success message
+          example: "User registered successfully"
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              description: New JWT access token
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        message:
+          type: string
+          description: Success message
+          example: "Token refreshed successfully"
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation failed
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code for programmatic handling
+              example: "AUTH_INVALID_CREDENTIALS"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Invalid email or password"
+            details:
+              type: object
+              description: Additional error details
+              additionalProperties: true
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Validation failed"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: "email"
+                  message:
+                    type: string
+                    example: "Invalid email format"
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationErrorResponse"
+          example:
+            success: false
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Validation failed"
+              details:
+                - field: "email"
+                  message: "Invalid email format"
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: "AUTH_TOKEN_INVALID"
+              message: "Invalid or expired authentication token"
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: "ACCESS_UNAUTHORIZED"
+              message: "Insufficient permissions to access this resource"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: "RESOURCE_NOT_FOUND"
+              message: "The requested resource was not found"
+
+    Conflict:
+      description: Conflict - Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: "USER_ALREADY_EXISTS"
+              message: "A user with this email already exists"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: "INTERNAL_SERVER_ERROR"
+              message: "An unexpected error occurred"
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints for login, registration, and token management
+  - name: Password Management
+    description: Password reset and recovery functionality
+  - name: Email Verification
+    description: Email verification and management endpoints
+  - name: Email Management
+    description: Email change and management functionality

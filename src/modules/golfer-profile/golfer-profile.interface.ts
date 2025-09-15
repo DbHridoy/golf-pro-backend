@@ -49,7 +49,7 @@ export interface LocationData {
 }
 
 // Profile privacy settings
-export interface ProfilePrivacySettings {
+export interface ProfilePrivacySettings { 
   profileVisibility: "public" | "friends" | "private";
   showLocation: boolean;
   showHandicap: boolean;

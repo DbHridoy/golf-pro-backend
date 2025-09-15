@@ -1,13 +1,16 @@
 import { Router } from "express";
 
+import { authMiddleware } from "@/middlewares/jwt-auth.middleware";
+
 import { authController } from "./auth.controller";
+import { authService } from "./auth.service";
 
 const router = Router();
 
 // Public routes
 router.post("/register", authController.register);
 router.post("/login", authController.login);
-router.post("/refresh", authController.refreshToken);
+router.post("/refresh", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "system_admin"]), authController.refreshToken);
 router.post("/logout", authController.logout);
 
 // Password management

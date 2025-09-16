@@ -129,7 +129,7 @@ export class GolferProfileRepository {
   async searchNearbyGolfers(searchParams: NearbyGolferSearch) {
     const { latitude, longitude, radius, page = 1, limit = 10 } = searchParams;
 
-    const pipeline = [
+    const pipeline: any[] = [
       {
         $geoNear: {
           near: {
@@ -167,14 +167,142 @@ export class GolferProfileRepository {
     const options = {
       page,
       limit,
-      customLabels: PaginationHelper.formatResponse({} as any).pagination,
+      // customLabels: PaginationHelper.formatResponse({} as any).pagination,
     };
 
     const result = await GolferProfileModel.aggregatePaginate(
-      pipeline,
+      GolferProfileModel.aggregate(pipeline),
       options,
     );
 
     return PaginationHelper.formatResponse(result);
   }
+
+  /**
+   * Update profile image
+   */
+
+  async updateProfileImage(profileId: string, imageUrl: string): Promise<IGolferProfile> {
+    return await this.updateProfile(profileId, { profileImage: imageUrl });
+  }
+
+  /**
+   * Update cover image
+   */
+  async updateCoverImage(profileId: string, imageUrl: string): Promise<IGolferProfile> {
+    return await this.updateProfile(profileId, { coverImage: imageUrl });
+  }
+
+  /**
+   * Update location
+   */
+  async updateLocation(profileId: string, locationData: LocationInput): Promise<IGolferProfile> {
+    const updateData = {
+      country: locationData.country,
+      city: locationData.city,
+      address: locationData.address,
+      location: {
+        type: "Point" as const,
+        coordinates: [locationData.longitude, locationData.latitude] as [number, number],
+      },
+    };
+
+    return await this.updateProfile(profileId, updateData);
+  }
+
+  /**
+   * Check if golfer profile exists
+   */
+  async profileExists(userId: string): Promise<boolean> {
+    const profile = await GolferProfileModel.findOne({ userId }).lean();
+    return !!profile;
+  }
+
+  /**
+   * Delete golfer profile
+   */
+  async deleteProfile(profileId: string): Promise<boolean> {
+    const result = await GolferProfileModel.findByIdAndDelete(profileId);
+    return !!result;
+  }
+
+  /**
+   * Update online status
+   */
+  async updateOnlineStatus(profileId: string, isOnline: boolean): Promise<void> {
+    await GolferProfileModel.findByIdAndUpdate(profileId, {
+      isOnline,
+      lastActiveAt: new Date(),
+    });
+  }
+
+  /**
+   * Add friend to golfer's friend list
+   */
+  async addFriend(profileId: string, friendId: string): Promise<IGolferProfile> {
+    const profile = await GolferProfileModel.findByIdAndUpdate(
+      profileId,
+      { $addToSet: { friends: friendId } },
+      { new: true },
+    ).lean();
+
+    if (!profile) {
+      throw new NotFoundException("Golfer profile not found");
+    }
+
+    return profile;
+  }
+
+  /**
+   * Remove friend from golfer's friend list
+   */
+  async removeFriend(profileId: string, friendId: string): Promise<IGolferProfile> {
+    const profile = await GolferProfileModel.findByIdAndUpdate(
+      profileId,
+      { $pull: { friends: friendId } },
+      { new: true },
+    ).lean();
+
+    if (!profile) {
+      throw new NotFoundException("Golfer profile not found");
+    }
+
+    return profile;
+  }
+
+  /**
+   * Add club membership
+   */
+  async addClubMembership(profileId: string, clubId: string): Promise<IGolferProfile> {
+    const profile = await GolferProfileModel.findByIdAndUpdate(
+      profileId,
+      { $addToSet: { clubMemberships: clubId } },
+      { new: true },
+    ).lean();
+
+    if (!profile) {
+      throw new NotFoundException("Golfer profile not found");
+    }
+
+    return profile;
+  }
+
+  /**
+   * Remove club membership
+   */
+  async removeClubMembership(profileId: string, clubId: string): Promise<IGolferProfile> {
+    const profile = await GolferProfileModel.findByIdAndUpdate(
+      profileId,
+      { $pull: { clubMemberships: clubId } },
+      { new: true },
+    ).lean();
+
+    if (!profile) {
+      throw new NotFoundException("Golfer profile not found");
+    }
+
+    return profile;
+  }
 }
+
+export const golferProfileRepository = new GolferProfileRepository();

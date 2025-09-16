@@ -28,39 +28,7 @@ export type UpdateLocationRequest = z.infer<typeof updateLocationSchema>;
 export type SearchNearbyGolfersRequest = z.infer<typeof searchNearbyGolfersSchema>;
 
 // Response types
-export interface GolferProfileResponse {
-  success: boolean;
-  data: {
-    id: string;
-    userId: string;
-    fullName: string;
-    gender: string;
-    dateOfBirth: Date;
-    age: number;
-    country: string;
-    city: string;
-    address: string;
-    location?: {
-      type: "Point";
-      coordinates: [number, number];
-    };
-    profileImage?: string;
-    coverImage?: string;
-    ghinNumber?: string;
-    handicapIndex?: number;
-    isProfilePublic: boolean;
-    bio?: string;
-    phoneNumber?: string;
-    website?: string;
-    friendCount: number;
-    clubMembershipCount: number;
-    lastActiveAt: Date;
-    isOnline: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  message?: string;
-}
+
 
 export interface GolferProfileListResponse {
   success: boolean;

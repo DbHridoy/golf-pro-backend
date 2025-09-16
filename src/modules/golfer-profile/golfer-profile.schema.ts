@@ -35,7 +35,7 @@ export const golferProfileSchemaGeneric = z.object({
   address: z.string().trim().min(1, "Address is required").max(200),
   location: z.object({
     type: z.literal("Point").default("Point"),
-    coordinates: z.array(z.number()).length(2),
+    coordinates: z.tuple([z.number(), z.number()]),
   }).optional(),
 
   // Images

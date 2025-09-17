@@ -1,15 +1,13 @@
 import type { IUser } from "@/modules/user/user.interface";
 
+import { logger } from "@/middlewares/pino-logger";
 import { NotFoundException } from "@/utils/app-error.utils";
 import { PaginationHelper } from "@/utils/pagination-helper";
 
 import UserModel from "./user.model";
 
 export class UserRepository {
-  /**
-   * Get paginated users with search and filters
-   */
-
+  // Get paginated users with search and filters
   async getUsers(query: any) {
     const paginateOptions = PaginationHelper.parsePaginationParams(query);
     const searchFields = ["email"];
@@ -17,13 +15,12 @@ export class UserRepository {
     const filter = PaginationHelper.createSearchFilter(query, searchFields);
 
     const result = await UserModel.paginate(filter, paginateOptions);
-
-    return PaginationHelper.formatResponse(result);
+    logger.info(result, "Debugging rs");
+    const result1 = PaginationHelper.formatResponse(result);
+    logger.warn(result1, "Debugging rs1");
+    return result1;
   }
 
-  /**
-   * Find user by ID
-   */
   async findUserById(userId: string): Promise<IUser> {
     const user = await UserModel.findOne({ _id: userId, isActive: true }).lean();
 
@@ -59,6 +56,11 @@ export class UserRepository {
     return !!user;
   }
 
+  async emailExists(email: string): Promise<boolean> {
+    const user = await UserModel.findOne({ email: email.toLowerCase() });
+    return !!user;
+  }
+
   /**
    * Get user with password (for password change)
    */
@@ -74,21 +76,32 @@ export class UserRepository {
     return user;
   }
 
-  /**
-   * Update user password
-   */
   async updatePassword(userId: string, hashedPassword: string): Promise<IUser> {
-    const user = await UserModel.findOneAndUpdate(
-      { _id: userId, isActive: true },
-      { $set: { password: hashedPassword } },
-      { new: true },
-    ).lean();
+    return await this.updateUser(userId, { password: hashedPassword });
+  }
+
+  async updateEmailVerification(userId: string): Promise<IUser> {
+    return await this.updateUser(userId, { isEmailVerified: true });
+  }
+
+  async validateUserStatus(userId: string): Promise<IUser> {
+    const user = await UserModel.findById(userId).lean();
 
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
+    if (!user.isActive) {
+      throw new NotFoundException("User account is deactivated");
+    }
+
     return user;
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, {
+      lastLoginAt: new Date(),
+    });
   }
 }
 

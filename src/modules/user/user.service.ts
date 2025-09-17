@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import { env } from "@/env";
+import { logger } from "@/middlewares/pino-logger";
 import { BadRequestException, NotFoundException } from "@/utils/app-error.utils";
 
 import type { ChangePasswordInput, GetUsersInput, UpdateUserInput } from "./user.type";
@@ -18,7 +19,9 @@ export class UserService {
    * Get paginated users
    */
   async getUsers(query: GetUsersInput["query"]) {
-    return await userRepository.getUsers(query);
+    const result = await userRepository.getUsers(query);
+    logger.warn(result, "Debugging");
+    return result;
   }
 
   /**

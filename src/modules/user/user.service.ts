@@ -20,7 +20,7 @@ export class UserService {
    */
   async getUsers(query: GetUsersInput["query"]) {
     const result = await userRepository.getUsers(query);
-    logger.warn(result, "Debugging");
+
     return result;
   }
 

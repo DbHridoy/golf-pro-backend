@@ -33,10 +33,7 @@ export const defaultPaginateOptions: PaginateOptions = {
   pagination: true,
   useEstimatedCount: true,
   allowDiskUse: true,
-  maxTimeMS: 30000,
   forceCountFn: true,
-  read: "secondaryPreferred",
-
 };
 
 export const PAGINATION_THRESHOLDS = {

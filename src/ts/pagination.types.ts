@@ -84,6 +84,7 @@ export interface PaginatedResponse<T> {
     hasPrev: boolean;
     nextPage: number | null;
     prevPage: number | null;
+    slNo: number;
   };
   meta?: Record<string, any>;
   error?: string;

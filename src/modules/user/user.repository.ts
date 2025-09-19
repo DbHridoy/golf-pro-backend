@@ -15,10 +15,15 @@ export class UserRepository {
   async getUsers(query: PaginationQuery): Promise<PaginatedResponse<IUser>> {
     const paginateOptions = PaginationHelper.parsePaginationParams(query);
 
+    console.log("Response from repository function");
     const searchFilter = PaginationHelper.createSearchFilter(
       query,
       this.searchableFields,
     );
+
+    console.log("Searhc filters: ", searchFilter);
+
+    logger.info(paginateOptions, " ", searchFilter, "Debugging");
 
     if (query.role && typeof query.role === "string") {
       const validRoles = ["golfer", "golf_club", "system_admin"];
@@ -29,6 +34,10 @@ export class UserRepository {
 
     if (query.isActive !== undefined) {
       searchFilter.isActive = Boolean(query.isActive);
+    }
+
+    if (query.isEmailVerified !== undefined) {
+      searchFilter.isEmailVerified = query.isEmailVerified === "true" || query.isEmailVerified === true;
     }
 
     if (paginateOptions.sort) {
@@ -44,21 +53,12 @@ export class UserRepository {
         );
       }
     }
-
-    logger.info({ query, searchFilter, paginateOptions }, "User repository query");
-
-    if (query.isEmailVerified !== undefined) {
-      searchFilter.isEmailVerified = query.isEmailVerified === "true" || query.isEmailVerified === true;
-    }
-
     const result = await UserModel.paginate(searchFilter, {
       ...paginateOptions,
       lean: true,
       leanWithId: true,
       populate: paginateOptions.populate,
     });
-
-    logger.info({ result }, "User repository result");
 
     return PaginationHelper.formatResponse(result);
   }

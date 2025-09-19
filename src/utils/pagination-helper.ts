@@ -92,20 +92,22 @@ export class PaginationHelper {
   }
 
   static formatResponse<T>(
-    paginateResult: PaginateResult<T> | AggregatePaginateResult<T>,
+    paginateResult: any,
   ): PaginatedResponse<T> {
+    const { currentPage, pageCount, totalItems, itemsPerPage, hasNext, hasPrev, nextPage, prevPage, slNo } = paginateResult.pagination;
     return {
       success: true,
       data: paginateResult.data || [],
       pagination: {
-        currentPage: paginateResult.currentPage ?? 1,
-        totalPages: paginateResult.totalPages,
-        totalItems: paginateResult.totalDocs,
-        itemsPerPage: paginateResult.itemsPerPage,
-        hasNext: paginateResult.hasNext,
-        hasPrev: paginateResult.hasPrev,
-        nextPage: paginateResult.nextPage ?? null,
-        prevPage: paginateResult.prevPage ?? null,
+        currentPage: currentPage || 1,
+        totalPages: pageCount || 0,
+        totalItems: totalItems || 0,
+        itemsPerPage: itemsPerPage || 10,
+        hasNext: hasNext || false,
+        hasPrev: hasPrev || false,
+        nextPage: nextPage || null,
+        prevPage: prevPage || null,
+        slNo: slNo || 0,
       },
     };
   }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { objectIdGeneric } from "@/utils/schema-generic.utils";
+import { emailGeneric, objectIdGeneric } from "@/utils/schema-generic.utils";
 
 export const UserRoleEnum = z.enum(["golfer", "golf_club", "system_admin"]);
 
@@ -60,12 +60,44 @@ export const getUsersSchema = z.object({
     search: z.string().trim().min(1).optional(),
     role: UserRoleEnum.optional(),
     isActive: z.enum(["true", "false"]).transform(val => val === "true").optional(),
-  }).optional(),
+  }),
 });
 
 // get user schema
 export const getUserByIdSchema = z.object({
   params: z.object({
     id: objectIdGeneric,
+  }),
+});
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: emailGeneric.trim(),
+  }),
+});
+
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, "Reset token is required"),
+    newPassword: z.string().min(4, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Password confirmation is required"),
+  }).refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  }),
+});
+
+// Email verification schema
+export const verifyEmailSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, "Verification token is required"),
+  }),
+});
+
+// Change email schema (for authenticated users)
+export const changeEmailSchema = z.object({
+  body: z.object({
+    newEmail: emailGeneric.trim(),
+    password: z.string().min(1, "Current password is required"),
   }),
 });

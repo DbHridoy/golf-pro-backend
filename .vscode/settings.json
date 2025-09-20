@@ -47,5 +47,6 @@
     "scss",
     "pcss",
     "postcss"
-  ]
+  ],
+  "CodeGPT.apiKey": "CodeGPT Enterprise"
 }

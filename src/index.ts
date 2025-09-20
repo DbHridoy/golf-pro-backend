@@ -8,6 +8,7 @@ const port = env.PORT;
 const server = app.listen(port, async () => {
   await connectDB();
   logger.info(`Listening: http://localhost:${port}`);
+  logger.info(`API Documentation: http://localhost:${port}/api/v1/docs`);
 });
 
 server.on("error", (err) => {

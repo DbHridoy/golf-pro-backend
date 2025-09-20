@@ -26,5 +26,10 @@ export default antfu({
       ignore: ["README.md"],
     }],
     "test/prefer-lowercase-title": ["off"],
+    "@typescript-eslint/no-namespace": [
+      "error",
+      { allowDeclarations: true },
+    ],
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
   },
 });

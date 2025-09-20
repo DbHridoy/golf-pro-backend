@@ -8,6 +8,11 @@ import type {
   PaginationQuery,
 } from "@/ts/pagination.types";
 
+import { ErrorCodeEnum } from "@/enums/error-code.enum";
+import { logger } from "@/middlewares/pino-logger";
+
+import { BadRequestException } from "./app-error.utils";
+
 export class PaginationHelper {
   private static readonly DEFAULT_PAGE = 1;
   private static readonly DEFAULT_LIMIT = 10;
@@ -15,10 +20,18 @@ export class PaginationHelper {
 
   static parsePaginationParams(query: PaginationQuery): PaginateOptions {
     const page = Math.max(1, Number.parseInt(String(query.page)) || this.DEFAULT_PAGE);
+
     const limit = Math.min(
       Math.max(1, Number.parseInt(String(query.limit)) || this.DEFAULT_LIMIT),
       this.MAX_LIMIT,
     );
+
+    if (page > 10000) {
+      throw new BadRequestException(
+        "Page number too large",
+        ErrorCodeEnum.PAGINATION_INVALID_PAGE,
+      );
+    }
 
     const sort = query.sort ? this.parseSortString(String(query.sort)) : { createdAt: -1 };
     const select = query.select ? String(query.select).trim() : "";
@@ -79,20 +92,22 @@ export class PaginationHelper {
   }
 
   static formatResponse<T>(
-    paginateResult: PaginateResult<T> | AggregatePaginateResult<T>,
+    paginateResult: any,
   ): PaginatedResponse<T> {
+    const { currentPage, pageCount, totalItems, itemsPerPage, hasNext, hasPrev, nextPage, prevPage, slNo } = paginateResult.pagination;
     return {
       success: true,
-      data: paginateResult.docs,
+      data: paginateResult.data || [],
       pagination: {
-        currentPage: paginateResult.page ?? 1,
-        totalPages: paginateResult.totalPages,
-        totalItems: paginateResult.totalDocs,
-        itemsPerPage: paginateResult.limit,
-        hasNext: paginateResult.hasNextPage,
-        hasPrev: paginateResult.hasPrevPage,
-        nextPage: paginateResult.nextPage ?? null,
-        prevPage: paginateResult.prevPage ?? null,
+        currentPage: currentPage || 1,
+        totalPages: pageCount || 0,
+        totalItems: totalItems || 0,
+        itemsPerPage: itemsPerPage || 10,
+        hasNext: hasNext || false,
+        hasPrev: hasPrev || false,
+        nextPage: nextPage || null,
+        prevPage: prevPage || null,
+        slNo: slNo || 0,
       },
     };
   }

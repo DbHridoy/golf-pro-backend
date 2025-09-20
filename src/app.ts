@@ -5,13 +5,15 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
-import "serve-favicon";
 
 import type MessageResponse from "@/interfaces/message-response.js";
 
 import api from "@/api/index.js";
 import { errorHandler } from "@/middlewares/error-handler.middleware";
 import { notFound } from "@/middlewares/not-found.middleware";
+import rootRouter from "@/routes/index.js";
+
+import { env } from "./env.js";
 
 const app: Application = express();
 
@@ -28,7 +30,7 @@ app.get<object, MessageResponse>("/", (req, res) => {
   });
 });
 
-app.use("/api/v1", api);
+app.use(env.BASE_URL, rootRouter);
 
 app.use(notFound);
 app.use(errorHandler);

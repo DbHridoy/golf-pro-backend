@@ -1,6 +1,8 @@
 import express from "express";
+import path from "node:path";
 
 import authRouter from "@/modules/auth/auth.route";
+import golferRouter from "@/modules/golfer/golfer.route";
 import userRouter from "@/modules/user/user.route";
 
 import docsRouter from "./docs.route";
@@ -19,6 +21,10 @@ const moduleRoutes = [
   {
     path: "/users",
     route: userRouter,
+  },
+  {
+    path: "/golfer",
+    route: golferRouter,
   },
 ];
 

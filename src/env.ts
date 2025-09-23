@@ -11,6 +11,10 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRY: z.string(),
   SALT_ROUNDS: z.coerce.number().default(12),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  AWS_REGION: z.string().default("us-east-1"),
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_BUCKET_NAME: z.string(),
 });
 
 try {

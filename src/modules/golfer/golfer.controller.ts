@@ -41,6 +41,15 @@ export class GolferProfileController {
 
     return res.status(HTTPSTATUS.CREATED).json(result);
   });
+
+  updateProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const { body }: UpdateGolferProfileRequest = await zParse(updateGolferProfileSchema, req);
+    const userId = req.user!.userId; // From auth middleware
+
+    const result = await golferProfileService.updateProfile(userId, body);
+
+    return res.status(HTTPSTATUS.OK).json(result);
+  });
 }
 
 export const golferProfileController = new GolferProfileController();

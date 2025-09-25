@@ -3,6 +3,7 @@ import path from "node:path";
 
 import authRouter from "@/modules/auth/auth.route";
 import golferRouter from "@/modules/golfer/golfer.route";
+import notificationRouter from "@/modules/notification/notification.route";
 import userRouter from "@/modules/user/user.route";
 
 import docsRouter from "./docs.route";
@@ -25,6 +26,10 @@ const moduleRoutes = [
   {
     path: "/golfer",
     route: golferRouter,
+  },
+  {
+    path: "/send-push-notification",
+    route: notificationRouter,
   },
 ];
 

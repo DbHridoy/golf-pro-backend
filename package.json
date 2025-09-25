@@ -29,6 +29,7 @@
     "crypto": "^1.0.1",
     "dayjs": "^1.11.18",
     "express": "^5.1.0",
+    "firebase-admin": "^13.5.0",
     "glob": "^11.0.3",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",

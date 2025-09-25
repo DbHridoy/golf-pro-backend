@@ -1,22 +1,21 @@
 import type { NextFunction, Request, Response } from "express";
 
-import { HTTPSTATUS } from "@/config/http.config";
-import { env } from "@/env";
-import { asyncHandler } from "@/middlewares/async-handler.middleware";
-import { zParse } from "@/utils/validators.utils";
-
 import type {
   LoginInput,
   RefreshAuthInput,
   RegisterInput,
-} from "./auth.type";
+} from "@/modules/auth/auth.type";
 
+import { HTTPSTATUS } from "@/config/http.config";
+import { env } from "@/env";
+import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import {
   loginSchema,
   refreshAuthSchema,
   registerSchema,
-} from "./auth.schema";
-import { authService } from "./auth.service";
+} from "@/modules/auth/auth.schema";
+import { authService } from "@/modules/auth/auth.service";
+import { zParse } from "@/utils/validators.utils";
 
 export class AuthController {
   /**

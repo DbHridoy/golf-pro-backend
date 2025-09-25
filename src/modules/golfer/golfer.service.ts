@@ -41,6 +41,21 @@ export class GolferProfileService {
       message: "Golfer profile created successfully",
     };
   }
+
+  async updateProfile(userId: string, profileData: UpdateGolferProfileRequest["body"]) {
+    const profile = await golferProfileRepository.findByUserId(userId);
+    if (!profile) {
+      throw new NotFoundException("Golfer profile not found");
+    }
+
+    const updatedProfile = await golferProfileRepository.updateProfile(profile._id as string, profileData);
+
+    return {
+      success: true,
+      data: updatedProfile,
+      message: "Golfer profile updated successfully",
+    };
+  }
 }
 
 export const golferProfileService = new GolferProfileService();

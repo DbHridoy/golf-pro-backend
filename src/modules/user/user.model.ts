@@ -1,6 +1,6 @@
-import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema.utils";
+import type { IUser } from "@/modules/user/user.interface";
 
-import type { IUser } from "./user.interface";
+import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema.utils";
 
 const UserSchema = createPaginatedSchema<IUser>(
   {

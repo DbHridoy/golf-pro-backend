@@ -6,35 +6,24 @@ import { zParse } from "@/utils/validators.utils";
 
 import type {
   CreateGolferProfileRequest,
-  GetGolferProfileRequest,
-  GetGolferProfilesRequest,
-  SearchNearbyGolfersRequest,
   UpdateGolferProfileRequest,
-  UpdateLocationRequest,
-  UploadCoverImageRequest,
-  UploadProfileImageRequest,
 } from "./golfer.type";
 
 import {
   createGolferProfileSchema,
-  getGolferProfileSchema,
-  getGolferProfilesSchema,
-  searchNearbyGolfersSchema,
   updateGolferProfileSchema,
-  updateLocationSchema,
-  uploadCoverImageSchema,
-  uploadProfileImageSchema,
 } from "./golfer.schema";
 import { golferProfileService } from "./golfer.service";
+// import { create } from "node:domain";
 
 export class GolferProfileController {
   /**
    * Create golfer profile
    * POST /golfer-profiles
    */
-
   createProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: CreateGolferProfileRequest = await zParse(createGolferProfileSchema, req);
+    // const {body}: CreateGolferProfileRequest = await createGolferProfileSchema.safeParseAsync(req.body);
     const userId = req.user!.userId; // From auth middleware
 
     const result = await golferProfileService.createProfile(userId, body);
@@ -46,7 +35,10 @@ export class GolferProfileController {
     const { body }: UpdateGolferProfileRequest = await zParse(updateGolferProfileSchema, req);
     const userId = req.user!.userId; // From auth middleware
 
-    const result = await golferProfileService.updateProfile(userId, body);
+    // Pass req.files to the service for file handling
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const result = await golferProfileService.updateProfile(userId, body, files);
 
     return res.status(HTTPSTATUS.OK).json(result);
   });

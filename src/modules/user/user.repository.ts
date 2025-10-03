@@ -55,11 +55,11 @@ export class UserRepository {
     }
     const result = await UserModel.paginate(searchFilter, {
       ...paginateOptions,
-      lean: true,
-      leanWithId: true,
+      lean: false,
+      leanWithId: false,
       populate: paginateOptions.populate,
     });
-
+    logger.debug(result);
     return PaginationHelper.formatResponse(result);
   }
 

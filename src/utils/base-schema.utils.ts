@@ -12,7 +12,6 @@ export function createPaginatedSchema<T extends Document>(
   options: Record<string, any> = {},
 ): Schema<T> {
   const schema = new Schema<T>(schemaDefinition, {
-    timestamps: true,
     ...options,
   });
 

@@ -13,6 +13,8 @@ const UserSchema = new Schema({
   isVerified: { type: Boolean, default: false },
 }, { timestamps: true });
 
+// Above schema are already used
+
 // Golfer Profile Schema
 const GolferProfileSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },

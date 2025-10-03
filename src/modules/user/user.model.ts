@@ -36,14 +36,19 @@ const UserSchema = createPaginatedSchema<IUser>(
   },
   {
     timestamps: true,
+    id: false, // disable default Mongoose id virtual
     toJSON: {
-      virtuals: true,
-      transform(_doc: Record<string, any>, ret: Record<string, any>) {
-        delete ret.password;
-        return ret;
+      virtuals: false,
+      transform(_doc:any, ret:any) {
+        ret.id = ret._id.toString(); // create id from _id
+        delete ret._id;
+        delete ret.__v;              // remove _id
+        delete ret.password;         // remove password if needed
+        return ret;                  // keep __v, createdAt, updatedAt
       },
     },
-  },
+    toObject: { virtuals: false },
+  }
 );
 
 UserSchema.index({ email: 1, isActive: 1 });

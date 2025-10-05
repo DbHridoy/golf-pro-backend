@@ -1,21 +1,23 @@
 import { z } from "zod";
 
-import {  objectIdGeneric } from "@/utils/schema-generic.utils";
-
-export const GenderEnum = z.enum(["male", "female", "other", "prefer_not_to_say"]);
+import { objectIdGeneric } from "@/utils/schema-generic.utils";
 
 // Base post schema
 export const postSchemaGeneric = z.object({
   userId: objectIdGeneric,
-  postTitle: z.string().trim().min(1, "Post title is required").max(100, "Post title cannot exceed 100 characters"),
-  postContent: z.string().trim().min(1, "Post content is required").max(1000, "Post content cannot exceed 1000 characters"),
+  postTitle: z.string().trim().max(200, "Post title cannot exceed 200 characters").transform(val => (val === "" ? undefined : val)).optional(),
   postImage: z.string().url().optional(),
+  taggedFriends: z.array(objectIdGeneric).optional(),
+  taggedClub: objectIdGeneric,
   isPostPublic: z.boolean().default(true),
 });
 
 // Create post schema
 export const createPostSchema = z.object({
-  body: postSchemaGeneric,
+  body: postSchemaGeneric.refine(data => data.postTitle || data.postImage, {
+    message: "You must provide at least a title or an image",
+    path: ["postTitle"], // optional: highlights the title field
+  }),
 });
 
 // Update post schema
@@ -37,5 +39,3 @@ export const getPostSchema = z.object({
     id: objectIdGeneric,
   }),
 });
-
-

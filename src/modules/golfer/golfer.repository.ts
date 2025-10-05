@@ -9,6 +9,7 @@ import type {
   NearbyGolferSearch,
 } from "./golfer.type";
 
+import "../club/club.model";
 import GolferProfileModel from "./golfer.model";
 
 export class GolferProfileRepository {
@@ -48,14 +49,15 @@ export class GolferProfileRepository {
    * Update golfer profile
    */
   async updateProfile(profileId: string, updateData: Partial<IGolferProfile>): Promise<IGolferProfile> {
+    console.log(updateData,"------------------updatedata")
     const profile = await GolferProfileModel.findByIdAndUpdate(
       profileId,
       { $set: updateData },
       { new: true, runValidators: true },
-    )
-      .populate("clubMemberships", "name description")
-      .populate("friends", "fullName profileImage")
-      .lean();
+    ).lean();
+    // .populate("clubMemberships", "name description")
+    // .populate("friends", "fullName profileImage")
+    // .lean();
 
     if (!profile) {
       throw new NotFoundException("Golfer profile not found");

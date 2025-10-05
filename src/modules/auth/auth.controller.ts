@@ -17,6 +17,9 @@ import {
 import { authService } from "@/modules/auth/auth.service";
 import { zParse } from "@/utils/validators.utils";
 
+import GolferProfileModel from "../golfer/golfer.model";
+import mongoose from "mongoose";
+
 export class AuthController {
   /**
    * Register new user
@@ -60,6 +63,9 @@ export class AuthController {
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    const golfer = new GolferProfileModel({ userId: new mongoose.Types.ObjectId(result.data.user.id) });
+    await golfer.save();
 
     return res.status(HTTPSTATUS.OK).json({
       success: result.success,

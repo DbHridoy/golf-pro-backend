@@ -24,7 +24,7 @@ export class AuthMiddleware {
     try {
       const authHeader = req.headers.authorization;
       const requestId = req.id || req.headers["x-request-id"] as string;
-
+console.log(authHeader)
       if (!authHeader) {
         logger.warn({ requestId, ip: req.ip }, "No authorization header provided");
         throw new UnauthorizedException(
@@ -42,7 +42,7 @@ export class AuthMiddleware {
       }
 
       const token = authHeader.substring(7);
-
+console.log(token,"token")
       if (!token) {
         throw new UnauthorizedException(
           "Access token required",

@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { transform } from "zod/v4";
 
 import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema.utils";
@@ -7,7 +7,7 @@ import type { IGolferProfile } from "./golfer.interface";
 
 const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
   userId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
     unique: true,
     ref: "User",
@@ -15,14 +15,14 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
   },
   fullName: {
     type: String,
-    required: true,
     trim: true,
+    default: null,
     maxlength: [100, "Full name cannot exceed 100 characters"],
   },
-
   gender: {
     type: String,
-    required: true,
+    default: null,
+
     enum: {
       values: ["male", "female", "other", "prefer_not_to_say"],
       message: "Gender must be male, female, other, or prefer_not_to_say",
@@ -31,9 +31,13 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
 
   dateOfBirth: {
     type: Date,
-    require: true,
+    default: null,
+
     validate: {
-      validator(value: Date) {
+      validator(value: Date | null): boolean {
+        if (!value)
+          return true; // allow null values
+
         const today = new Date();
         const age = today.getFullYear() - value.getFullYear();
         return age >= 2 && age <= 120;
@@ -45,69 +49,74 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
   // location fields
   country: {
     type: String,
-    required: true,
+    default: null,
+
     trim: true,
     maxlength: [100, "Country name cannot exceed 100 characters"],
   },
   city: {
     type: String,
-    required: true,
+    default: null,
+
     trim: true,
     maxlength: [100, "City name cannot exceed 100 characters"],
   },
   address: {
     type: String,
-    required: true,
+    default: null,
+
     trim: true,
     maxlength: [200, "Address cannot exceed 200 characters"],
   },
-  location: {
-    type: {
-      type: String,
-      enum: ["Point"],
-      default: "Point",
-    },
-    coordinates: {
-      type: [Number],
-      validate: {
-        validator(coords: number[]) {
-          return coords.length === 2
-            && coords[0] >= -180 && coords[0] <= 180 // longitude
-            && coords[1] >= -90 && coords[1] <= 90; // latitude
-        },
-        message: "Invalid coordinates format",
-      },
-    },
+  // location: {
+  //   type: {
+  //     type: String,
+  //     enum: ["Point"],
+  //     default: "Point",
+  //   },
+  //   coordinates: {
+  //     type: [Number],
+  //     validate: {
+  //       validator(coords: number[]) {
+  //         return coords.length === 2
+  //           && coords[0] >= -180 && coords[0] <= 180 // longitude
+  //           && coords[1] >= -90 && coords[1] <= 90; // latitude
+  //       },
+  //       message: "Invalid coordinates format",
+  //     },
+  //   },
 
-  },
+  // },
 
   // Images
   profileImage: {
     type: String,
     trim: true,
-    validate: {
-      validator(url: string) {
-        if (!url)
-          return true;
-        // eslint-disable-next-line regexp/no-unused-capturing-group
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-      },
-      message: "Invalid profile image URL format",
-    },
+    default: null,
+    // validate: {
+    //   validator(url: string|null) {
+    //     if (!url)
+    //       return true;
+    //     // eslint-disable-next-line regexp/no-unused-capturing-group
+    //     return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+    //   },
+    //   message: "Invalid profile image URL format",
+    // },
   },
 
   coverImage: {
     type: String,
     trim: true,
-    validate: {
-      validator(url: string) {
-        if (!url)
-          return true; // Optional field
-        // eslint-disable-next-line regexp/no-unused-capturing-group
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-      },
-      message: "Invalid cover image URL format",
-    },
+    default: null,
+    // validate: {
+    //   validator(url: string|null) {
+    //     if (!url)
+    //       return true; // Optional field
+    //     // eslint-disable-next-line regexp/no-unused-capturing-group
+    //     return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+    //   },
+    //   message: "Invalid cover image URL format",
+    // },
   },
 
   // Golf-specific data
@@ -115,6 +124,7 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
     type: String,
     trim: true,
     sparse: true,
+    default: null,
     unique: true,
     validate: {
       validator(ghin: string) {
@@ -128,6 +138,8 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
 
   handicapIndex: {
     type: Number,
+    default: null,
+
     min: [0, "Handicap index cannot be negative"],
     max: [54, "Handicap index cannot exceed 54"],
   },
@@ -139,30 +151,47 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
   },
 
   // Social references
-  clubMemberships: [{
-    type: Schema.Types.ObjectId,
-    ref: "Club",
-  }],
+  clubMemberships: {
 
-  friends: [{
-    type: Schema.Types.ObjectId,
-    ref: "GolferProfile",
-  }],
+    type: [{
+      type: Schema.Types.ObjectId,
 
-  friendRequests: [{
-    type: Schema.Types.ObjectId,
-    ref: "FriendRequest",
-  }],
+      ref: "Club",
+    }],
+    default: [],
+  },
 
-  clubMemberRequests: [{
-    type: Schema.Types.ObjectId,
-    ref: "ClubMemberRequest",
-  }],
+  friends: {
+    type: [{
+      type: Schema.Types.ObjectId,
+      ref: "GolferProfile",
+    }],
+    default: [],
+  },
 
-  notifications: [{
-    type: Schema.Types.ObjectId,
-    ref: "Notification",
-  }],
+  friendRequests: {
+    type: [{
+      type: Schema.Types.ObjectId,
+      ref: "FriendRequest",
+    }],
+    default: [],
+  },
+
+  clubMemberRequests: {
+    type: [{
+      type: Schema.Types.ObjectId,
+      ref: "ClubMemberRequest",
+    }],
+    default: [],
+  },
+
+  notifications: {
+    type: [{
+      type: Schema.Types.ObjectId,
+      ref: "Notification",
+    }],
+    default: null,
+  },
 
   // Additional profile fields
   bio: {

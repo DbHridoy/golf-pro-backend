@@ -33,8 +33,8 @@ export class GolferProfileController {
 
   updateProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: UpdateGolferProfileRequest = await zParse(updateGolferProfileSchema, req);
+    console.error(body);
     const userId = req.user!.userId; // From auth middleware
-
     // Pass req.files to the service for file handling
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 

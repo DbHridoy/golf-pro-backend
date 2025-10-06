@@ -1,10 +1,8 @@
-/* eslint-disable ts/consistent-type-definitions */
-
 // JWT payload type
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: "golfer" | "golf_club" | "system_admin";
+  role: "golfer" | "golf_club" | "admin";
   iat?: number;
   exp?: number;
 }

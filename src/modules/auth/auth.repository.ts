@@ -1,5 +1,6 @@
 import type { IUser } from "@/modules/user/user.interface";
 
+import { logger } from "@/middlewares/pino-logger";
 import UserModel from "@/modules/user/user.model";
 
 export class AuthRepository {
@@ -23,9 +24,16 @@ export class AuthRepository {
     return await query.exec();
   };
 
-  async createUser(userData: Partial<IUser>): Promise<IUser> {
-    const user = new UserModel(userData);
-    return await user.save();
+  // Create User
+  async createUser(userData: Partial<IUser>): Promise<IUser | null | undefined> {
+    try {
+      logger.info(userData, "repostiory layer.");
+      const user = new UserModel(userData);
+      return await user.save();
+    }
+    catch (error) {
+      logger.error(error, "Repository layer error check.");
+    }
   }
 
   async emailExists(email: string): Promise<boolean> {

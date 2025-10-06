@@ -11,7 +11,7 @@ info:
     ## User Roles
     - **golfer**: Regular golf players
     - **golf_club**: Golf club administrators
-    - **system_admin**: System administrators with full access
+    - **admin**: System administrators with full access
 
   version: 1.0.0
   contact:
@@ -148,7 +148,7 @@ paths:
       summary: Refresh access token
       description: |
         Generates a new access token using the refresh token stored in httpOnly cookie.
-        Requires authentication and specific role authorization (golfer or system_admin).
+        Requires authentication and specific role authorization (golfer or admin).
       operationId: refreshToken
       parameters:
         - in: cookie
@@ -390,7 +390,7 @@ components:
           example: "securePassword123"
         role:
           type: string
-          enum: [golfer, golf_club, system_admin]
+          enum: [golfer, golf_club, admin]
           description: User's role in the system
           example: "golfer"
         handicapIndex:
@@ -488,7 +488,7 @@ components:
           example: "john.doe@example.com"
         role:
           type: string
-          enum: [golfer, golf_club, system_admin]
+          enum: [golfer, golf_club, admin]
           description: User's role in the system
           example: "golfer"
         isActive:

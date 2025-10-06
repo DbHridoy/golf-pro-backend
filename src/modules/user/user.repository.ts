@@ -26,7 +26,7 @@ export class UserRepository {
     logger.info(paginateOptions, " ", searchFilter, "Debugging");
 
     if (query.role && typeof query.role === "string") {
-      const validRoles = ["golfer", "golf_club", "system_admin"];
+      const validRoles = ["golfer", "golf_club", "admin"];
       if (validRoles.includes(query.role)) {
         searchFilter.role = query.role;
       }

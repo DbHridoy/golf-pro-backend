@@ -15,20 +15,24 @@ const fields = [
   { name: "coverImage", maxCount: 1 },
 ];
 
-// Authenticated routes (requires login)
-// router.post(
-//   "/create-profile",
-//   authMiddleware.authenticate,
-//   authMiddleware.authorize(["golfer"]),
-//   golferProfileController.createProfile,
-// );
-
-router.put(
-  "/update-profile",
+router.patch(
+  "/update-golfer-profile",
   authMiddleware.authenticate,
   authMiddleware.authorize(["golfer"]),
   uploader.fields(fields),
   golferProfileController.updateProfile,
+);
+router.get(
+  "/get-golfer-profiles",
+  authMiddleware.authenticate,
+  authMiddleware.authorize(["admin", "golf_club", "golfer"]),
+  golferProfileController.getGolferProfiles,
+);
+router.get(
+  "/get-golfer-profile/:id",
+  authMiddleware.authenticate,
+  authMiddleware.authorize(["golfer", "golf_club", "admin"]),
+  golferProfileController.getSingleGolferProfile,
 );
 
 export default router;

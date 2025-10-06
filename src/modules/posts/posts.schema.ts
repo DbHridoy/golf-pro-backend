@@ -8,13 +8,20 @@ export const postSchemaGeneric = z.object({
   postTitle: z.string().trim().max(200, "Post title cannot exceed 200 characters").transform(val => (val === "" ? undefined : val)).optional(),
   postImage: z.string().url().optional(),
   taggedFriends: z.array(objectIdGeneric).optional(),
-  taggedClub: objectIdGeneric,
+  taggedClubs: z.array(objectIdGeneric).optional(),
+  comments: z.array(objectIdGeneric).optional(),
+  likes: z.array(objectIdGeneric).optional(),
+  likesCount: z.number().min(0).default(0),
+  commentsCount: z.number().min(0).default(0),
   isPostPublic: z.boolean().default(true),
 });
 
 // Create post schema
 export const createPostSchema = z.object({
-  body: postSchemaGeneric.refine(data => data.postTitle || data.postImage, {
+  body: postSchemaGeneric
+  .partial()
+  .omit({ userId: true })
+  .refine(data => data.postTitle || data.postImage, {
     message: "You must provide at least a title or an image",
     path: ["postTitle"], // optional: highlights the title field
   }),
@@ -28,14 +35,4 @@ export const updatePostSchema = z.object({
     .refine(data => Object.keys(data).length > 0, {
       message: "At least one field must be provided for update",
     }),
-  params: z.object({
-    id: objectIdGeneric,
-  }),
-});
-
-// Get all post schema
-export const getPostSchema = z.object({
-  params: z.object({
-    id: objectIdGeneric,
-  }),
 });

@@ -32,9 +32,9 @@ class GolferProfileService {
     profileData: UpdateGolferProfileRequest["body"],
     files: { [fieldname: string]: Express.Multer.File[] } = {},
   ) {
-    logger.info(profileData, "Updating profile from service");
+    // logger.info(profileData, "Updating profile from service");
     const profile = await golferProfileRepository.findByUserId(userId);
-    logger.info(profile, "profile from service");
+    // logger.info(profile, "profile from service");
     if (!profile)
       throw new NotFoundException("Golfer profile not found");
 

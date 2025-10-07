@@ -2,28 +2,47 @@ import type { NextFunction, Request, Response } from "express";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
-import { logger } from "@/middlewares/pino-logger";
-import { zParse } from "@/utils/validators.utils";
 
-import type { CreatePostInput } from "./posts.type";
-
-import { createPostSchema } from "./posts.schema";
 import { postService } from "./posts.service";
 
 class PostsController {
-  createPost = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const body: CreatePostInput = await zParse(createPostSchema, req);
-    logger.info(body, "body from controller");
-    const userId = req.user!.userId;
+  async createPost(req: Request, res: Response, _next: NextFunction) {
+    const data = req.body;
+    // logger.info(data, "Creating post");
+    // const userId = req.user!.userId;
     const postData = {
-      userId,
-      ...body,
+      userId: req.user!.userId,
+      ...data.body,
     };
-    logger.info(postData, "post data from controller");
+    // logger.info(data)
+    // logger.info(postData, "Creating post");
     const post = await postService.createPost(postData);
-    logger.info(post, "post from controller");
-    res.status(HTTPSTATUS.OK).json(post);
-  });
+
+    return res.status(HTTPSTATUS.CREATED).json({
+      success: true,
+      message: "Post created successfully",
+      data: post,
+    });
+  };
+
+  async getAllPosts(req: Request, res: Response, _next: NextFunction) {
+    const posts = await postService.getAllPosts();
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Posts fetched successfully",
+      data: posts,
+    });
+  };
+
+  async getAllPostsForUser(req: Request, res: Response, _next: NextFunction) {
+    const userId = req.user!.userId;
+    const posts = await postService.getAllPostsForUser(userId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Posts fetched successfully",
+      data: posts,
+    });
+  };
 }
 
 export const postController = new PostsController();

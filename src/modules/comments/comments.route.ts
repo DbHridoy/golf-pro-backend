@@ -1,5 +1,12 @@
 import { Router } from "express";
 
-const router=Router();
+import { authMiddleware } from "@/middlewares/jwt-auth.middleware";
 
-export default router
+import { commnetController } from "./comments.controller";
+
+const router = Router();
+
+router.post("/create-comment", authMiddleware.authenticate, commnetController.createComment);
+router.get("/get-all-comments/:postId", authMiddleware.authenticate, commnetController.getAllCommentsForPost);
+
+export default router;

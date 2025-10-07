@@ -33,7 +33,7 @@ class GolferProfileController {
   });
 
   getGolferProfiles = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    logger.info(req, "Getting profiles from controller");
+    // logger.info(req, "Getting profiles from controller");
     const result = await golferProfileService.getAllProfiles();
     return res.status(HTTPSTATUS.OK).json(result);
   });

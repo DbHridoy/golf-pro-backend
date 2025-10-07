@@ -19,12 +19,12 @@ export const postSchemaGeneric = z.object({
 // Create post schema
 export const createPostSchema = z.object({
   body: postSchemaGeneric
-  .partial()
-  .omit({ userId: true })
-  .refine(data => data.postTitle || data.postImage, {
-    message: "You must provide at least a title or an image",
-    path: ["postTitle"], // optional: highlights the title field
-  }),
+    .partial()
+    .omit({ userId: true })
+    .refine(data => data.postTitle || data.postImage, {
+      message: "You must provide at least a title or an image",
+      path: ["postTitle"], // optional: highlights the title field
+    }),
 });
 
 // Update post schema

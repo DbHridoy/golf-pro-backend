@@ -15,10 +15,12 @@ const PostSchema = createPaginatedSchema<IPosts>(
       type: String,
       trim: true,
       maxlength: [200, "Post title cannot exceed 200 characters"],
+      default:null
     },
     postImage: {
       type: String,
       trim: true,
+      default: null,
     },
     postVideo: {
       type: String,

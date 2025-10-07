@@ -64,7 +64,7 @@ export class UserController {
    */
   forgotPassword = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: ForgotPasswordInput = await zParse(forgotPasswordSchema, req);
-    logger.info(body);
+    // logger.info(body);
     // TODO: Implement forgot password logic with email sending
     // For now, return success message
     return res.status(HTTPSTATUS.OK).json({
@@ -79,7 +79,7 @@ export class UserController {
    */
   resetPassword = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: ResetPasswordInput = await zParse(resetPasswordSchema, req);
-    logger.info(body);
+    // logger.info(body);
     // TODO: Implement reset password logic
     // For now, return success message
     return res.status(HTTPSTATUS.OK).json({
@@ -94,7 +94,7 @@ export class UserController {
    */
   verifyEmail = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: VerifyEmailInput = await zParse(verifyEmailSchema, req);
-    logger.info(body);
+    // logger.info(body);
     // TODO: Implement email verification logic
     // For now, return success message
     return res.status(HTTPSTATUS.OK).json({
@@ -109,7 +109,7 @@ export class UserController {
    */
   changeEmail = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: ChangeEmailInput = await zParse(changeEmailSchema, req);
-    logger.info(body);
+    // logger.info(body);
     // TODO: Implement change email logic
     // For now, return success message
     return res.status(HTTPSTATUS.OK).json({

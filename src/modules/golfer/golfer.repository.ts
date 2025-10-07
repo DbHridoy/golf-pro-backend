@@ -73,7 +73,7 @@ export class GolferProfileRepository {
    * Get paginated golfer profiles with filters
    */
   async getAllGolfers(query: any, filters: GolferProfileFilters = {}) {
-    logger.info(query, "Getting profiles from repository");
+    // logger.info(query, "Getting profiles from repository");
     if (!query) {
       return GolferProfileModel.find().lean();
     }

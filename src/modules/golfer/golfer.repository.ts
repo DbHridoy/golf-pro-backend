@@ -1,8 +1,10 @@
 import type { IGolferProfile } from "@/modules/golfer/golfer.interface";
 
+import { logger } from "@/middlewares/pino-logger";
 import { NotFoundException } from "@/utils/app-error.utils";
 import { PaginationHelper } from "@/utils/pagination-helper";
 
+import "../club/club.model";
 import type {
   GolferProfileFilters,
   LocationInput,
@@ -29,33 +31,36 @@ export class GolferProfileRepository {
    */
   async findByUserId(userId: string): Promise<IGolferProfile | null> {
     return await GolferProfileModel.findOne({ userId })
-      .populate("clubMemberships", "name description")
-      .populate("friends", "fullName profileImage")
+      .populate("clubs", "name")
+      .populate("friends", "fullName")
       .lean();
   }
 
   /**
    * Find golfer profile by profile ID
    */
-  async findById(profileId: string): Promise<IGolferProfile | null> {
-    return await GolferProfileModel.findById(profileId)
-      .populate("clubMemberships", "name description")
-      .populate("friends", "fullName profileImage")
+  async findGolferById(golferid: string): Promise<IGolferProfile | null> {
+    return await GolferProfileModel.findById(golferid)
+      .populate("clubs", "clubName")
+      .populate("friends", "fullName")
       .lean();
   }
 
   /**
    * Update golfer profile
    */
-  async updateProfile(profileId: string, updateData: Partial<IGolferProfile>): Promise<IGolferProfile> {
+  async updateInDB(profileId: string, updateData: Partial<IGolferProfile>): Promise<IGolferProfile> {
+    // console.log(updateData, "------------------updatedata");
     const profile = await GolferProfileModel.findByIdAndUpdate(
       profileId,
       { $set: updateData },
       { new: true, runValidators: true },
     )
-      .populate("clubMemberships", "name description")
-      .populate("friends", "fullName profileImage")
+      .populate("clubs", "name")
       .lean();
+    // .populate("clubMemberships", "name description")
+    // .populate("friends", "fullName profileImage")
+    // .lean();
 
     if (!profile) {
       throw new NotFoundException("Golfer profile not found");
@@ -67,7 +72,12 @@ export class GolferProfileRepository {
   /**
    * Get paginated golfer profiles with filters
    */
-  async getProfiles(query: any, filters: GolferProfileFilters = {}) {
+  async getAllGolfers(query: any, filters: GolferProfileFilters = {}) {
+    // logger.info(query, "Getting profiles from repository");
+    if (!query) {
+      return GolferProfileModel.find().lean();
+    }
+
     const paginateOptions = PaginationHelper.parsePaginationParams(query);
 
     // Build search filter
@@ -114,14 +124,13 @@ export class GolferProfileRepository {
     const result = await GolferProfileModel.paginate(filter, {
       ...paginateOptions,
       populate: [
-        { path: "clubMemberships", select: "name description" },
-        { path: "friends", select: "fullName profileImage" },
+        { path: "clubs", select: "clubName" },
+        { path: "friends", select: "fullName" },
       ],
     });
 
     return PaginationHelper.formatResponse(result);
   }
-
   /**
    * Search nearby golfers using geospatial query
    */
@@ -176,38 +185,6 @@ export class GolferProfileRepository {
     );
 
     return PaginationHelper.formatResponse(result);
-  }
-
-  /**
-   * Update profile image
-   */
-
-  async updateProfileImage(profileId: string, imageUrl: string): Promise<IGolferProfile> {
-    return await this.updateProfile(profileId, { profileImage: imageUrl });
-  }
-
-  /**
-   * Update cover image
-   */
-  async updateCoverImage(profileId: string, imageUrl: string): Promise<IGolferProfile> {
-    return await this.updateProfile(profileId, { coverImage: imageUrl });
-  }
-
-  /**
-   * Update location
-   */
-  async updateLocation(profileId: string, locationData: LocationInput): Promise<IGolferProfile> {
-    const updateData = {
-      country: locationData.country,
-      city: locationData.city,
-      address: locationData.address,
-      location: {
-        type: "Point" as const,
-        coordinates: [locationData.longitude, locationData.latitude] as [number, number],
-      },
-    };
-
-    return await this.updateProfile(profileId, updateData);
   }
 
   /**

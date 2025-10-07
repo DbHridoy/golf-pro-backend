@@ -6,7 +6,7 @@ const { Schema } = mongoose;
 const UserSchema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String },
-  userType: { type: String, enum: ["golfer", "golf_club", "system_admin"], required: true },
+  userType: { type: String, enum: ["golfer", "golf_club", "admin"], required: true },
   authProvider: { type: String, enum: ["local", "google", "usga"], required: true },
   ghinNumber: { type: String, sparse: true },
   isActive: { type: Boolean, default: true },

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { emailGeneric, objectIdGeneric } from "@/utils/schema-generic.utils";
 
-export const UserRoleEnum = z.enum(["golfer", "golf_club", "system_admin"]);
+export const UserRoleEnum = z.enum(["golfer", "golf_club", "admin"]);
 
 export const userSchemaGeneric = z.object({
   email: z.string().email("Invalid email format").toLowerCase().trim(),

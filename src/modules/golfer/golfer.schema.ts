@@ -33,10 +33,10 @@ export const golferProfileSchemaGeneric = z.object({
   country: z.string().trim().min(1, "Country is required").max(100),
   city: z.string().trim().min(1, "City is required").max(100),
   address: z.string().trim().min(1, "Address is required").max(200),
-  location: z.object({
-    type: z.literal("Point").default("Point"),
-    coordinates: z.tuple([z.number(), z.number()]),
-  }).optional(),
+  // location: z.object({
+  //   type: z.literal("Point").default("Point"),
+  //   coordinates: z.tuple([z.number(), z.number()]),
+  // }).optional(),
 
   // Images
   profileImage: z.string().url().optional(),
@@ -50,7 +50,7 @@ export const golferProfileSchemaGeneric = z.object({
   isProfilePublic: z.boolean().default(true),
 
   // Additional fields
-  bio: z.string().trim().max(500, "Bio cannot exceed 500 characters").optional(),
+  // bio: z.string().trim().max(500, "Bio cannot exceed 500 characters").optional(),
 });
 
 // Create golfer profile schema
@@ -66,9 +66,9 @@ export const updateGolferProfileSchema = z.object({
     .refine(data => Object.keys(data).length > 0, {
       message: "At least one field must be provided for update",
     }),
-  params: z.object({
-    id: objectIdGeneric,
-  }),
+  // params: z.object({
+  //   id: objectIdGeneric,
+  // }),
 });
 
 // Get golfer profile schema

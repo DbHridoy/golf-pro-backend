@@ -8,6 +8,7 @@ import type { IUser } from "@/modules/user/user.interface";
 
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { env } from "@/env";
+import { logger } from "@/middlewares/pino-logger";
 import {
   BadRequestException,
   UnauthorizedException,
@@ -35,6 +36,8 @@ export class AuthService {
 
   // Authentication methods
   async register(registerData: RegisterInput["body"]): Promise<AuthResponse> {
+    // Check if user already exists
+    logger.info(registerData, "Service layer.");
     const { email, password, role } = registerData;
 
     const existingUser = await authRepository.emailExists(email);

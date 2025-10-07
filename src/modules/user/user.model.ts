@@ -17,8 +17,8 @@ const UserSchema = createPaginatedSchema<IUser>(
       type: String,
       required: true,
       enum: {
-        values: ["golfer", "golf_club", "system_admin"],
-        message: "Role must be either golfer, golf_club, or system_admin",
+        values: ["golfer", "golf_club", "admin"],
+        message: "Role must be either golfer, golf_club, or admin",
       },
       index: true,
     },
@@ -39,16 +39,16 @@ const UserSchema = createPaginatedSchema<IUser>(
     id: false, // disable default Mongoose id virtual
     toJSON: {
       virtuals: false,
-      transform(_doc:any, ret:any) {
+      transform(_doc: any, ret: any) {
         ret.id = ret._id.toString(); // create id from _id
         delete ret._id;
-        delete ret.__v;              // remove _id
-        delete ret.password;         // remove password if needed
-        return ret;                  // keep __v, createdAt, updatedAt
+        delete ret.__v; // remove _id
+        delete ret.password; // remove password if needed
+        return ret; // keep __v, createdAt, updatedAt
       },
     },
     toObject: { virtuals: false },
-  }
+  },
 );
 
 UserSchema.index({ email: 1, isActive: 1 });

@@ -24,7 +24,6 @@ export class AuthMiddleware {
     try {
       const authHeader = req.headers.authorization;
       const requestId = req.id || req.headers["x-request-id"] as string;
-
       if (!authHeader) {
         logger.warn({ requestId, ip: req.ip }, "No authorization header provided");
         throw new UnauthorizedException(
@@ -42,7 +41,6 @@ export class AuthMiddleware {
       }
 
       const token = authHeader.substring(7);
-
       if (!token) {
         throw new UnauthorizedException(
           "Access token required",
@@ -104,12 +102,12 @@ export class AuthMiddleware {
         const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
         if (!roles.includes(userRole)) {
-          logger.warn({
-            requestId: req.id,
-            userId: req.user.userId,
-            userRole,
-            requiredRoles: roles,
-          }, "Insufficient permissions");
+          // logger.warn({
+          //   requestId: req.id,
+          //   userId: req.user.userId,
+          //   userRole,
+          //   requiredRoles: roles,
+          // }, "Insufficient permissions");
 
           throw new UnauthorizedException(
             "Insufficient permissions",
@@ -117,12 +115,12 @@ export class AuthMiddleware {
           );
         }
 
-        logger.info({
-          requestId: req.id,
-          userId: req.user.userId,
-          role: userRole,
-          allowedRoles: roles,
-        }, "Authorization successful");
+        // logger.info({
+        //   requestId: req.id,
+        //   userId: req.user.userId,
+        //   role: userRole,
+        //   allowedRoles: roles,
+        // }, "Authorization successful");
 
         next();
       }
@@ -148,7 +146,7 @@ export class AuthMiddleware {
       const currentUserId = req.user.userId;
 
       // System admin can access any resource
-      if (req.user.role === "system_admin") {
+      if (req.user.role === "admin") {
         return next();
       }
 

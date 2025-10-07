@@ -6,9 +6,9 @@ import { userController } from "./user.controller";
 
 const router = Router();
 
-router.get("/", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "system_admin"]), userController.getUsers);
-router.get("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "system_admin"]), userController.getUserById);
-router.patch("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "system_admin"]), userController.updateUser);
+router.get("/", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), userController.getUsers);
+router.get("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "admin"]), userController.getUserById);
+router.patch("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "admin"]), userController.updateUser);
 router.patch("/:id/change-password", userController.changePassword);
 
 // Password management

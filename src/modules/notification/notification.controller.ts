@@ -18,7 +18,7 @@ export class NotificationController {
       res.json({ success: true, response });
     }
     catch (error) {
-      logger.error(error, "Error sending push notification");
+      // logger.error(error, "Error sending push notification");
       res.status(500).json({ success: false, error });
     }
   });

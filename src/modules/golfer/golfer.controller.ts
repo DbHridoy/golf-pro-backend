@@ -43,6 +43,12 @@ class GolferProfileController {
     const profile = await golferProfileRepository.findGolferById(id);
     return res.status(HTTPSTATUS.OK).json(profile);
   });
+
+  async toggleGolferStatus(req: Request, res: Response, _next: NextFunction) {
+    const { id } = req.params; // ← access the param
+    const profile = await golferProfileService.toggleGolferActiveStatus(id);
+    return res.status(HTTPSTATUS.OK).json(profile);
+  }
 }
 
 export const golferProfileController = new GolferProfileController();

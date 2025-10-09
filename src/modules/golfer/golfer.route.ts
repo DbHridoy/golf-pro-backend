@@ -35,4 +35,12 @@ router.get(
   golferProfileController.getSingleGolferProfile,
 );
 
+
+router.patch(
+  "/toggle-golfer-status/:id",
+  authMiddleware.authenticate,
+  authMiddleware.authorize(["admin", "golf_club"]),
+  golferProfileController.toggleGolferStatus,
+);
+
 export default router;

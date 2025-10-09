@@ -22,6 +22,17 @@ export class NotificationController {
       res.status(500).json({ success: false, error });
     }
   });
+
+  async createNotification(req: Request, res: Response, _next: NextFunction) {
+    try {
+      const notification = await admin.messaging().send(req.body);
+      res.json({ success: true, notification });
+    }
+    catch (error) {
+      logger.error(error, "Error sending push notification");
+      res.status(500).json({ success: false, error });
+    }
+  }
 }
 
 export const notificationController = new NotificationController();

@@ -9,4 +9,5 @@ export interface IPosts extends BaseDocument {
   likes: string[];
   comments: string[];
   isPostPublic: boolean;
+  isActive: boolean;
 }

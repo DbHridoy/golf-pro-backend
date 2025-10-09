@@ -34,32 +34,21 @@ const ClubProfileSchema = new Schema({
     type: String,
     default: null,
   },
-  clubMembers: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "GolferProfile",
-      },
-    ],
-    default: [],
+  isProfilePublic: {
+    type: Boolean,
+    default: true,
   },
-  clubMembershipRequests: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "GolferProfile",
-      },
-    ],
-    default: [],
+  isActive: {
+    type: Boolean,
+    default: true,
   },
-  notifications: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Notification",
-      },
-    ],
-    default: null,
+  isOnline:{
+    type: Boolean,
+    default: false
+  },
+  lastActiveAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

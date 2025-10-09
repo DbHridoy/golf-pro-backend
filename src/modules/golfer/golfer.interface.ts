@@ -31,7 +31,7 @@ export interface IGolferProfile extends BaseDocument {
 
   // Additional profile fields
   bio?: string;
-
+  isActive?: boolean;
   // Activity tracking
   lastActiveAt?: Date;
   isOnline?: boolean;

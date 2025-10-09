@@ -14,9 +14,6 @@ import type {
 import GolferProfileModel from "./golfer.model";
 
 export class GolferProfileRepository {
-  /**
-   * Create new golfer profile
-   */
   async createProfile(userId: string, profileData: Partial<IGolferProfile>): Promise<IGolferProfile> {
     const profile = new GolferProfileModel({
       userId,
@@ -26,9 +23,28 @@ export class GolferProfileRepository {
     return await profile.save();
   }
 
-  /**
-   * Find golfer profile by user ID
-   */
+  async toggleGolferActiveStatus(
+  userId: string,
+  isActive: boolean,
+): Promise<Partial<IGolferProfile> | null> {
+  logger.info("from golfer repository");
+
+  const updatedGolfer = await GolferProfileModel.findOneAndUpdate(
+    { userId },
+    { isActive },
+    { new: true, lean: true }
+  );
+
+  if (!updatedGolfer) {
+    logger.warn(`No golfer found with userId: ${userId}`);
+    return null;
+  }
+
+  logger.info(updatedGolfer, "updated from golfer repository");
+  return updatedGolfer;
+}
+
+
   async findByUserId(userId: string): Promise<IGolferProfile | null> {
     return await GolferProfileModel.findOne({ userId })
       .populate("clubs", "name")
@@ -36,21 +52,15 @@ export class GolferProfileRepository {
       .lean();
   }
 
-  /**
-   * Find golfer profile by profile ID
-   */
-  async findGolferById(golferid: string): Promise<IGolferProfile | null> {
-    return await GolferProfileModel.findById(golferid)
-      .populate("clubs", "clubName")
-      .populate("friends", "fullName")
-      .lean();
+  async findGolferById(userId: string): Promise<IGolferProfile | null> {
+    // logger.info('golfer id from reposotory', golferid);
+    const profile = await GolferProfileModel.findOne({userId}).lean();
+    if(!profile) throw new NotFoundException("Golfer profile not found");
+    logger.info( profile,"findbyid in repository");
+    return profile;
   }
 
-  /**
-   * Update golfer profile
-   */
   async updateInDB(profileId: string, updateData: Partial<IGolferProfile>): Promise<IGolferProfile> {
-    // console.log(updateData, "------------------updatedata");
     const profile = await GolferProfileModel.findByIdAndUpdate(
       profileId,
       { $set: updateData },
@@ -58,9 +68,6 @@ export class GolferProfileRepository {
     )
       .populate("clubs", "name")
       .lean();
-    // .populate("clubMemberships", "name description")
-    // .populate("friends", "fullName profileImage")
-    // .lean();
 
     if (!profile) {
       throw new NotFoundException("Golfer profile not found");

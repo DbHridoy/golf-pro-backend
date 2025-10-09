@@ -15,13 +15,13 @@ export class UserRepository {
   async getUsers(query: PaginationQuery): Promise<PaginatedResponse<IUser>> {
     const paginateOptions = PaginationHelper.parsePaginationParams(query);
 
-    console.log("Response from repository function");
+    // console.log("Response from repository function");
     const searchFilter = PaginationHelper.createSearchFilter(
       query,
       this.searchableFields,
     );
 
-    console.log("Searhc filters: ", searchFilter);
+    // console.log("Searhc filters: ", searchFilter);
 
     logger.info(paginateOptions, " ", searchFilter, "Debugging");
 
@@ -73,9 +73,6 @@ export class UserRepository {
     return user;
   }
 
-  /**
-   * Update user profile
-   */
   async updateUser(userId: string, updateData: Partial<IUser>): Promise<IUser> {
     const user = await UserModel.findOneAndUpdate(
       { _id: userId, isActive: true },
@@ -90,9 +87,6 @@ export class UserRepository {
     return user;
   }
 
-  /**
-   * Check if user exists
-   */
   async userExists(userId: string): Promise<boolean> {
     const user = await UserModel.findOne({ _id: userId, isActive: true }).lean();
     return !!user;
@@ -103,9 +97,6 @@ export class UserRepository {
     return !!user;
   }
 
-  /**
-   * Get user with password (for password change)
-   */
   async getUserWithPassword(userId: string): Promise<IUser> {
     const user = await UserModel.findOne({ _id: userId, isActive: true })
       .select("+password")
@@ -145,6 +136,8 @@ export class UserRepository {
       lastLoginAt: new Date(),
     });
   }
+
+
 }
 
 export const userRepository = new UserRepository();

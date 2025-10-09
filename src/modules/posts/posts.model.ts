@@ -49,32 +49,36 @@ const PostSchema = createPaginatedSchema<IPosts>(
       type: Boolean,
       default: true,
     },
-    comments: {
-      type: [
-        {
-          type: Types.ObjectId,
-          ref: "Comment",
-        },
-      ],
-      default: [],
-    }, // store all comment IDs
-    likes: {
-      type: [
-        {
-          type: Types.ObjectId,
-          ref: "Like",
-        },
-      ],
-      default: [],
-    }, // store all like IDs
-    commentsCount: {
-      type: Number,
-      default: 0,
-    },
-    likesCount: {
-      type: Number,
-      default: 0,
-    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    }
+    // comments: {
+    //   type: [
+    //     {
+    //       type: Types.ObjectId,
+    //       ref: "Comment",
+    //     },
+    //   ],
+    //   default: [],
+    // }, // store all comment IDs
+    // likes: {
+    //   type: [
+    //     {
+    //       type: Types.ObjectId,
+    //       ref: "Like",
+    //     },
+    //   ],
+    //   default: [],
+    // }, // store all like IDs
+    // commentsCount: {
+    //   type: Number,
+    //   default: 0,
+    // },
+    // likesCount: {
+    //   type: Number,
+    //   default: 0,
+    // },
   },
   {
     timestamps: true,

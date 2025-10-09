@@ -2,9 +2,12 @@ import express from "express";
 
 import authRouter from "@/modules/auth/auth.route";
 import commentsRouter from "@/modules/comments/comments.route";
+import conversationRouter from "@/modules/conversation/conversation.routes";
+import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import friendsRouter from "@/modules/friends/friends.route";
 import golferRouter from "@/modules/golfer/golfer.route";
 import likesRouter from "@/modules/likes/likes.route";
+import messageRouter from "@/modules/message/message.routes";
 import notificationRouter from "@/modules/notification/notification.route";
 import postsRouter from "@/modules/posts/posts.route";
 import userRouter from "@/modules/user/user.route";
@@ -50,6 +53,12 @@ const moduleRoutes = [
     path: "/send-push-notification",
     route: notificationRouter,
   },
+  {
+    path: "/dashboard",
+    route: dashboardRouter,
+  },
+  { path: "/conversations", route: conversationRouter },
+  { path: "/messages", route: messageRouter },
 ];
 
 moduleRoutes.forEach(route => router.use(route.path, route.route));

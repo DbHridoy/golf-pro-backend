@@ -119,32 +119,9 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>({
     ],
     default: [],
   },
-  friends: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "GolferProfile",
-      },
-    ],
-    default: [],
-  },
-  friendRequests: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "FriendRequest",
-      },
-    ],
-    default: [],
-  },
-  notifications: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Notification",
-      },
-    ],
-    default: null,
+  isActive:{
+    type: Boolean,
+    default: true
   },
   lastActiveAt: {
     type: Date,

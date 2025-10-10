@@ -5,7 +5,7 @@ import { env } from "@/env.js";
 import { logger } from "@/middlewares/pino-logger.js";
 
 import { connectDB } from "./config/database.config";
-import { connectSocket } from "./socket/socket-connection.js";
+import { initSocket } from "./socket.js";
 
 const port = env.PORT;
 
@@ -13,7 +13,7 @@ const port = env.PORT;
 const server = createServer(app);
 
 // initialize socket
-connectSocket(server);
+initSocket(server);
 
 // Start the server
 server.listen(port, async () => {

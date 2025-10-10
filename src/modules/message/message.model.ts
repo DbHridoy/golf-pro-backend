@@ -1,42 +1,14 @@
-import mongoose, { model, Schema } from 'mongoose';
-import { IMessage } from './message.interface';
+import { model, Schema } from "mongoose";
 
-const messageSchema = new Schema<IMessage>(
-  {
-    text: {
-      type: String,
-      default: '',
-    },
-    imageUrl: {
-      type: [String],
-      default: [],
-    },
-    audioUrl: {
-     type: String,
-     required: false,
-     default: "",
-    },
-    seen: {
-      type: Boolean,
-      default: false,
-    },
-    msgByUserId: {
-      type: mongoose.Schema.ObjectId,
-      required: true,
-      ref: 'User',
-    },
-    conversationId: {
-      type: mongoose.Schema.ObjectId,
-      required: true,
-      ref: 'Conversation',
-    },
-  },
-  {
-    timestamps: true,
-    versionKey:false
-  },
-);
+const MessageSchema = new Schema({
+  channelId: { type: Schema.Types.ObjectId, ref: "Channel", required: true },
+  senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  receiverId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  content: { type: String, required: true },
+  messageType: { type: String, enum: ["text", "image", "file", "system"], default: "text" },
+  isRead: { type: Boolean, default: false },
+  editedAt: { type: Date },
+});
 
-const Message = model<IMessage>('Message', messageSchema);
-
-export default Message;
+const MessageModel = model("Message", MessageSchema);
+export default MessageModel;

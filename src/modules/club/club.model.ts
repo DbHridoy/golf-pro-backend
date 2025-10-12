@@ -1,56 +1,32 @@
 import { model, Schema } from "mongoose";
 
-const ClubProfileSchema = new Schema({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
+const ClubSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    clubName: { type: String, default: null },
+    country: { type: String, default: null },
+    city: { type: String, default: null },
+    address: { type: String, default: null },
+    clubProfileImage: { type: String, default: null },
+    clubCoverImage: { type: String, default: null },
+    ghinNumber: { type: String, default: null },
+    isProfilePublic: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true },
+    isOnline: { type: Boolean, default: false },
+    lastActiveAt: { type: Date, default: Date.now },
   },
-  clubName: {
-    type: String,
-    default: null,
-  },
-  country: {
-    type: String,
-    default: null,
-  },
-  city: {
-    type: String,
-    default: null,
+  { timestamps: true, toJSON: { virtuals: true } }
+);
 
-  },
-  address: {
-    type: String,
-    default: null,
-  },
-  clubProfileImage: {
-    type: String,
-    default: null,
-  },
-  clubCoverImage: {
-    type: String,
-    default: null,
-  },
-  ghinNumber: {
-    type: String,
-    default: null,
-  },
-  isProfilePublic: {
-    type: Boolean,
-    default: true,
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
-  isOnline:{
-    type: Boolean,
-    default: false
-  },
-  lastActiveAt: {
-    type: Date,
-    default: Date.now,
-  },
+// Virtual: populate members if needed
+ClubSchema.virtual("memberships", {
+  ref: "Membership",
+  localField: "_id",
+  foreignField: "clubId",
 });
 
-const ClubProfileModel = model("Club", ClubProfileSchema);
-export default ClubProfileModel;
+const ClubModel = model("Club", ClubSchema);
+export default ClubModel;

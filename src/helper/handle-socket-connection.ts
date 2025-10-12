@@ -1,20 +1,28 @@
-import { logger } from "@/middlewares/pino-logger";
-import { channelRepository } from "@/modules/channel/channel.repository";
+import { channelRepository } from "@/modules/channel/channel.repository.js";
 
 import handleChannelChat from "./handle-channel-chat.js";
 import handleSingleChat from "./handle-single-chat.js";
 
-function isChannel(chatWith) {
-  return channelRepository.getChannel(chatWith);
-}
-export default function handleConnection(SocketServer, socket: any) {
-  // For Postman/testing we can still use handshake query for now
-  const userId = socket.handshake.query.userId as string;
-  const chatWith = socket.handshake.query.chatWith as string;
+export default async function handleConnection(io, socket) {
+  try {
+    const userId = socket.handshake.query.userId as string;
+    const chatWith = socket.handshake.query.chatWith as string;
 
-  if (isChannel(chatWith)) {
-    return handleChannelChat(SocketServer, socket, data);
+    if (!userId)
+      return socket.disconnect();
+
+    const channel = await channelRepository.getChannel(chatWith);
+
+    if (channel) {
+      // ✅ group chat
+      return handleChannelChat(io, socket, channel, userId);
+    }
+
+    // ✅ single chat
+    return handleSingleChat(io, socket, chatWith, userId);
   }
-
-  return handleSingleChat(SocketServer, socket, data);
+  catch (err) {
+    console.error("Socket connection error:", err);
+    socket.disconnect();
+  }
 }

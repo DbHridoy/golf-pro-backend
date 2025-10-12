@@ -9,3 +9,5 @@ router.get("/get-channel/:id", channelController.getChannel);
 router.get("/get-all-channels", channelController.getAllChannels);
 router.patch("/update-channel/:id", channelController.updateChannel);
 router.delete("/delete-channel/:id", channelController.deleteChannel);
+
+export default router;

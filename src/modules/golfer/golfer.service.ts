@@ -1,6 +1,10 @@
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+
+import { bucket, s3 } from "@/config/aws.config";
+import { env } from "@/env";
 import { logger } from "@/middlewares/pino-logger";
 import { NotFoundException } from "@/utils/app-error.utils";
-import { getFilePath } from "@/utils/file-upload.utils";
+// import { getFilePath } from "@/utils/file-upload.utils";
 
 import type { IGolferProfile } from "./golfer.interface";
 import type {
@@ -114,17 +118,32 @@ class GolferProfileService {
   async toggleGolferActiveStatus(userId: string) {
     logger.info("befor finding from golfer service");
     const currentUser = await golferProfileRepository.findGolferById(userId);
-    logger.info(currentUser,"from golfer service");
-    logger.info(userId,"userid from service")
+    logger.info(currentUser, "from golfer service");
+    logger.info(userId, "userid from service");
 
     if (!currentUser) {
       throw new NotFoundException("Golfer profile not found");
     }
     const isActive = !currentUser.isActive;
     const updatedGolfer = await golferProfileRepository.toggleGolferActiveStatus(userId, isActive);
-logger.info(updatedGolfer,"updated from golfer service");
-    return updatedGolfer
+    logger.info(updatedGolfer, "updated from golfer service");
+    return updatedGolfer;
   }
+  // src/services/s3.service.ts
+
+  uploadToS3 = async (fileContent: Buffer, key: string, contentType: string) => {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: fileContent,
+        ContentType: contentType,
+        ACL: "public-read",
+      }),
+    );
+
+    return `https://${bucket}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
+  };
 }
 
 export const golferProfileService = new GolferProfileService();

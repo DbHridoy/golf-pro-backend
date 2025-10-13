@@ -1,45 +1,47 @@
-// import { PutObjectCommand } from "@aws-sdk/client-s3";
-// import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-// import fs from "node:fs";
-// import path from "node:path";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import fs from "node:fs";
+import path from "node:path";
 
-// import { s3Client } from "@/config/aws.config";
-// import { env } from "@/env.js";
+import { s3Client } from "@/config/aws.config";
+import { env } from "@/env.js";
 
-// /**
-//  * Uploads a file from local disk to S3 and returns the public URL.
-//  */
-// export async function uploadFileToS3(filePath: string, bucketFolder = "uploads/"): Promise<string> {
-//   const fileContent = fs.readFileSync(filePath);
-//   const fileName = path.basename(filePath);
+/**
+ * Uploads a file from local disk to S3 and returns the public URL.
+ */
+export async function uploadFileToS3(filePath: string, bucketFolder = "uploads/"): Promise<string> {
+  const fileContent = fs.readFileSync(filePath);
+  const fileName = path.basename(filePath);
 
-//   const params = {
-//     Bucket: env.AWS_BUCKET_NAME!,
-//     Key: `${bucketFolder}${fileName}`,
-//     Body: fileContent,
-//     ACL: "public-read" as const,
-//   };
+  const params = {
+    Bucket: env.AWS_BUCKET_NAME!,
+    Key: `${bucketFolder}${fileName}`,
+    Body: fileContent,
+    ACL: "public-read" as const,
+  };
 
-//   try {
-//     const command = new PutObjectCommand(params);
-//     await s3Client.send(command);
-//     return `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${bucketFolder}${fileName}`;
-//   } catch (err: any) {
-//     throw new Error(`S3 Upload Error: ${err.message}`);
-//   }
-// }
+  try {
+    const command = new PutObjectCommand(params);
+    await s3Client.send(command);
+    return `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${bucketFolder}${fileName}`;
+  } catch (err: any) {
+    throw new Error(`S3 Upload Error: ${err.message}`);
+  }
+}
 
-// /**
-//  * Generates a signed S3 upload URL for direct browser uploads.
-//  */
-// export async function generateS3UploadURL(fileName: string, bucketFolder = "uploads/"): Promise<string> {
-//   const command = new PutObjectCommand({
-//     Bucket: env.AWS_BUCKET_NAME!,
-//     Key: `${bucketFolder}${fileName}`,
-//   });
+/**
+ * Generates a signed S3 upload URL for direct browser uploads.
+ */
+export async function generateS3UploadURL(fileName: string, bucketFolder = "uploads/"): Promise<string> {
+  const command = new PutObjectCommand({
+    Bucket: env.AWS_BUCKET_NAME!,
+    Key: `${bucketFolder}${fileName}`,
+  });
 
-//   return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-// }
+  return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+}
+
+
 
 // import type { FileFilterCallback, StorageEngine } from "multer";
 
@@ -101,56 +103,57 @@
 //   return path.join(uploadDir, filename);
 // }
 
-import type { Request } from "express";
-import type { FileFilterCallback, StorageEngine } from "multer";
+// local file upload for testing
+// import type { Request } from "express";
+// import type { FileFilterCallback, StorageEngine } from "multer";
 
-import multer from "multer";
-import fs from "node:fs";
-import path from "node:path";
+// import multer from "multer";
+// import fs from "node:fs";
+// import path from "node:path";
 
-const DEFAULT_UPLOAD_DIR = path.join(__dirname, "../uploads");
+// const DEFAULT_UPLOAD_DIR = path.join(__dirname, "../uploads");
 
-function ensureDirExists(dir: string) {
-  if (!fs.existsSync(dir))
-    fs.mkdirSync(dir, { recursive: true });
-}
+// function ensureDirExists(dir: string) {
+//   if (!fs.existsSync(dir))
+//     fs.mkdirSync(dir, { recursive: true });
+// }
 
-function getUploaderConfig(uploadDir = DEFAULT_UPLOAD_DIR, maxSize = 5 * 1024 * 1024) {
-  ensureDirExists(uploadDir);
+// function getUploaderConfig(uploadDir = DEFAULT_UPLOAD_DIR, maxSize = 5 * 1024 * 1024) {
+//   ensureDirExists(uploadDir);
 
-  const storage: StorageEngine = multer.diskStorage({
-    destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-      cb(null, uploadDir); // ✅ destination must be string, not optional
-    },
-    filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-      const timestamp = Date.now();
-      const ext = path.extname(file.originalname);
-      const name = path.basename(file.originalname, ext).replace(/\s+/g, "_");
-      cb(null, `${name}_${timestamp}${ext}`); // ✅ filename must be string
-    },
-  });
+//   const storage: StorageEngine = multer.diskStorage({
+//     destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+//       cb(null, uploadDir); // ✅ destination must be string, not optional
+//     },
+//     filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+//       const timestamp = Date.now();
+//       const ext = path.extname(file.originalname);
+//       const name = path.basename(file.originalname, ext).replace(/\s+/g, "_");
+//       cb(null, `${name}_${timestamp}${ext}`); // ✅ filename must be string
+//     },
+//   });
 
-  const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    if (allowedTypes.test(file.mimetype))
-      cb(null, true);
-    else cb(new Error("Invalid file type. Only images are allowed."));
-  };
+//   const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+//     const allowedTypes = /jpeg|jpg|png|gif/;
+//     if (allowedTypes.test(file.mimetype))
+//       cb(null, true);
+//     else cb(new Error("Invalid file type. Only images are allowed."));
+//   };
 
-  return { storage, fileFilter, limits: { fileSize: maxSize } };
-}
+//   return { storage, fileFilter, limits: { fileSize: maxSize } };
+// }
 
-export function createFileUploader(uploadDir = DEFAULT_UPLOAD_DIR, maxFiles = 10, maxSize = 5 * 1024 * 1024) {
-  const { storage, fileFilter, limits } = getUploaderConfig(uploadDir, maxSize);
-  const upload = multer({ storage, fileFilter, limits });
+// export function createFileUploader(uploadDir = DEFAULT_UPLOAD_DIR, maxFiles = 10, maxSize = 5 * 1024 * 1024) {
+//   const { storage, fileFilter, limits } = getUploaderConfig(uploadDir, maxSize);
+//   const upload = multer({ storage, fileFilter, limits });
 
-  return {
-    single: (fieldName: string) => upload.single(fieldName),
-    multiple: (fieldName: string) => upload.array(fieldName, maxFiles),
-    fields: (fields: { name: string; maxCount: number }[]) => upload.fields(fields),
-  };
-}
+//   return {
+//     single: (fieldName: string) => upload.single(fieldName),
+//     multiple: (fieldName: string) => upload.array(fieldName, maxFiles),
+//     fields: (fields: { name: string; maxCount: number }[]) => upload.fields(fields),
+//   };
+// }
 
-export function getFilePath(filename: string, uploadDir = DEFAULT_UPLOAD_DIR) {
-  return path.join(uploadDir, filename);
-}
+// export function getFilePath(filename: string, uploadDir = DEFAULT_UPLOAD_DIR) {
+//   return path.join(uploadDir, filename);
+// }

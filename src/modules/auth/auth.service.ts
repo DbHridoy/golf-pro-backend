@@ -1,11 +1,12 @@
 import type mongoose from "mongoose";
 
-import bcrypt from "bcryptjs";
+import axios from "axios";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 
 import type { IUser } from "@/modules/user/user.interface";
 
+import { transporter } from "@/config/nodemailer.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { env } from "@/env";
 import { logger } from "@/middlewares/pino-logger";
@@ -13,31 +14,30 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from "@/utils/app-error.utils";
+import hashingUtils from "@/utils/hash.utils";
 
 import type { AuthResponse, JWTPayload, RefreshTokenResponse } from "./auth.interface";
 import type { LoginInput, RegisterInput } from "./auth.type";
 
 import { authRepository } from "./auth.repository";
+import OTPModel from "./otp.model";
 
 export class AuthService {
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
   private readonly accessTokenExpiry: string;
   private readonly refreshTokenExpiry: string;
-  private readonly saltRounds: number;
 
   constructor() {
     this.jwtSecret = env.JWT_SECRET as string;
     this.jwtRefreshSecret = env.JWT_REFRESH_SECRET as string;
     this.accessTokenExpiry = env.JWT_EXPIRY as string;
     this.refreshTokenExpiry = env.JWT_REFRESH_EXPIRY as string;
-    this.saltRounds = env.SALT_ROUNDS;
   }
 
   // Authentication methods
   async register(registerData: RegisterInput["body"]): Promise<AuthResponse> {
     // Check if user already exists
-    logger.info(registerData, "Service layer.");
     const { email, password, role } = registerData;
 
     const existingUser = await authRepository.emailExists(email);
@@ -45,7 +45,7 @@ export class AuthService {
       throw new BadRequestException("User with this email already exists", ErrorCodeEnum.RESOURCE_CONFLICT);
     }
 
-    const hashedPassword = await this.hashPassword(password);
+    const hashedPassword = await hashingUtils.hashPassword(password);
 
     const userData: Partial<IUser> = {
       email: email.toLowerCase(),
@@ -122,6 +122,32 @@ export class AuthService {
     };
   }
 
+  // ghin login
+  async ghinLogin({ ghinNo, ghinPassword }) {
+    const responseData = async () => {
+      try {
+        const payload = {
+          user: {
+            email_or_ghin: ghinNo,
+            password: ghinPassword,
+          },
+          token: "123",
+        };
+
+        const response = await axios.post("https://api.example.com/users", payload);
+        console.log(response.data); // server response
+        return response.data;
+      }
+      catch (err) {
+        console.error(err);
+        return { error: "Failed to post data" };
+      }
+    };
+
+    const ghinData = responseData.golfer_user.golfers.display_name;
+    return ghinData;
+  }
+
   // refresh token
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
     const payload = this.verifyRefreshToken(refreshToken);
@@ -151,10 +177,6 @@ export class AuthService {
   }
 
   // utility methods
-
-  async hashPassword(password: string): Promise<string> {
-    return await bcrypt.hash(password, this.saltRounds);
-  }
 
   async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
     return await bcrypt.compare(password, hashedPassword);
@@ -198,6 +220,63 @@ export class AuthService {
 
   generatePasswordResetToken(): string {
     return crypto.randomBytes(32).toString("hex");
+  }
+
+  async resetPassword(email: string) {
+    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min expiry
+
+    // Save or update OTP in DB
+    await OTPModel.findOneAndUpdate(
+      { email },
+      { otp, expiresAt },
+      { upsert: true, new: true },
+    );
+
+    try {
+      await transporter.sendMail({
+        from: `"My App" <${env.GMAIL_USER}>`,
+        to: email,
+        subject: "Your OTP Code",
+        html: `
+        <h3>Password Reset</h3>
+        <p>Your OTP code is: <b>${otp}</b></p>
+        <p>This code will expire in 5 minutes.</p>
+      `,
+      });
+
+      return { success: true, message: "OTP sent successfully" };
+    }
+    catch (error) {
+      console.error("Email error:", error);
+      return { success: false, message: "Failed to send OTP" };
+    }
+  }
+
+  async setNewPassword(userId: string, oldPassword: string, newPassword: string) {
+    logger.info(`setNewPassword called with userId: ${userId}, oldPassword: ${oldPassword}, newPassword: ${newPassword}`);
+    // Find user by ID
+    const user = await authRepository.findUserById(userId, true);
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+    logger.info(2);
+    // Compare old password
+    logger.info(3);
+    logger.info(user);
+    const isMatch = await this.comparePassword(oldPassword, user.password);
+    if (!isMatch) {
+      return { success: false, message: "Old password is incorrect" };
+    }
+
+    // Hash new password
+    const hashedPassword = await this.hashPassword(newPassword);
+
+    // Update user password
+    await authRepository.updateUserPassword(userId, hashedPassword);
+
+    return { success: true, message: "Password updated successfully" };
   }
 }
 

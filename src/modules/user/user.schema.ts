@@ -7,9 +7,6 @@ export const UserRoleEnum = z.enum(["golfer", "golf_club", "admin"]);
 export const userSchemaGeneric = z.object({
   email: z.string().email("Invalid email format").toLowerCase().trim(),
   password: z.string().min(4, "Password must be at least 4 characters"),
-  // .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-  //   "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"),
-
   role: UserRoleEnum,
   isActive: z.boolean().default(true).optional(),
   handicapIndex: z.number().min(0).max(54).optional(),

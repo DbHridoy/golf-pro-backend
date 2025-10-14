@@ -1,28 +1,53 @@
+import { logger } from "@/middlewares/pino-logger";
+
+import { clubRepository } from "../club/club.repository";
+import { golferRepository } from "../golfer/golfer.repository";
 import { membershipRepository } from "./memberships.repository";
 
 class MembershipService {
-    createMembership(data) {
-        return membershipRepository.createMembership(data);
+ async createMembership({ userId, golferId }) {
+
+    logger.info(`into service layer`)
+    const club= await clubRepository.findClubById(userId);
+    if (!club) {
+      return { success: false, message: "Club not found" };
     }
 
-    updateMembership(data) {
-        return membershipRepository.deactivateMembership(data);
+    // logger.info(`from membership service: ${JSON.stringify(clubId)}`);
+
+    const golfer =await golferRepository.findByUserId(golferId);
+    logger.info(`golfer from membership service: ${JSON.stringify(golfer)}`);
+    if (!golfer) {
+      return { success: false, message: "Golfer not found" };
     }
 
-    reactivateMembership(clubId: string, userId: string) {
-        return membershipRepository.reactivateMembership(clubId, userId);
-    }
+    const data = { clubId: club._id, golferId: golfer._id, isActive: true };
+    logger.info(`from membership service: ${JSON.stringify(data)}`);
+    const result = membershipRepository.createMembership(data);
+    return result;
+  }
 
-    deleteMembership(clubId: string, userId: string) {
-        return membershipRepository.removeMembership(clubId, userId);
-    }
-    getAllMembersOfaClub(clubId: string) {
-        return membershipRepository.getAllMembersOfaClub(clubId);
-    }
+  getAllClubsOfaGolfer(userId: string) {
+    return membershipRepository.getAllClubsOfaGolfer(userId);
+  }
 
-    getAllClubsOfaGolfer(userId: string) {
-        return membershipRepository.getAllClubsOfaGolfer(userId);
-    }
+  getAllMembersOfaClub(userId: string) {
+    const club = clubRepository.findclubById(userId.toString());
+    logger.info(`from memberservice club= ${JSON.stringify(club)}`);
+    return membershipRepository.getAllMembersOfaClub(club._id);
+  }
+
+  updateMembership(data) {
+    return membershipRepository.deactivateMembership(data);
+  }
+
+  reactivateMembership(clubId: string, userId: string) {
+    return membershipRepository.reactivateMembership(clubId, userId);
+  }
+
+  deleteMembership(clubId: string, userId: string) {
+    return membershipRepository.removeMembership(clubId, userId);
+  }
 }
 
 export const membershipService = new MembershipService();

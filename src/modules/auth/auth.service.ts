@@ -15,28 +15,20 @@ import {
   UnauthorizedException,
 } from "@/utils/app-error.utils";
 import hashingUtils from "@/utils/hash.utils";
+import { jwtUtils } from "@/utils/jwt.utils";
 
 import type { AuthResponse, JWTPayload, RefreshTokenResponse } from "./auth.interface";
 import type { LoginInput, RegisterInput } from "./auth.type";
 
+import AdminModel from "../admin/admin.model";
+import ClubModel from "../club/club.model";
+import GolferModel from "../golfer/golfer.model";
 import { authRepository } from "./auth.repository";
 import OTPModel from "./otp.model";
 
 export class AuthService {
-  private readonly jwtSecret: string;
-  private readonly jwtRefreshSecret: string;
-  private readonly accessTokenExpiry: string;
-  private readonly refreshTokenExpiry: string;
-
-  constructor() {
-    this.jwtSecret = env.JWT_SECRET as string;
-    this.jwtRefreshSecret = env.JWT_REFRESH_SECRET as string;
-    this.accessTokenExpiry = env.JWT_EXPIRY as string;
-    this.refreshTokenExpiry = env.JWT_REFRESH_EXPIRY as string;
-  }
-
-  // Authentication methods
-  async register(registerData: RegisterInput["body"]): Promise<AuthResponse> {
+  // Register
+  async register(registerData: RegisterInput["body"]) {
     // Check if user already exists
     const { email, password, role } = registerData;
 
@@ -54,26 +46,36 @@ export class AuthService {
       isActive: true,
       isEmailVerified: false,
     };
-
     const user = await authRepository.createUser(userData);
-
-    const tokenPayload: Omit<JWTPayload, "iat" | "exp"> = {
-      userId: (user._id as mongoose.Types.ObjectId).toString(),
-      email: user.email,
-      role: user.role,
+    if (userData.role === "golfer") {
+      const golfer = new GolferModel({ userId: user?._id });
+      await golfer.save();
+    }
+    else if (userData.role === "golf_club") {
+      const club = new ClubModel({ userId: user?._id });
+      await club.save();
+    }
+    else {
+      const admin = new AdminModel({ userId: user?._id });
+      await admin.save();
+    }
+    const tokenPayload = {
+      userId: user?._id,
+      email: user?.email,
+      role: user?.role,
     };
 
-    const { accessToken, refreshToken } = this.generateTokens(tokenPayload);
+    const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
 
     return {
       success: true,
       data: {
         user: {
-          id: (user._id as mongoose.Types.ObjectId).toString(),
-          email: user.email,
-          role: user.role,
-          isActive: user.isActive,
-          isEmailVerified: user.isEmailVerified,
+          id: user?._id,
+          email: user?.email,
+          role: user?.role,
+          isActive: user?.isActive,
+          isEmailVerified: user?.isEmailVerified,
         },
         accessToken,
         refreshToken,
@@ -83,7 +85,7 @@ export class AuthService {
   }
 
   // login service
-  async login(loginData: LoginInput["body"]): Promise<AuthResponse> {
+  async login(loginData: LoginInput["body"]) {
     const { email, password } = loginData;
 
     const user = await authRepository.findUserByEmail(email, true);
@@ -92,24 +94,24 @@ export class AuthService {
       throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
     }
 
-    const isPasswordValid = await this.comparePassword(password, user.password);
+    const isPasswordValid = await hashingUtils.comparePassword(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
     }
 
-    const tokenPayload: Omit<JWTPayload, "iat" | "exp"> = {
-      userId: (user._id as mongoose.Types.ObjectId).toString(),
+    const tokenPayload = {
+      userId: user._id,
       email: user.email,
       role: user.role,
     };
 
-    const { accessToken, refreshToken } = this.generateTokens(tokenPayload);
+    const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
 
     return {
       success: true,
       data: {
         user: {
-          id: (user._id as mongoose.Types.ObjectId).toString(),
+          id: user._id,
           email: user.email,
           role: user.role,
           isActive: user.isActive,
@@ -124,28 +126,44 @@ export class AuthService {
 
   // ghin login
   async ghinLogin({ ghinNo, ghinPassword }) {
-    const responseData = async () => {
-      try {
-        const payload = {
-          user: {
-            email_or_ghin: ghinNo,
-            password: ghinPassword,
-          },
-          token: "123",
-        };
+    try {
+      const payload = {
+        user: {
+          email_or_ghin: ghinNo,
+          password: ghinPassword,
+        },
+        token: "123",
+      };
 
-        const response = await axios.post("https://api.example.com/users", payload);
-        console.log(response.data); // server response
-        return response.data;
-      }
-      catch (err) {
-        console.error(err);
-        return { error: "Failed to post data" };
-      }
-    };
+      const response = await axios.post(
+        "https://api.ghin.com/api/v1/golfer_login.json",
+        payload,
+      );
 
-    const ghinData = responseData.golfer_user.golfers.display_name;
-    return ghinData;
+      console.log("Full response:", response.data);
+
+      // ✅ golfers is an array — grab the first item
+      const golfer = response.data?.golfer_user?.golfers?.[0];
+      const ghinData = golfer?.display;
+      const userData = {
+
+      };
+      return ghinData || { error: "Invalid data format" };
+    }
+    catch (err) {
+      if (err.response) {
+        console.error("Error response:", err.response.status, err.response.data);
+        return { error: err.response.data };
+      }
+      else if (err.request) {
+        console.error("No response received:", err.request);
+        return { error: "No response from server" };
+      }
+      else {
+        console.error("Axios error:", err.message);
+        return { error: err.message };
+      }
+    }
   }
 
   // refresh token
@@ -178,31 +196,7 @@ export class AuthService {
 
   // utility methods
 
-  async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
-    return await bcrypt.compare(password, hashedPassword);
-  }
-
-  generateTokens(payload: Omit<JWTPayload, "iat" | "exp">): { accessToken: string; refreshToken: string } {
-    const accessToken = jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.accessTokenExpiry,
-    } as jwt.SignOptions);
-
-    const refreshToken = jwt.sign(payload, this.jwtRefreshSecret, {
-      expiresIn: this.refreshTokenExpiry,
-    } as jwt.SignOptions);
-
-    return { accessToken, refreshToken };
-  }
-
-  verifyAccessToken(token: string): JWTPayload {
-    try {
-      return jwt.verify(token, this.jwtSecret) as JWTPayload;
-    }
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    catch (error: unknown) {
-      throw new UnauthorizedException("Invalid or expired access token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
-    }
-  }
+ 
 
   verifyRefreshToken(token: string): JWTPayload {
     try {

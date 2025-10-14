@@ -1,9 +1,28 @@
+import { logger } from "@/middlewares/pino-logger";
+
 import MembershipModel from "./memberships.model";
 
 class MembershipRepository {
   async createMembership(data) {
+    const existing = await MembershipModel.findOne({ clubId: data.clubId, golferId: data.golferId });
+    if (existing) {
+      return { success: false, message: "Golfer is already a member of this club" };
+    }
+    logger.info(`membership from repo: ${JSON.stringify(data)}`);
     const membership = await MembershipModel.create(data);
+    logger.info(`membership from repo: ${JSON.stringify(membership)}`);
     return membership;
+  }
+
+  async getAllClubsOfaGolfer(userId: string) {
+    const clubs = await MembershipModel.find({ userId }).lean();
+    return clubs;
+  }
+
+  async getAllMembersOfaClub(clubId: string) {
+    const members = await MembershipModel.find({ clubId }).lean();
+    logger.info(`members from repo: ${JSON.stringify(members)}`);
+    return members;
   }
 
   async deactivateMembership(data) {
@@ -15,30 +34,18 @@ class MembershipRepository {
     return membership;
   }
 
-  async  reactivateMembership(clubId: string, userId: string) {
-  const membership = await MembershipModel.findOneAndUpdate(
-    { clubId, userId },
-    { isActive: true },
-    { new: true }
-  );
-  return membership;
-}
-
-
-  async  removeMembership(clubId: string, userId: string) {
-  const result = await MembershipModel.deleteOne({ clubId, userId });
-  return result.deletedCount > 0;
-}
-
-
-  async getAllMembersOfaClub(clubId: string) {
-    const members = await MembershipModel.find({ clubId }).lean();
-    return members;
+  async reactivateMembership(clubId: string, userId: string) {
+    const membership = await MembershipModel.findOneAndUpdate(
+      { clubId, userId },
+      { isActive: true },
+      { new: true },
+    );
+    return membership;
   }
 
-  async getAllClubsOfaGolfer(userId: string) {
-    const clubs = await MembershipModel.find({ userId }).lean();
-    return clubs;
+  async removeMembership(clubId: string, userId: string) {
+    const result = await MembershipModel.deleteOne({ clubId, userId });
+    return result.deletedCount > 0;
   }
 }
 

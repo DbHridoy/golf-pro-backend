@@ -1,8 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
 
-import mongoose from "mongoose";
-import { email, string } from "zod/v4";
-
 import type {
   LoginInput,
   RefreshAuthInput,
@@ -21,9 +18,6 @@ import {
 import { authService } from "@/modules/auth/auth.service";
 import { zParse } from "@/utils/validators.utils";
 
-import AdminProfileModel from "../admin/admin.model";
-import ClubProfileModel from "../club/club.model";
-import GolferProfileModel from "../golfer/golfer.model";
 import { authRepository } from "./auth.repository";
 
 export class AuthController {
@@ -33,8 +27,8 @@ export class AuthController {
     // logger.info(body, "Registering user");
 
     const result = await authService.register(body);
-    logger.info(result, "Registered user");
-    
+    // logger.info(result, "Registered user");
+
     res.cookie("jwt", result.data.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
@@ -42,18 +36,6 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    if (result.data.user.role === "golfer") {
-      const golfer = new GolferProfileModel({ userId: new mongoose.Types.ObjectId(result.data.user.id) });
-      await golfer.save();
-    }
-    else if (result.data.user.role === "golf_club") {
-      const club = new ClubProfileModel({ userId: result.data.user.id });
-      await club.save();
-    }
-    else {
-      const admin = new AdminProfileModel({ userId: new mongoose.Types.ObjectId(result.data.user.id) });
-      await admin.save();
-    }
     return res.status(HTTPSTATUS.CREATED).json({
       success: result.success,
       data: {
@@ -67,8 +49,10 @@ export class AuthController {
   // login
   login = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: LoginInput = await zParse(loginSchema, req);
+    // logger.info("from authcontroller");
 
     const result = await authService.login(body);
+    // logger.info("from authcontroller");
 
     res.cookie("jwt", result.data.refreshToken, {
       httpOnly: true,
@@ -88,11 +72,11 @@ export class AuthController {
   });
 
   // ghin login
-  ghinLogin=asyncHandler(async(req:Request,res:Response,_next:NextFunction)=>{
-    const {ghinNo,ghinPassword}=req.body
-    const result=await authService.ghinLogin({ghinNo,ghinPassword});
+  ghinLogin = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const { ghinNo, ghinPassword } = req.body;
+    const result = await authService.ghinLogin({ ghinNo, ghinPassword });
     return res.status(HTTPSTATUS.OK).json(result);
-  })
+  });
 
   // generate refresh token
   refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
@@ -166,14 +150,15 @@ export class AuthController {
   });
 
   setNewPassword = asyncHandler(async (req, res) => {
-    const userId= req.user?.userId; // comes from authMiddleware
+    const userId = req.user?.userId; // comes from authMiddleware
     // logger.info(`userId: ${userId}`);
     // const userId = new mongoose.Types.ObjectId(id);
-    if(!userId){
+    if (!userId) {
       return res.status(HTTPSTATUS.BAD_REQUEST).json({
         success: false,
         message: "User not found",
-    })}
+      });
+    }
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
     // Basic validation

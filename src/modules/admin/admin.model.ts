@@ -1,12 +1,12 @@
-import mongoose, { Schema } from "mongoose";
+import { Schema } from "mongoose";
 
 import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema.utils";
 
 import type { IAdminProfile } from "./admin.interface";
 
-const AdminProfileSchema = createPaginatedSchema<IAdminProfile>({
+const AdminSchema = createPaginatedSchema<IAdminProfile>({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     required: true,
     unique: true,
     ref: "User",
@@ -30,7 +30,6 @@ const AdminProfileSchema = createPaginatedSchema<IAdminProfile>({
   dateOfBirth: {
     type: Date,
     default: null,
-
     validate: {
       validator(value: Date | null): boolean {
         if (!value)
@@ -57,15 +56,6 @@ const AdminProfileSchema = createPaginatedSchema<IAdminProfile>({
     //   message: "Invalid profile image URL format",
     // },
   },
-  notifications: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Notification",
-      },
-    ],
-    default: null,
-  },
 }, {
   timestamps: true,
   toJSON: {
@@ -77,9 +67,11 @@ const AdminProfileSchema = createPaginatedSchema<IAdminProfile>({
   },
 });
 
-export const AdminProfileModel = createPaginatedModel<IAdminProfile>(
-  "AdminProfile",
-  AdminProfileSchema,
+AdminSchema.index({ userId: 1 }, { unique: true });
+
+export const AdminModel = createPaginatedModel<IAdminProfile>(
+  "Admin",
+  AdminSchema,
 );
 
-export default AdminProfileModel;
+export default AdminModel;

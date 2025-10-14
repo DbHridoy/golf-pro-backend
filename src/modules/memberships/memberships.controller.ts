@@ -1,11 +1,14 @@
 import { HTTPSTATUS } from "@/config/http.config";
+import { logger } from "@/middlewares/pino-logger";
 
+import { clubRepository } from "../club/club.repository";
 import { membershipService } from "./memberships.service";
 
 class MembershipController {
-  createMembership(req, res) {
-    const data = req.body;
-    const result = membershipService.createMembership(data);
+  async createMembership(req, res) {
+    const { userId } = req.user!;
+    const { golferId } = req.body!;
+    const result = await membershipService.createMembership({ userId, golferId });
     return res.status(HTTPSTATUS.CREATED).json({
       success: true,
       message: "Membership created successfully",
@@ -13,22 +16,24 @@ class MembershipController {
     });
   }
 
-  getAllMembersOfaClub(req, res) {
-    const { id } = req.params;
-    const result = membershipService.getAllMembersOfaClub(id);
+  async getAllClubsOfaGolfer(req, res) {
+    const { userId } = req.user!;
+    const result = await membershipService.getAllClubsOfaGolfer(userId);
     return res.status(HTTPSTATUS.OK).json({
       success: true,
-      message: "All members of a club",
+      message: "All clubs of a golfer",
       data: result,
     });
   }
 
-  getAllClubsOfaGolfer(req, res) {
-    const { id } = req.params;
-    const result = membershipService.getAllClubsOfaGolfer(id);
+  async getAllMembersOfaClub(req, res) {
+    logger.info(`from membership controller`);
+    const { userId } = req.user!;
+    logger.info(`userId from controller: ${userId}`);
+    const result = await membershipService.getAllMembersOfaClub(userId);
     return res.status(HTTPSTATUS.OK).json({
       success: true,
-      message: "All clubs of a golfer",
+      message: "All members of a club",
       data: result,
     });
   }

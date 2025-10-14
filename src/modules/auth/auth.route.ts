@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { authMiddleware } from "@/middlewares/jwt-auth.middleware";
+import { authMiddleware } from "@/middlewares/auth.middleware";
 
 import { authController } from "./auth.controller";
 
@@ -14,6 +14,6 @@ router.post("/logout", authMiddleware.authenticate, authMiddleware.authorize(["g
 router.post("/send-otp", authController.resetPassword);
 router.post("/verify-otp", authController.verifyOtp);
 router.post("/set-password", authMiddleware.authenticate, authController.setNewPassword);
-router.post("/ghin-login",authController.ghinLogin);
+router.post("/ghin-login", authController.ghinLogin);
 
 export default router;

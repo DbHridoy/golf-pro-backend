@@ -18,15 +18,8 @@ const ClubSchema = new Schema(
     isOnline: { type: Boolean, default: false },
     lastActiveAt: { type: Date, default: Date.now },
   },
-  { timestamps: true, toJSON: { virtuals: true } }
+  { timestamps: true, toJSON: { virtuals: true } },
 );
-
-// Virtual: populate members if needed
-ClubSchema.virtual("memberships", {
-  ref: "Membership",
-  localField: "_id",
-  foreignField: "clubId",
-});
 
 const ClubModel = model("Club", ClubSchema);
 export default ClubModel;

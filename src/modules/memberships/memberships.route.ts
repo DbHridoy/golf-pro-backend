@@ -1,10 +1,14 @@
 import { Router } from "express";
 
+import { authMiddleware } from "@/middlewares/auth.middleware";
+
+import { membershipController } from "./memberships.controller";
+
 const router = Router();
 
-// router.post("/create-membership", );
-// router.get("/get-membership/:id", );
-// router.get("/get-all-memberships", );
+router.post("/create-membership", authMiddleware.authenticate,authMiddleware.authorize(["golf_club"]), membershipController.createMembership);
+router.get("/get-myclubs",authMiddleware.authenticate, membershipController.getAllClubsOfaGolfer);
+router.get("/get-mymembers",authMiddleware.authenticate, membershipController.getAllMembersOfaClub);
 // router.patch("/update-membership/:id", );
 // router.delete("/delete-membership/:id", );
 

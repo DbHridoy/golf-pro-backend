@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { authMiddleware } from "@/middlewares/jwt-auth.middleware";
+import { authMiddleware } from "@/middlewares/auth.middleware";
 import { upload } from "@/middlewares/upload.middleware";
 // import { createFileUploader } from "@/utils/file-upload.utils";
 

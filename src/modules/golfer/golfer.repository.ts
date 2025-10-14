@@ -13,7 +13,7 @@ import type {
 
 import GolferProfileModel from "./golfer.model";
 
-export class GolferProfileRepository {
+export class GolferRepository {
   async createProfile(userId: string, profileData: Partial<IGolferProfile>): Promise<IGolferProfile> {
     const profile = new GolferProfileModel({
       userId,
@@ -24,39 +24,37 @@ export class GolferProfileRepository {
   }
 
   async toggleGolferActiveStatus(
-  userId: string,
-  isActive: boolean,
-): Promise<Partial<IGolferProfile> | null> {
-  logger.info("from golfer repository");
+    userId: string,
+    isActive: boolean,
+  ): Promise<Partial<IGolferProfile> | null> {
+    logger.info("from golfer repository");
 
-  const updatedGolfer = await GolferProfileModel.findOneAndUpdate(
-    { userId },
-    { isActive },
-    { new: true, lean: true }
-  );
+    const updatedGolfer = await GolferProfileModel.findOneAndUpdate(
+      { userId },
+      { isActive },
+      { new: true, lean: true },
+    );
 
-  if (!updatedGolfer) {
-    logger.warn(`No golfer found with userId: ${userId}`);
-    return null;
+    if (!updatedGolfer) {
+      logger.warn(`No golfer found with userId: ${userId}`);
+      return null;
+    }
+
+    logger.info(updatedGolfer, "updated from golfer repository");
+    return updatedGolfer;
   }
-
-  logger.info(updatedGolfer, "updated from golfer repository");
-  return updatedGolfer;
-}
-
 
   async findByUserId(userId: string): Promise<IGolferProfile | null> {
     return await GolferProfileModel.findOne({ userId })
-      .populate("clubs", "name")
-      .populate("friends", "fullName")
       .lean();
   }
 
   async findGolferById(userId: string): Promise<IGolferProfile | null> {
     // logger.info('golfer id from reposotory', golferid);
-    const profile = await GolferProfileModel.findOne({userId}).lean();
-    if(!profile) throw new NotFoundException("Golfer profile not found");
-    logger.info( profile,"findbyid in repository");
+    const profile = await GolferProfileModel.findOne({ userId }).lean();
+    if (!profile)
+      throw new NotFoundException("Golfer profile not found");
+    logger.info(profile, "findbyid in repository");
     return profile;
   }
 
@@ -289,4 +287,4 @@ export class GolferProfileRepository {
   }
 }
 
-export const golferProfileRepository = new GolferProfileRepository();
+export const golferRepository = new GolferRepository();

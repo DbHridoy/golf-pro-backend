@@ -1,6 +1,8 @@
+import type { Schema } from "mongoose";
+
 // JWT payload type
 export interface JWTPayload {
-  userId: string;
+  userId: Schema.Types.ObjectId;
   email: string;
   role: "golfer" | "golf_club" | "admin";
   iat?: number;

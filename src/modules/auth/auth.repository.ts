@@ -6,7 +6,21 @@ import UserModel from "@/modules/user/user.model";
 import OTPModel from "./otp.model";
 
 export class AuthRepository {
+  // Register user
+  async createUser(userData: Partial<IUser>): Promise<IUser | null | undefined> {
+    try {
+      // logger.info(userData, "repostiory layer.");
+      const user = new UserModel(userData);
+      return await user.save();
+    }
+    catch (error) {
+      logger.error(error, "Repository layer error check.");
+    }
+  }
+  
+  // Login user
   async findUserByEmail(email: string, includePassword = false): Promise<IUser | null> {
+    
     const query = UserModel.findOne({ email: email.toLowerCase(), isActive: true });
 
     if (includePassword) {
@@ -23,20 +37,12 @@ export class AuthRepository {
       query.select("+password");
     }
 
-    return await query.exec();
+    const data= await query.exec();
+    logger.info(`data from authrepo: ${JSON.stringify(data)}`);
+    return data;
   };
 
   // Create User
-  async createUser(userData: Partial<IUser>): Promise<IUser | null | undefined> {
-    try {
-      logger.info(userData, "repostiory layer.");
-      const user = new UserModel(userData);
-      return await user.save();
-    }
-    catch (error) {
-      logger.error(error, "Repository layer error check.");
-    }
-  }
 
   async emailExists(email: string): Promise<boolean> {
     const user = await UserModel.findOne({ email: email.toLowerCase() });

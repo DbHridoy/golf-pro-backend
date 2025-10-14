@@ -8,16 +8,11 @@ const MembershipSchema = new Schema(
       required: true,
       index: true,
     },
-    userId: {
+    golferId: {
       type: Schema.Types.ObjectId,
       ref: "GolferProfile",
       required: true,
       index: true,
-    },
-    role: {
-      type: String,
-      enum: ["member", "admin", "coach"],
-      default: "member",
     },
     isActive: {
       type: Boolean,
@@ -32,11 +27,11 @@ const MembershipSchema = new Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Ensure one membership per user-club pair
-MembershipSchema.index({ clubId: 1, userId: 1 }, { unique: true });
+MembershipSchema.index({ clubId: 1, golferId: 1 },{ unique: true });
 
 const MembershipModel = model("Membership", MembershipSchema);
 export default MembershipModel;

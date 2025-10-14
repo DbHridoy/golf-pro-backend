@@ -1,10 +1,10 @@
-import mongoose, { Schema } from "mongoose";
+import { Schema } from "mongoose";
 
 import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema.utils";
 
 import type { IGolferProfile } from "./golfer.interface";
 
-const GolferProfileSchema = createPaginatedSchema<IGolferProfile>(
+const GolferSchema = createPaginatedSchema<IGolferProfile>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -65,31 +65,10 @@ const GolferProfileSchema = createPaginatedSchema<IGolferProfile>(
   },
 );
 
-// Virtual: populate clubs via Membership
-GolferProfileSchema.virtual("clubs", {
-  ref: "Membership",
-  localField: "_id",
-  foreignField: "userId",
-});
-
-// Virtual for age
-GolferProfileSchema.virtual("age").get(function () {
-  if (!this.dateOfBirth)
-    return null;
-  const today = new Date();
-  const birthDate = new Date(this.dateOfBirth);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  if (today.getMonth() < birthDate.getMonth()
-    || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-});
-
-const GolferProfileModel = createPaginatedModel<IGolferProfile>("GolferProfile", GolferProfileSchema);
+const GolferModel = createPaginatedModel<IGolferProfile>("Golfer", GolferSchema);
 
 (async () => {
-  await GolferProfileModel.syncIndexes();
+  await GolferModel.syncIndexes();
 })();
 
-export default GolferProfileModel;
+export default GolferModel;

@@ -8,6 +8,7 @@ import { authService } from "@/modules/auth/auth.service";
 import { UnauthorizedException } from "@/utils/app-error.utils";
 
 import { logger } from "./pino-logger.js";
+import { jwtUtils } from "@/utils/jwt.utils.js";
 
 declare global {
   namespace Express {
@@ -22,8 +23,10 @@ declare global {
 export class AuthMiddleware {
   async authenticate(req: Request, res: Response, next: NextFunction) {
     try {
+      logger.info(`from authenticate middleware`)
       const authHeader = req.headers.authorization;
       const requestId = req.id || req.headers["x-request-id"] as string;
+
       if (!authHeader) {
         logger.warn({ requestId, ip: req.ip }, "No authorization header provided");
         throw new UnauthorizedException(
@@ -48,8 +51,8 @@ export class AuthMiddleware {
         );
       }
 
-      const payload = authService.verifyAccessToken(token);
-
+      const payload = jwtUtils.verifyAccessToken(token);
+      logger.info(`payload from auth middleware: ${JSON.stringify(payload)}`);
       const user = await authRepository.findUserById(payload.userId);
 
       if (!user) {

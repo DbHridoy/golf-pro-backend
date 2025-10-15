@@ -1,9 +1,9 @@
 import express from "express";
 
 import authRouter from "@/modules/auth/auth.route";
-import channelRouter from "@/modules/channel/channel.route";
+import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
-import dashboardRouter from "@/modules/dashboard/dashboard.route";
+import conversationRouter from "@/modules/conversation/conversation.route";
 import friendsRouter from "@/modules/friends/friends.route";
 import golferRouter from "@/modules/golfer/golfer.route";
 import likesRouter from "@/modules/likes/likes.route";
@@ -34,6 +34,10 @@ const moduleRoutes = [
     route: golferRouter,
   },
   {
+    path: "/club",
+    route: clubRouter,
+  },
+  {
     path: "/posts",
     route: postsRouter,
   },
@@ -53,13 +57,14 @@ const moduleRoutes = [
     path: "/send-push-notification",
     route: notificationRouter,
   },
+  // {
+  //   path: "/dashboard",
+  //   route: dashboardRouter,
+  // },
+  // routes/index.ts
   {
-    path: "/dashboard",
-    route: dashboardRouter,
-  },
-  {
-    path: "/channel",
-    route: channelRouter,
+    path: "/conversation",
+    route: conversationRouter,
   },
   {
     path: "/membership",

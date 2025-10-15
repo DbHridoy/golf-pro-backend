@@ -62,7 +62,7 @@ export class UserController {
    * Forgot password
    * POST /user/forgot-password
    */
-  forgotPassword = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  sendOtp = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: ForgotPasswordInput = await zParse(forgotPasswordSchema, req);
     // logger.info(body);
     // TODO: Implement forgot password logic with email sending
@@ -77,7 +77,7 @@ export class UserController {
    * Reset password
    * POST /user/reset-password
    */
-  resetPassword = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  sendOtp = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: ResetPasswordInput = await zParse(resetPasswordSchema, req);
     // logger.info(body);
     // TODO: Implement reset password logic

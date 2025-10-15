@@ -1,7 +1,21 @@
 import { Router } from "express";
 
-const router=Router();
+import { authMiddleware } from "@/middlewares/auth.middleware";
+import { upload } from "@/middlewares/upload.middleware";
 
-router.patch("/update-club-profile");
+import { clubController } from "./club.controller";
 
-export default router
+const router = Router();
+
+router.get("/get-club-profile", authMiddleware.authenticate, authMiddleware.authorize(["golf_club", "admin"]), clubController.getClubProfile);
+router.patch(
+  "/update-club-profile",
+  authMiddleware.authenticate,
+  authMiddleware.authorize(["golf_club", "admin"]),
+  upload.fields([
+    { name: "clubProfileImage", maxCount: 1 },
+    { name: "clubCoverImage", maxCount: 1 },
+  ]),
+  clubController.updateProfile,
+);
+export default router;

@@ -1,17 +1,16 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { env } from "node:process";
 
 import { bucket, s3 } from "@/config/aws.config";
-import { env } from "@/env";
-import { logger } from "@/middlewares/pino-logger";
 import { NotFoundException } from "@/utils/app-error.utils";
-// import { getFilePath } from "@/utils/file-upload.utils";
+import fileUploadUtils from "@/utils/file-upload.utils";
 
 import type { IGolferProfile } from "./golfer.interface";
 import type {
   UpdateGolferProfileRequest,
 } from "./golfer.type";
 
-import { golferProfileRepository } from "./golfer.repository";
+import { golferRepository } from "./golfer.repository";
 
 class GolferProfileService {
   // async createProfile(userId: string, profileData: CreateGolferProfileRequest["body"]) {
@@ -30,120 +29,117 @@ class GolferProfileService {
   //     message: "Golfer profile created successfully",
   //   };
   // }
+  
+  getMyProfile(userId: string) {
+    const profile = golferRepository.findByUserId(userId);
+    return profile;
+  }
 
   async updateProfile(
     userId: string,
-    profileData: UpdateGolferProfileRequest["body"],
+    body: UpdateGolferProfileRequest["body"],
     files: { [fieldname: string]: Express.Multer.File[] } = {},
   ) {
-    // logger.info(profileData, "Updating profile from service");
-    const profile = await golferProfileRepository.findByUserId(userId);
-    // logger.info(profile, "profile from service");
-    if (!profile)
+    const existing = await golferRepository.findByUserId(userId);
+    if (!existing)
       throw new NotFoundException("Golfer profile not found");
 
-    // const updatedData={...profileData}
-    // Handle profilePicture
+    const update: Partial<IGolferProfile> = { ...body };
 
-    // if (files.profilePicture?.[0]) {
-    //   updatedData.profileImage = getFilePath(files.profilePicture[0].filename);
-    // }
-    // if (files.profilePicture && files.profilePicture[0]) {
-    // const profilePicUrl = await uploadFileToS3(files.profilePicture[0].path, "uploads/");
-    // const profilePicUrl = getFilePath(files.profilePicture[0].filename);
-    // console.error(profilePicUrl);
-    // (updatedData as any).profileImage = profilePicUrl;
-    // }
+    // profile image
+    if (files.profileImage?.[0]) {
+      const f = files.profileImage[0];
+      const key = `uploads/golfers/${userId}/profile-${Date.now()}-${f.originalname}`;
+      update.profileImage = await fileUploadUtils.uploadToS3(f.buffer, key, f.mimetype);
+    }
 
-    // Handle coverPhoto
-    //     if (files.coverPhoto?.[0]) {
-    //   updatedData.coverImage = getFilePath(files.coverPhoto[0].filename);
-    // }
-    // if (files.coverPhoto && files.coverPhoto[0]) {
-    //   // const coverPhotoUrl = await uploadFileToS3(files.coverPhoto[0].path, "uploads/");
-    //   const coverPhotoUrl = getFilePath(files.coverPhoto[0].filename);
+    // cover image
+    if (files.coverImage?.[0]) {
+      const f = files.coverImage[0];
+      const key = `uploads/golfers/${userId}/cover-${Date.now()}-${f.originalname}`;
+      update.coverImage = await fileUploadUtils.uploadToS3(f.buffer, key, f.mimetype);
+    }
 
-    //   (updatedData as any).coverImage = coverPhotoUrl;
-    // }
-    //     const updatedData: Partial<IGolferProfile> = {
-    //   ...profileData,
-    //   ...(files.profilePicture?.[0] && { profileImage: getFilePath(files.profilePicture[0].filename) }),
-    //   ...(files.coverPhoto?.[0] && { coverImage: getFilePath(files.coverPhoto[0].filename) }),
-    // };
+    // strip undefined so we don’t overwrite existing fields
+    Object.keys(update).forEach(k => (update as any)[k] == null && delete (update as any)[k]);
 
-    // const updatedData={...profileData, profileImage: profileData.profileImage, coverImage: profileData.coverImage};
+    const saved = await golferRepository.updateInDB(existing._id as string, update);
 
-    const updatedData: Partial<IGolferProfile> = {
-      fullName: profileData.fullName,
-      profileImage: files.profileImage?.[0] ? getFilePath(files.profileImage[0].filename) : undefined,
-      coverImage: files.coverImage?.[0] ? getFilePath(files.coverImage[0].filename) : undefined,
-    };
-    const updatedProfile = await golferProfileRepository.updateInDB(profile._id as string, updatedData);
-
-    return {
-      success: true,
-      data: updatedProfile,
-      message: "Golfer profile updated successfully",
-    };
+    return { success: true, data: saved, message: "Golfer profile updated successfully" };
   }
 
-  async getSingleGolferProfile(golferId: string) {
-    const profile = await golferProfileRepository.findGolferById(golferId);
-    if (!profile) {
-      throw new NotFoundException("Golfer profile not found");
-    }
-    else {
-      return ({
-        success: true,
-        data: profile,
-        message: "Golfer profile fetched successfully",
-      });
-    }
-  }
+  // async updateProfile(
+  //   userId: string,
+  //   profileData: UpdateGolferProfileRequest["body"],
+  //   files: { [fieldname: string]: Express.Multer.File[] } = {},
+  // ) {
+  //   // logger.info(profileData, "Updating profile from service");
+  //   const profile = await golferProfileRepository.findByUserId(userId);
+  //   // logger.info(profile, "profile from service");
+  //   if (!profile)
+  //     throw new NotFoundException("Golfer profile not found");
 
-  async getAllProfiles() {
-    const profiles = await golferProfileRepository.getAllGolfers();
-    if (!profiles) {
-      throw new NotFoundException("Golfer profiles not found");
-    }
-    else {
-      return ({
-        success: true,
-        data: profiles,
-        message: "Golfer profiles fetched successfully",
-      });
-    }
-  }
+  //   // const updatedData={...profileData}
+  //   // Handle profilePicture
 
-  async toggleGolferActiveStatus(userId: string) {
-    logger.info("befor finding from golfer service");
-    const currentUser = await golferProfileRepository.findGolferById(userId);
-    logger.info(currentUser, "from golfer service");
-    logger.info(userId, "userid from service");
+  //   // if (files.profilePicture?.[0]) {
+  //   //   updatedData.profileImage = getFilePath(files.profilePicture[0].filename);
+  //   // }
+  //   // if (files.profilePicture && files.profilePicture[0]) {
+  //   // const profilePicUrl = await uploadFileToS3(files.profilePicture[0].path, "uploads/");
+  //   // const profilePicUrl = getFilePath(files.profilePicture[0].filename);
+  //   // console.error(profilePicUrl);
+  //   // (updatedData as any).profileImage = profilePicUrl;
+  //   // }
 
-    if (!currentUser) {
-      throw new NotFoundException("Golfer profile not found");
-    }
-    const isActive = !currentUser.isActive;
-    const updatedGolfer = await golferProfileRepository.toggleGolferActiveStatus(userId, isActive);
-    logger.info(updatedGolfer, "updated from golfer service");
-    return updatedGolfer;
-  }
+  //   // Handle coverPhoto
+  //   //     if (files.coverPhoto?.[0]) {
+  //   //   updatedData.coverImage = getFilePath(files.coverPhoto[0].filename);
+  //   // }
+  //   // if (files.coverPhoto && files.coverPhoto[0]) {
+  //   //   // const coverPhotoUrl = await uploadFileToS3(files.coverPhoto[0].path, "uploads/");
+  //   //   const coverPhotoUrl = getFilePath(files.coverPhoto[0].filename);
+
+  //   //   (updatedData as any).coverImage = coverPhotoUrl;
+  //   // }
+  //   //     const updatedData: Partial<IGolferProfile> = {
+  //   //   ...profileData,
+  //   //   ...(files.profilePicture?.[0] && { profileImage: getFilePath(files.profilePicture[0].filename) }),
+  //   //   ...(files.coverPhoto?.[0] && { coverImage: getFilePath(files.coverPhoto[0].filename) }),
+  //   // };
+
+  //   // const updatedData={...profileData, profileImage: profileData.profileImage, coverImage: profileData.coverImage};
+
+  //   const updatedData = {
+  //     fullName: profileData.fullName,
+  //     profileImage: files.profileImage?.[0] ? getFilePath(files.profileImage[0].filename) : undefined,
+  //     coverImage: files.coverImage?.[0] ? getFilePath(files.coverImage[0].filename) : undefined,
+  //   };
+
+  //   const updatedProfile = await golferProfileRepository.updateInDB(profile._id as string, updatedData);
+
+  //   return {
+  //     success: true,
+  //     data: updatedProfile,
+  //     message: "Golfer profile updated successfully",
+  //   };
+  // }
+
   // src/services/s3.service.ts
 
-  uploadToS3 = async (fileContent: Buffer, key: string, contentType: string) => {
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: fileContent,
-        ContentType: contentType,
-        ACL: "public-read",
-      }),
-    );
+  // uploadToS3 = async (fileContent: Buffer, key: string, contentType: string) => {
+  //   await s3.send(
+  //     new PutObjectCommand({
+  //       Bucket: bucket,
+  //       Key: key,
+  //       Body: fileContent,
+  //       ContentType: contentType,
+  //       ACL: "public-read",
+  //     }),
+  //   );
 
-    return `https://${bucket}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
-  };
+  //   return `https://${bucket}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
+  // };
 }
 
 export const golferProfileService = new GolferProfileService();

@@ -1,47 +1,82 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import fs from "node:fs";
-import path from "node:path";
+import { env } from "node:process";
 
-import { s3Client } from "@/config/aws.config";
-import { env } from "@/env.js";
+import { bucket, s3 } from "@/config/aws.config";
 
-/**
- * Uploads a file from local disk to S3 and returns the public URL.
- */
-export async function uploadFileToS3(filePath: string, bucketFolder = "uploads/"): Promise<string> {
-  const fileContent = fs.readFileSync(filePath);
-  const fileName = path.basename(filePath);
+class FileUploadUtils {
+  uploadToS3 = async (fileContent: Buffer, key: string, contentType: string) => {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: fileContent,
+        ContentType: contentType,
+        ACL: "public-read",
+      }),
+    );
 
-  const params = {
-    Bucket: env.AWS_BUCKET_NAME!,
-    Key: `${bucketFolder}${fileName}`,
-    Body: fileContent,
-    ACL: "public-read" as const,
+    return `https://${bucket}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
   };
-
-  try {
-    const command = new PutObjectCommand(params);
-    await s3Client.send(command);
-    return `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${bucketFolder}${fileName}`;
-  } catch (err: any) {
-    throw new Error(`S3 Upload Error: ${err.message}`);
-  }
 }
+const fileUploadUtils = new FileUploadUtils();
+export default fileUploadUtils;
 
-/**
- * Generates a signed S3 upload URL for direct browser uploads.
- */
-export async function generateS3UploadURL(fileName: string, bucketFolder = "uploads/"): Promise<string> {
-  const command = new PutObjectCommand({
-    Bucket: env.AWS_BUCKET_NAME!,
-    Key: `${bucketFolder}${fileName}`,
-  });
+// import { PutObjectCommand } from "@aws-sdk/client-s3";
+// import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+// import fs from "node:fs";
+// import path from "node:path";
 
-  return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-}
+// import { s3Client } from "@/config/aws.config";
+// import { env } from "@/env.js";
 
+// /**
+//  * Uploads a file from local disk to S3 and returns the public URL.
+//  */
+// export async function uploadFileToS3(filePath: string, bucketFolder = "uploads/"): Promise<string> {
+//   const fileContent = fs.readFileSync(filePath);
+//   const fileName = path.basename(filePath);
 
+//   const params = {
+//     Bucket: env.AWS_BUCKET_NAME!,
+//     Key: `${bucketFolder}${fileName}`,
+//     Body: fileContent,
+//     ACL: "public-read" as const,
+//   };
+
+//   try {
+//     const command = new PutObjectCommand(params);
+//     await s3Client.send(command);
+//     return `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${bucketFolder}${fileName}`;
+//   } catch (err: any) {
+//     throw new Error(`S3 Upload Error: ${err.message}`);
+//   }
+// }
+
+// /**
+//  * Generates a signed S3 upload URL for direct browser uploads.
+//  */
+// export async function generateS3UploadURL(fileName: string, bucketFolder = "uploads/"): Promise<string> {
+//   const command = new PutObjectCommand({
+//     Bucket: env.AWS_BUCKET_NAME!,
+//     Key: `${bucketFolder}${fileName}`,
+//   });
+
+//   return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+// }
+
+//  uploadToS3 = async (fileContent: Buffer, key: string, contentType: string) => {
+//     await s3.send(
+//       new PutObjectCommand({
+//         Bucket: bucket,
+//         Key: key,
+//         Body: fileContent,
+//         ContentType: contentType,
+//         ACL: "public-read",
+//       }),
+//     );
+
+//     return `https://${bucket}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
+//   };
 
 // import type { FileFilterCallback, StorageEngine } from "multer";
 

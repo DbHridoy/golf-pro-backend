@@ -4,6 +4,12 @@ import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema
 
 const UserSchema = createPaginatedSchema<IUser>(
   {
+    fullName: {
+      type: String,
+      trim: true,
+      default: null,
+      maxlength: 100,
+    },
     email: {
       type: String,
       unique: true,

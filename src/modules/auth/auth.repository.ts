@@ -7,7 +7,7 @@ import OTPModel from "./otp.model";
 
 export class AuthRepository {
   // Register user
-  async createUser(userData: Partial<IUser>): Promise<IUser | null | undefined> {
+  async registerUser(userData) {
     try {
       // logger.info(userData, "repostiory layer.");
       const user = new UserModel(userData);
@@ -17,10 +17,9 @@ export class AuthRepository {
       logger.error(error, "Repository layer error check.");
     }
   }
-  
+
   // Login user
   async findUserByEmail(email: string, includePassword = false): Promise<IUser | null> {
-    
     const query = UserModel.findOne({ email: email.toLowerCase(), isActive: true });
 
     if (includePassword) {
@@ -30,38 +29,31 @@ export class AuthRepository {
     return await query.exec();
   }
 
-  async findUserById(userId: string, includePassword = false): Promise<IUser | null> {
+  async findUserById(userId: string, includePassword = false) {
     const query = UserModel.findOne({ _id: userId, isActive: true });
 
     if (includePassword) {
       query.select("+password");
     }
 
-    const data= await query.exec();
+    const data = await query.exec();
     logger.info(`data from authrepo: ${JSON.stringify(data)}`);
     return data;
   };
 
-  // Create User
-
-  async emailExists(email: string): Promise<boolean> {
-    const user = await UserModel.findOne({ email: email.toLowerCase() });
-    return !!user;
-  }
-
-  async matchOtp({ email, otp }) {
+  async matchOtp(email: string, otp: string) {
     const record = await OTPModel.findOne({ email, otp });
     return record;
   }
 
-  async deleteOtp(id) {
+  async deleteOtp(id: string) {
     const record = await OTPModel.findOneAndDelete({ _id: id });
     return record;
   }
 
-  async updateUserPassword(userId: string, hashedPassword: string) {
+  async updateUserPassword(id: string, hashedPassword: string) {
     return UserModel.findByIdAndUpdate(
-      userId,
+      id,
       { password: hashedPassword },
       { new: true },
     );

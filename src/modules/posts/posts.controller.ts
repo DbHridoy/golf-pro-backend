@@ -6,24 +6,19 @@ import { logger } from "@/middlewares/pino-logger";
 import { postService } from "./posts.service";
 
 class PostsController {
-  async createPost(req: Request, res: Response, _next: NextFunction) {
-    const data = req.body;
-    logger.info(data, "Creating post");
-    // const userId = req.user!.userId;
-    const postData = {
-      userId: req.user!.userId,
-      ...data,
-    };
-    // logger.info(data)
-    logger.info(postData, "post from controller");
-    const post = await postService.createPost(postData);
+ async createPost(req: Request, res: Response, _next: NextFunction) {
+  const { body } = req;
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const userId = req.user!.userId;
 
-    return res.status(HTTPSTATUS.CREATED).json({
-      success: true,
-      message: "Post created successfully",
-      data: post,
-    });
-  };
+  const post = await postService.createPost(userId, body, files);
+
+  return res.status(HTTPSTATUS.CREATED).json({
+    success: true,
+    message: "Post created successfully",
+    data: post,
+  });
+}
 
   async getAllPosts(req: Request, res: Response, _next: NextFunction) {
     const posts = await postService.getAllPosts();

@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 
 const MessageSchema = new Schema({
-  channelId: { type: Schema.Types.ObjectId, ref: "Channel", required: false },
+  convId: { type: Schema.Types.ObjectId, ref: "Conversation", required: true },
   senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   receiverId: { type: Schema.Types.ObjectId, ref: "User", required: false },
   content: { type: String, required: true },
@@ -10,5 +10,7 @@ const MessageSchema = new Schema({
   editedAt: { type: Date },
 }, { timestamps: true });
 
+MessageSchema.index({ convId: 1, createdAt: -1 });
+MessageSchema.index({ senderId: 1, receiverId: 1, createdAt: -1 });
 const MessageModel = model("Message", MessageSchema);
 export default MessageModel;

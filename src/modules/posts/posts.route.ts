@@ -1,12 +1,21 @@
 import { Router } from "express";
 
 import { authMiddleware } from "@/middlewares/auth.middleware";
+import { upload } from "@/middlewares/upload.middleware";
 
 import { postController } from "./posts.controller";
 
 const router = Router();
 
-router.post("/create-new-post", authMiddleware.authenticate, postController.createPost);
+router.post(
+  "/create-new-post",
+  authMiddleware.authenticate,
+  upload.fields([
+    { name: "postImage", maxCount: 1 },
+    { name: "postVideo", maxCount: 1 },
+  ]),
+  postController.createPost,
+);
 router.get("/get-all-posts", authMiddleware.authenticate, postController.getAllPosts);
 router.get("/get-all-posts-of-user", authMiddleware.authenticate, postController.getAllPostsForUser);
 router.patch("/toggle-post-status/:postId", authMiddleware.authenticate, postController.togglePostStatus);

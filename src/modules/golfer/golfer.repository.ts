@@ -64,7 +64,6 @@ export class GolferRepository {
       { $set: updateData },
       { new: true, runValidators: true },
     )
-      .populate("clubs", "name")
       .lean();
 
     if (!profile) {

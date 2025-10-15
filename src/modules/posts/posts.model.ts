@@ -15,7 +15,7 @@ const PostSchema = createPaginatedSchema<IPosts>(
       type: String,
       trim: true,
       maxlength: [200, "Post title cannot exceed 200 characters"],
-      default:null
+      default: null,
     },
     postImage: {
       type: String,
@@ -26,25 +26,6 @@ const PostSchema = createPaginatedSchema<IPosts>(
       type: String,
       trim: true,
     },
-    taggedFriends: {
-      type: [
-        {
-          type: Types.ObjectId,
-          ref: "GolferProfile",
-        },
-      ],
-      default: [],
-    },
-    taggedClubs: {
-      type: [
-        {
-
-          type: Types.ObjectId,
-          ref: "GolfClub",
-        },
-      ],
-      default: [],
-    },
     isPostPublic: {
       type: Boolean,
       default: true,
@@ -52,33 +33,8 @@ const PostSchema = createPaginatedSchema<IPosts>(
     isActive: {
       type: Boolean,
       default: true,
-    }
-    // comments: {
-    //   type: [
-    //     {
-    //       type: Types.ObjectId,
-    //       ref: "Comment",
-    //     },
-    //   ],
-    //   default: [],
-    // }, // store all comment IDs
-    // likes: {
-    //   type: [
-    //     {
-    //       type: Types.ObjectId,
-    //       ref: "Like",
-    //     },
-    //   ],
-    //   default: [],
-    // }, // store all like IDs
-    // commentsCount: {
-    //   type: Number,
-    //   default: 0,
-    // },
-    // likesCount: {
-    //   type: Number,
-    //   default: 0,
-    // },
+    },
+
   },
   {
     timestamps: true,

@@ -18,6 +18,13 @@ import { golferProfileService } from "./golfer.service";
 // import { create } from "node:domain";
 
 class GolferProfileController {
+  // Get My Profile
+  getMyProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const userId = req.user!.userId; // From auth middleware
+    const profile = await golferProfileService.getMyProfile(userId);
+    return res.status(HTTPSTATUS.OK).json(profile);
+  });
+
   // Update Profile
   updateProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const { body }: UpdateGolferProfileRequest = await zParse(updateGolferProfileSchema, req);
@@ -31,24 +38,6 @@ class GolferProfileController {
 
     return res.status(HTTPSTATUS.OK).json(result);
   });
-
-  getGolferProfiles = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    // logger.info(req, "Getting profiles from controller");
-    const result = await golferProfileService.getAllProfiles();
-    return res.status(HTTPSTATUS.OK).json(result);
-  });
-
-  getSingleGolferProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { id } = req.params; // ← access the param
-    const profile = await golferProfileRepository.findGolferById(id);
-    return res.status(HTTPSTATUS.OK).json(profile);
-  });
-
-  async toggleGolferStatus(req: Request, res: Response, _next: NextFunction) {
-    const { id } = req.params; // ← access the param
-    const profile = await golferProfileService.toggleGolferActiveStatus(id);
-    return res.status(HTTPSTATUS.OK).json(profile);
-  }
 }
 
 export const golferProfileController = new GolferProfileController();

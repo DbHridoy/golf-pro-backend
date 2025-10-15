@@ -1,12 +1,12 @@
 import { Router } from "express";
 
 import { authMiddleware } from "@/middlewares/auth.middleware";
-import { upload } from "@/middlewares/upload.middleware";
+import { logger } from "@/middlewares/pino-logger";
 // import { createFileUploader } from "@/utils/file-upload.utils";
+import { upload } from "@/middlewares/upload.middleware";
 
 import { golferProfileController } from "./golfer.controller";
 import { golferProfileService } from "./golfer.service";
-import { logger } from "@/middlewares/pino-logger";
 
 const router: Router = Router();
 // const upload = multer({ dest: "tmp/" });
@@ -25,26 +25,28 @@ const router: Router = Router();
 //   uploader.fields(fields),
 //   golferProfileController.updateProfile,
 // );
-router.get(
-  "/get-golfer-profiles",
-  authMiddleware.authenticate,
-  authMiddleware.authorize(["admin", "golf_club", "golfer"]),
-  golferProfileController.getGolferProfiles,
-);
-router.get(
-  "/get-golfer-profile/:id",
-  authMiddleware.authenticate,
-  authMiddleware.authorize(["golfer", "golf_club", "admin"]),
-  golferProfileController.getSingleGolferProfile,
-);
 
-router.patch(
-  "/toggle-golfer-status/:id",
-  authMiddleware.authenticate,
-  authMiddleware.authorize(["admin", "golf_club"]),
-  golferProfileController.toggleGolferStatus,
-);
+// router.get(
+//   "/get-all-golfers",
+//   authMiddleware.authenticate,
+//   authMiddleware.authorize(["admin", "golf_club", "golfer"]),
+//   golferProfileController.getGolferProfiles,
+// );
+
 // src/routes/upload.route.ts
+
+// route - golfer.route.ts
+router.get("/get-my-profile", authMiddleware.authenticate, authMiddleware.authorize(["golfer"]), golferProfileController.getMyProfile);
+router.patch(
+  '/update-my-profile',
+  authMiddleware.authenticate,
+  authMiddleware.authorize(['golfer']),
+  upload.fields([
+    { name: 'profileImage', maxCount: 1 },
+    { name: 'coverImage',  maxCount: 1 },
+  ]),
+  golferProfileController.updateProfile,
+);
 
 router.patch("/upload", upload.any(), async (req, res) => {
   try {

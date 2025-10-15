@@ -92,7 +92,7 @@ export class UserRepository {
     return !!user;
   }
 
-  async emailExists(email: string): Promise<boolean> {
+  async findUserByEmail(email: string): Promise<boolean> {
     const user = await UserModel.findOne({ email: email.toLowerCase() });
     return !!user;
   }

@@ -217,7 +217,7 @@ paths:
       description: |
         Initiates a password reset process by sending reset instructions to the user's email.
         Currently returns a success message (implementation pending).
-      operationId: forgotPassword
+      operationId: sendOtp
       security: []
       requestBody:
         required: true
@@ -252,7 +252,7 @@ paths:
       description: |
         Resets the user's password using a valid reset token and new password.
         Currently returns a success message (implementation pending).
-      operationId: resetPassword
+      operationId: sendOtp
       security: []
       requestBody:
         required: true

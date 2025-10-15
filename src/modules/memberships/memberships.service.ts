@@ -32,7 +32,8 @@ class MembershipService {
   }
 
   getAllMembersOfaClub(userId: string) {
-    const club = clubRepository.findclubById(userId.toString());
+    const club = clubRepository.findClubById(userId);
+    if(!club) return { success: false, message: "Club not found" };
     logger.info(`from memberservice club= ${JSON.stringify(club)}`);
     return membershipRepository.getAllMembersOfaClub(club._id);
   }

@@ -1,19 +1,46 @@
+import mongoose from "mongoose";
+
 import PostModel from "./posts.model";
 
 class PostRepository {
-
   async getSinglePost(postId) {
     const post = await PostModel.findOne({ _id: postId }).lean();
     return post;
   }
+
   async getAllPosts() {
-    const posts = await PostModel.find({}).lean();
-    return posts;
+    return await PostModel.aggregate([
+      {
+        $lookup: {
+          from: "posttags", // collection created by PostTagModel
+          localField: "_id",
+          foreignField: "postId",
+          as: "tags",
+          pipeline: [
+            { $project: { _id: 0, taggedEntityId: 1, taggedEntityType: 1 } },
+          ],
+        },
+      },
+      { $sort: { createdAt: -1 } },
+    ]);
   }
 
-  async getAllPostsForUser(userId) {
-    const posts = await PostModel.find({ userId }).lean();
-    return posts;
+  async getAllPostsForUser(userId: string) {
+    return await PostModel.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $lookup: {
+          from: "posttags",
+          localField: "_id",
+          foreignField: "postId",
+          as: "tags",
+          pipeline: [
+            { $project: { _id: 0, taggedEntityId: 1, taggedEntityType: 1 } },
+          ],
+        },
+      },
+      { $sort: { createdAt: -1 } },
+    ]);
   }
 
   async togglePostStatus(postId, isActive) {

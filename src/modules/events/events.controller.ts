@@ -20,6 +20,14 @@ class EventController {
     return res.status(HTTPSTATUS.OK).json(result);
   };
 
+  getEventWithInvitations = asyncHandler(async (req: Request, res: Response) => {
+    const event = await eventService.getEventWithInvitations(
+      req.params.eventId,
+      req.user!.userId,
+    );
+    res.json({ success: true, data: event });
+  });
+
   updateEvent = async (req, res) => {
     const { id } = req.params;
     const { body } = req;

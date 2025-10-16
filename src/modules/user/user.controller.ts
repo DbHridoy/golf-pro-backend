@@ -117,7 +117,14 @@ export class UserController {
       message: "Email change request sent. Please verify your new email.",
     });
   });
-
+ async getUserMedia(req: Request, res: Response) {
+    const userId = req.user!.userId; // or from params if admin endpoint
+    const media = await userService.getUserMedia(userId);
+    res.json({
+      success: true,
+      data: media
+    });
+  }
 
 }
 

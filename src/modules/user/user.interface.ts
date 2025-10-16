@@ -8,4 +8,5 @@ export interface IUser extends BaseDocument {
   handicapIndex?: number;
   isEmailVerified: boolean;
   clubId?: string;
+  fcmToken?: string;
 }

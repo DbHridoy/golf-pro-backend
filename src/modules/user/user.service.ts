@@ -7,6 +7,7 @@ import { BadRequestException } from "@/utils/app-error.utils";
 import type { ChangePasswordInput, GetUsersInput, UpdateUserInput } from "./user.type";
 
 import { userRepository } from "./user.repository";
+import { postRepository } from "../posts/posts.repository";
 
 export class UserService {
   private readonly saltRounds: number;
@@ -67,7 +68,33 @@ export class UserService {
       message: "Password changed successfully",
     };
   }
+ async getUserMedia(userId: string) {
+    // Get user's profile and cover images
+    const user = await userRepository.findUserById(userId, {
+      select: "profileImage coverImage"
+    });
 
+    // Get all posts by user with media
+    const posts = await postRepository.getPostsByUserWithMedia(userId);
+
+    // Extract all media URLs
+    const media = {
+      images: [] as string[],
+      videos: [] as string[],
+    };
+
+    // Add profile and cover images if they exist
+    if (user.profileImage) media.images.push(user.profileImage);
+    if (user.coverImage) media.images.push(user.coverImage);
+
+    // Add post media
+    posts.forEach(post => {
+      if (post.postImage) media.images.push(post.postImage);
+      if (post.postVideo) media.videos.push(post.postVideo);
+    });
+
+    return media;
+  }
 }
 
 export const userService = new UserService();

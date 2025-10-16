@@ -63,8 +63,16 @@ export class UserRepository {
     return PaginationHelper.formatResponse(result);
   }
 
-  async findUserById(userId: string): Promise<IUser> {
-    const user = await UserModel.findOne({ _id: userId, isActive: true }).lean();
+  
+
+  async findUserById(userId: string, options: { select?: string } = {}){
+    let query = UserModel.findOne({ _id: userId, isActive: true });
+
+    if (options.select) {
+      query = query.select(options.select);
+    }
+
+    const user = await query.lean();
 
     if (!user) {
       throw new NotFoundException("User not found");
@@ -136,8 +144,6 @@ export class UserRepository {
       lastLoginAt: new Date(),
     });
   }
-
-
 }
 
 export const userRepository = new UserRepository();

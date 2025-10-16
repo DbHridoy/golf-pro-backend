@@ -5,7 +5,7 @@ const MessageSchema = new Schema({
   senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   receiverId: { type: Schema.Types.ObjectId, ref: "User", required: false },
   content: { type: String, required: true },
-  messageType: { type: String, enum: ["text", "image", "file", "system"], default: "text" },
+  messageType: { type: String, enum: ["text", "image", "file", "system","video"], default: "text" },
   isRead: { type: Boolean, default: false },
   editedAt: { type: Date },
 }, { timestamps: true });

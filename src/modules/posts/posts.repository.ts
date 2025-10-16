@@ -47,6 +47,15 @@ class PostRepository {
     const post = await PostModel.findOneAndUpdate({ _id: postId }, { isActive }, { new: true }).lean();
     return post;
   }
+    async getPostsByUserWithMedia(userId: string) {
+    return PostModel.find({
+      userId,
+      $or: [
+        { postImage: { $exists: true, $ne: null } },
+        { postVideo: { $exists: true, $ne: null } }
+      ]
+    }).select('postImage postVideo');
+  }
 }
 
 export const postRepository = new PostRepository();

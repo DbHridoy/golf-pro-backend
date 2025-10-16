@@ -1,11 +1,35 @@
-import { model, Schema } from "mongoose";
+// In events.model.ts
+import { Schema, model, Types } from "mongoose";
+
+const EventInvitationSchema = new Schema({
+  invitee: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  inviter: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  status: { 
+    type: String, 
+    enum: ["pending", "accepted", "declined", "cancelled"], 
+    default: "pending" 
+  },
+  message: String,
+  respondedAt: Date
+}, { timestamps: true, _id: true });
 
 const EventSchema = new Schema({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  date: { type: Date, required: true },
-  location: { type: String, required: true },
+  // ... existing fields ...
+  members: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  invitations: [EventInvitationSchema],
+  createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true }
+  // ... rest of your schema ...
 }, { timestamps: true });
 
-const EventModel = model("Event", EventSchema);
-export default EventModel;
+// Add methods
+EventSchema.methods.isUserInvited = function(userId: string) {
+  return this.invitations.some(inv => 
+    inv.invitee.equals(userId) && inv.status === 'pending'
+  );
+};
+
+EventSchema.methods.isMember = function(userId: string) {
+  return this.members.some(memberId => memberId.equals(userId));
+};
+
+export default model("Event", EventSchema);

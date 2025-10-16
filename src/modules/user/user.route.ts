@@ -12,15 +12,13 @@ router.post("/reset-password", userController.sendOtp);
 router.post("/verify-email", userController.verifyEmail); // verify email
 router.post("/change-email", userController.changeEmail); // Change email (TODO: Add auth middleware)
 
+// Media routes
+router.get("/media", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club"]), userController.getUserMedia);
 
+// User CRUD routes
 router.get("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "admin"]), userController.getUserById);
 router.patch("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "admin"]), userController.updateUser);
 router.patch("/:id/change-password", userController.changePassword);
 
-// Password management
-
-// Email management
-
-// Stats
 
 export default router;

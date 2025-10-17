@@ -1,4 +1,7 @@
+import type { Request, Response } from "express";
+
 import { HTTPSTATUS } from "@/config/http.config";
+import { asyncHandler } from "@/middlewares/async-handler.middleware";
 
 import { eventService } from "./event.service";
 

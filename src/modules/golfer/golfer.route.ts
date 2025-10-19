@@ -6,20 +6,18 @@ import { logger } from "@/middlewares/pino-logger";
 import { upload } from "@/middlewares/upload.middleware";
 
 import { golferController } from "./golfer.controller";
-import { golferService } from "./golfer.service";
 
 const router: Router = Router();
-
 
 router.get("/get-my-profile", authMiddleware.authenticate, authMiddleware.authorize(["golfer"]), golferController.getMyProfile);
 
 router.patch(
-  '/update-my-profile',
+  "/update-my-profile",
   authMiddleware.authenticate,
-  authMiddleware.authorize(['golfer','golf_club']),
+  authMiddleware.authorize(["golfer"]),
   upload.fields([
-    { name: 'profileImage', maxCount: 1 },
-    { name: 'coverImage',  maxCount: 1 },
+    { name: "profileImage", maxCount: 1 },
+    { name: "coverImage", maxCount: 1 },
   ]),
   golferController.updateProfile,
 );
@@ -52,8 +50,7 @@ router.patch(
 
 export default router;
 
-
-/* ----------------local upload----------------*/
+/* ----------------local upload---------------- */
 
 // const upload = multer({ dest: "tmp/" });
 // const uploader = createFileUploader();
@@ -78,5 +75,3 @@ export default router;
 //   authMiddleware.authorize(["admin", "golf_club", "golfer"]),
 //   golferProfileController.getGolferProfiles,
 // );
-
-

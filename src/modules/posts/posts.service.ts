@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 import { logger } from "@/middlewares/pino-logger";
 import fileUploadUtils from "@/utils/file-upload.utils";
 
+import { notificationService } from "../notification/notification.service";
 import { PostTagModel } from "../tags/tags.model";
 import PostModel from "./posts.model";
 import { postRepository } from "./posts.repository";
-import { notificationService } from "../notification/notification.service";
 
 class PostServices {
   async createPost(
@@ -56,7 +56,7 @@ class PostServices {
         ...taggedFriends.map((id: string) => ({
           postId: postDoc._id,
           taggedEntityId: id,
-          taggedEntityType: "GolferProfile",
+          taggedEntityType: "Golfer",
           taggedBy: userId,
         })),
         ...taggedClubs.map((id: string) => ({
@@ -71,23 +71,24 @@ class PostServices {
         await PostTagModel.insertMany(tags, { session });
 
       await session.commitTransaction();
-     try {
+      try {
         for (const friendId of taggedFriends) {
           await notificationService.createAndSendNotification({
             recipientId: friendId,
-            type: 'post_created',
-            title: 'New Post',
-            body: `You were tagged in a post${postTitle ? `: ${postTitle}` : ''}`,
+            type: "post_created",
+            title: "New Post",
+            body: `You were tagged in a post${postTitle ? `: ${postTitle}` : ""}`,
             payload: {
               postId: postDoc._id.toString(),
-              postTitle: postTitle || '',
+              postTitle: postTitle || "",
             },
           });
         }
-      } catch (error) {
-        logger.error('Failed to send post tagging notifications:', error);
       }
-      
+      catch (error) {
+        logger.error("Failed to send post tagging notifications:", error);
+      }
+
       return postDoc;
     }
     catch (err) {

@@ -5,13 +5,11 @@ const LikeSchema = new Schema({
     type: Schema.Types.ObjectId,
     required: true,
     ref: "User",
-    index: true,
   },
   postId: {
     type: Schema.Types.ObjectId,
     required: true,
     ref: "Post",
-    index: true,
   },
   isLike: {
     type: Boolean,

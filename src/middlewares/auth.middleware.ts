@@ -18,7 +18,6 @@ declare global {
 }
 
 // JWT Authentication Middleware
-
 export class AuthMiddleware {
   async authenticate(req: Request, res: Response, next: NextFunction) {
     try {
@@ -68,12 +67,12 @@ export class AuthMiddleware {
         role: payload.role,
       };
 
-      // logger.info({
-      //   requestId,
-      //   userId: payload.userId,
-      //   email: payload.email,
-      //   role: payload.role,
-      // }, "User authenticated successfully");
+      logger.info({
+        requestId,
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
+      }, "User authenticated successfully");
 
       next();
     }
@@ -89,7 +88,6 @@ export class AuthMiddleware {
   }
 
   // Role-based authorization middleware
-
   authorize(allowedRoles: string | string[]) {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
@@ -132,9 +130,6 @@ export class AuthMiddleware {
     };
   }
 
-  /**
-   * Check if user is accessing their own resource
-   */
   authorizeSelf = (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {

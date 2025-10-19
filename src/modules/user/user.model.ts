@@ -1,64 +1,56 @@
-import type { IUser } from "@/modules/user/user.interface";
+import { model, Schema } from "mongoose";
 
-import { createPaginatedModel, createPaginatedSchema } from "@/utils/base-schema.utils";
-
-const UserSchema = createPaginatedSchema<IUser>(
-  {
-    fullName: {
-      type: String,
-      trim: true,
-      default: null,
-      maxlength: 100,
-    },
-    email: {
-      type: String,
-      unique: true,
-      required: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
-    password: { type: String, required: true, select: false },
-    role: {
-      type: String,
-      required: true,
-      enum: {
-        values: ["golfer", "golf_club", "admin"],
-        message: "Role must be either golfer, golf_club, or admin",
-      },
-      index: true,
-    },
-    isActive: { type: Boolean, required: false, default: true, index: true },
-    handicapIndex: {
-      type: Number,
-      required: false,
-      min: [0, "Handicap index cannot be negative"],
-      max: [54, "Handicap index cannot exceed 54"],
-    },
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
+const UserSchema = new Schema({
+  fullName: {
+    type: String,
+    required: true,
+    trim: true,
+    default: null,
+    maxlength: 100,
+  },
+  email: {
+    type: String,
+    required: true,
+    lowercase: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    select: false,
+  },
+  role: {
+    type: String,
+    required: true,
+    enum: {
+      values: ["golfer", "golf_club", "admin"],
+      message: "Role must be either golfer, golf_club, or admin",
     },
   },
-  {
-    timestamps: true,
-    id: false, // disable default Mongoose id virtual
-    toJSON: {
-      virtuals: false,
-      transform(_doc: any, ret: any) {
-        ret.id = ret._id.toString(); // create id from _id
-        delete ret._id;
-        delete ret.__v; // remove _id
-        delete ret.password; // remove password if needed
-        return ret; // keep __v, createdAt, updatedAt
-      },
-    },
-    toObject: { virtuals: false },
+  isActive: {
+    type: Boolean,
+    required: false,
+    default: true,
   },
-);
+  handicapIndex: {
+    type: Number,
+    required: false,
+    min: [0, "Handicap index cannot be negative"],
+    max: [54, "Handicap index cannot exceed 54"],
+  },
+}, {
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform(_doc: Record<string, any>, ret: Record<string, any>) {
+      delete ret.__v;
+      return ret;
+    },
+  },
+});
 
-UserSchema.index({ email: 1, isActive: 1 });
-UserSchema.index({ role: 1, isActive: 1 });
+UserSchema.index({ email: 1 }, { unique: true });
 
-export const UserModel = createPaginatedModel<IUser>("User", UserSchema);
+export const UserModel = model("User", UserSchema);
+
 export default UserModel;

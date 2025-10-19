@@ -16,10 +16,18 @@ const FriendSchema = new Schema({
     enum: ["pending", "accepted", "rejected"],
     default: "pending",
   },
-
 }, {
   timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform(_doc: Record<string, any>, ret: Record<string, any>) {
+      delete ret.__v;
+      return ret;
+    },
+  },
 });
+
+FriendSchema.index({ requesterId: 1, receiverId: 1 }, { unique: true });
 
 const FriendModel = model("Friend", FriendSchema);
 

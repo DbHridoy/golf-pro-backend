@@ -5,12 +5,26 @@ import { golferRepository } from "../golfer/golfer.repository";
 import { membershipRepository } from "./memberships.repository";
 
 class MembershipService {
-  async sendMembershipRequest({ golferId, clubId }: any) {
-    return membershipRepository.sendMembershipRequest({ golferId, clubId });
+  async sendMembershipRequest({userId, clubId }: any) {
+    const golferId=await golferRepository.findByUserId(userId);
+    const club=await clubRepository.findClubById(clubId);
+    if (!club) {
+      return { success: false, message: "Club not found" };
+    }
+    if (!golferId) {
+      return { success: false, message: "Golfer not found" };
+    }
+    return await membershipRepository.sendMembershipRequest({ golferId, clubId });
   }
-async getMembershipRequests(userId: string) {
-    return membershipRepository.getMembershipRequests(userId);
+
+  async getMembershipRequests(userId: string) {
+    const clubId=await clubRepository.findClubByUserId(userId);
+    if (!clubId) {
+      return { success: false, message: "Club not found" };
+    }
+    return await membershipRepository.getMembershipRequests(clubId._id);
   }
+
   async createMembership({ userId, golferId }: any) {
     logger.info(`into service layer`);
     const club = await clubRepository.findClubById(userId);
@@ -32,16 +46,16 @@ async getMembershipRequests(userId: string) {
     return result;
   }
 
-  getAllClubsOfaGolfer(userId: string) {
-    return membershipRepository.getAllClubsOfaGolfer(userId);
+  async getAllClubsOfaGolfer(userId: string) {
+    return await membershipRepository.getAllClubsOfaGolfer(userId);
   }
 
-  getAllMembersOfaClub(userId: string) {
-    const club = clubRepository.findClubById(userId);
+  async getAllMembersOfaClub(userId: string) {
+    const club = await clubRepository.findClubByUserId(userId);
     if (!club)
       return { success: false, message: "Club not found" };
     logger.info(`from memberservice club= ${JSON.stringify(club)}`);
-    return membershipRepository.getAllMembersOfaClub(club._id);
+    return await membershipRepository.getAllMembersOfaClub(club._id);
   }
 
   updateMembership(data) {
@@ -54,6 +68,14 @@ async getMembershipRequests(userId: string) {
 
   deleteMembership(clubId: string, userId: string) {
     return membershipRepository.removeMembership(clubId, userId);
+  }
+  approveMembershipRequest(golferId: string) {
+    logger.info(`into service layer`);
+    return membershipRepository.approveMembershipRequest(golferId);
+  }
+  rejectMembershipRequest(golferId: string) {
+    logger.info(`into service layer`);
+    return membershipRepository.rejectMembershipRequest(golferId);
   }
 }
 

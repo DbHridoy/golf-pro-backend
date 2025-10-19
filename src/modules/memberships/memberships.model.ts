@@ -6,13 +6,11 @@ const MembershipSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Club",
       required: true,
-      index: true,
     },
     golferId: {
       type: Schema.Types.ObjectId,
-      ref: "GolferProfile",
+      ref: "Golfer",
       required: true,
-      index: true,
     },
     requestStatus: {
       type: String,
@@ -35,8 +33,8 @@ const MembershipSchema = new Schema(
   { timestamps: true },
 );
 
-// Ensure one membership per user-club pair
-MembershipSchema.index({ clubId: 1, golferId: 1 },{ unique: true });
+MembershipSchema.index({ clubId: 1, golferId: 1 }, { unique: true });
 
 const MembershipModel = model("Membership", MembershipSchema);
+
 export default MembershipModel;

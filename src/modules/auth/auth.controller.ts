@@ -1,18 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 
-import type {
-  LoginInput,
-  RefreshAuthInput,
-} from "@/modules/auth/auth.type";
-
 import { HTTPSTATUS } from "@/config/http.config";
 import { env } from "@/env";
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { logger } from "@/middlewares/pino-logger";
-import {
-  loginSchema,
-  refreshAuthSchema,
-} from "@/modules/auth/auth.schema";
 import { authService } from "@/modules/auth/auth.service";
 import { zParse } from "@/utils/validators.utils";
 
@@ -81,7 +72,7 @@ export class AuthController {
 
   // login
   login = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { body }: LoginInput = await zParse(loginSchema, req);
+    const { body } = req;
     // logger.info("from authcontroller");
 
     const result = await authService.login(body);

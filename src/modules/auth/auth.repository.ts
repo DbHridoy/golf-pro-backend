@@ -37,7 +37,7 @@ export class AuthRepository {
     }
 
     const data = await query.exec();
-    logger.info(`data from authrepo: ${JSON.stringify(data)}`);
+    // logger.info(`data from authrepo: ${JSON.stringify(data)}`);
     return data;
   };
 

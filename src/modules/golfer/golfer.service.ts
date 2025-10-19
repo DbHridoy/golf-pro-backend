@@ -12,7 +12,7 @@ import type {
 
 import { golferRepository } from "./golfer.repository";
 
-class GolferProfileService {
+class GolferService {
   // async createProfile(userId: string, profileData: CreateGolferProfileRequest["body"]) {
   //   const user = await authRepository.findUserById(userId);
   //   if (!user) throw new NotFoundException("User not found");
@@ -142,4 +142,4 @@ class GolferProfileService {
   // };
 }
 
-export const golferProfileService = new GolferProfileService();
+export const golferService = new GolferService();

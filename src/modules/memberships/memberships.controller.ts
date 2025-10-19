@@ -5,6 +5,28 @@ import { clubRepository } from "../club/club.repository";
 import { membershipService } from "./memberships.service";
 
 class MembershipController {
+async sendMembershipRequest(req: any, res: any) {
+    const { userId } = req.user!;
+    const golferId = userId
+    const { clubId } = req.body!;
+    const result = await membershipService.sendMembershipRequest({ golferId, clubId });
+    return res.status(HTTPSTATUS.CREATED).json({
+      success: true,
+      message: "Membership request sent successfully",
+      data: result,
+    });
+  }
+
+  async getMembershipRequests(req: any, res: any) {
+    const { userId } = req.user!;
+    const result = await membershipService.getMembershipRequests(userId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Membership requests",
+      data: result,
+    });
+  }
+
   async createMembership(req, res) {
     const { userId } = req.user!;
     const { golferId } = req.body!;

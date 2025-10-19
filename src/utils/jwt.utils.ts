@@ -23,7 +23,6 @@ class JWT {
   generateTokens(payload: object) {
     const accessTokenOptions: SignOptions = {
       expiresIn: this.accessTokenExpiry as jwt.SignOptions["expiresIn"],
-
     };
 
     const refreshTokenOptions: SignOptions = {
@@ -46,15 +45,15 @@ class JWT {
     }
   }
 
-    verifyRefreshToken(token: string) {
-      try {
-        return jwt.verify(token, this.jwtRefreshSecret) ;
-      }
-      // eslint-disable-next-line unused-imports/no-unused-vars
-      catch (error) {
-        throw new UnauthorizedException("Invalid or expired refresh token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
-      }
+  verifyRefreshToken(token: string) {
+    try {
+      return jwt.verify(token, this.jwtRefreshSecret);
     }
+    // eslint-disable-next-line unused-imports/no-unused-vars
+    catch (error) {
+      throw new UnauthorizedException("Invalid or expired refresh token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
+    }
+  }
 }
 
 export const jwtUtils = new JWT();

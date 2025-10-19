@@ -9,19 +9,17 @@ import type {
   UpdateGolferProfileRequest,
 } from "./golfer.type";
 
-import GolferProfileModel from "./golfer.model";
-import { golferProfileRepository } from "./golfer.repository";
 import {
   updateGolferProfileSchema,
 } from "./golfer.schema";
-import { golferProfileService } from "./golfer.service";
+import { golferService } from "./golfer.service";
 // import { create } from "node:domain";
 
-class GolferProfileController {
+class GolferController {
   // Get My Profile
   getMyProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const userId = req.user!.userId; // From auth middleware
-    const profile = await golferProfileService.getMyProfile(userId);
+    const profile = await golferService.getMyProfile(userId);
     return res.status(HTTPSTATUS.OK).json(profile);
   });
 
@@ -34,10 +32,10 @@ class GolferProfileController {
     // Pass req.files to the service for file handling
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    const result = await golferProfileService.updateProfile(userId, body, files);
+    const result = await golferService.updateProfile(userId, body, files);
 
     return res.status(HTTPSTATUS.OK).json(result);
   });
 }
 
-export const golferProfileController = new GolferProfileController();
+export const golferController = new GolferController();

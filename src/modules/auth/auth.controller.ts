@@ -113,7 +113,8 @@ export class AuthController {
 
   // generate refresh token
   refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { cookies }: RefreshAuthInput = await zParse(refreshAuthSchema, req);
+    // const { cookies }: RefreshAuthInput = await zParse(refreshAuthSchema, req);
+    const cookies = req.cookies;
 
     const result = await authService.refreshToken(cookies.jwt);
 

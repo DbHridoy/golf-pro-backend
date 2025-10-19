@@ -1,6 +1,7 @@
 import type { BaseDocument } from "@/utils/base-schema.utils";
 
 export interface IUser extends BaseDocument {
+  fullName: string;
   email: string;
   password: string;
   role: "golfer" | "golf_club" | "admin";

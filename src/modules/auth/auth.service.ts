@@ -50,17 +50,18 @@ export class AuthService {
     // Create dependent entity
     switch (user?.role) {
       case "golfer":
-        await new GolferModel({ userId: user._id }).save();
+        await new GolferModel({ userId: user._id,fullName:user.fullName }).save();
         break;
       case "golf_club":
-        await new ClubModel({ userId: user._id }).save();
+        await new ClubModel({ userId: user._id,fullName:user.fullName }).save();
         break;
       default:
-        await new AdminModel({ userId: user?._id }).save();
+        await new AdminModel({ userId: user?._id,fullName:user?.fullName }).save();
         break;
     }
 
     const payload = {
+      fullName:user!.fullName,
       userId: user!._id,
       email: user!.email,
       role: user!.role,
@@ -97,6 +98,7 @@ export class AuthService {
     }
 
     const tokenPayload = {
+      fullName:user.fullName,
       userId: user._id,
       email: user.email,
       role: user.role,
@@ -206,6 +208,7 @@ export class AuthService {
     }
 
     const tokenPayload = {
+      fullName:user.fullName,
       userId: user._id,
       email: user.email,
       role: user.role,
@@ -218,6 +221,7 @@ export class AuthService {
       data: {
         user: {
           id: user._id,
+          fullName:user.fullName,
           email: user.email,
           role: user.role,
           isActive: user.isActive,

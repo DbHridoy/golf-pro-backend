@@ -4,11 +4,10 @@ import type { JWTPayload } from "@/modules/auth/auth.interface";
 
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { authRepository } from "@/modules/auth/auth.repository.js";
-import { authService } from "@/modules/auth/auth.service";
 import { UnauthorizedException } from "@/utils/app-error.utils";
+import { jwtUtils } from "@/utils/jwt.utils.js";
 
 import { logger } from "./pino-logger.js";
-import { jwtUtils } from "@/utils/jwt.utils.js";
 
 declare global {
   namespace Express {
@@ -23,7 +22,7 @@ declare global {
 export class AuthMiddleware {
   async authenticate(req: Request, res: Response, next: NextFunction) {
     try {
-      logger.info(`from authenticate middleware`)
+      // logger.info(`from authenticate middleware`)
       const authHeader = req.headers.authorization;
       const requestId = req.id || req.headers["x-request-id"] as string;
 
@@ -52,7 +51,7 @@ export class AuthMiddleware {
       }
 
       const payload = jwtUtils.verifyAccessToken(token);
-      logger.info(`payload from auth middleware: ${JSON.stringify(payload)}`);
+      // logger.info(`payload from auth middleware: ${JSON.stringify(payload)}`);
       const user = await authRepository.findUserById(payload.userId);
 
       if (!user) {
@@ -69,22 +68,22 @@ export class AuthMiddleware {
         role: payload.role,
       };
 
-      logger.info({
-        requestId,
-        userId: payload.userId,
-        email: payload.email,
-        role: payload.role,
-      }, "User authenticated successfully");
+      // logger.info({
+      //   requestId,
+      //   userId: payload.userId,
+      //   email: payload.email,
+      //   role: payload.role,
+      // }, "User authenticated successfully");
 
       next();
     }
     catch (error) {
-      logger.error({
-        requestId: req.id,
-        error: error instanceof Error ? error.message : "Unknown error",
-        ip: req.ip,
-        userAgent: req.get("User-Agent"),
-      }, "Authentication failed");
+      // logger.error({
+      //   requestId: req.id,
+      //   error: error instanceof Error ? error.message : "Unknown error",
+      //   ip: req.ip,
+      //   userAgent: req.get("User-Agent"),
+      // }, "Authentication failed");
       next(error);
     }
   }

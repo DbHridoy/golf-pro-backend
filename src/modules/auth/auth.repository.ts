@@ -1,5 +1,3 @@
-import type { IUser } from "@/modules/user/user.interface";
-
 import { logger } from "@/middlewares/pino-logger";
 import UserModel from "@/modules/user/user.model";
 
@@ -7,20 +5,20 @@ import OTPModel from "./otp.model";
 
 export class AuthRepository {
   // Register user
-  async registerUser(userData) {
+  async registerUser(userData: any) {
     try {
-      // logger.info(userData, "repostiory layer.");
       const user = new UserModel(userData);
       return await user.save();
     }
     catch (error) {
       logger.error(error, "Repository layer error check.");
+      throw error;
     }
   }
 
-  // Login user
-  async findUserByEmail(email: string, includePassword = false): Promise<IUser | null> {
-    const query = UserModel.findOne({ email: email.toLowerCase(), isActive: true });
+  // find user by email
+  async findUserByEmail(email: string, includePassword = false) {
+    const query = UserModel.findOne({ email: email.toLowerCase() });
 
     if (includePassword) {
       query.select("+password");
@@ -30,14 +28,13 @@ export class AuthRepository {
   }
 
   async findUserById(userId: string, includePassword = false) {
-    const query = UserModel.findOne({ _id: userId, isActive: true });
+    const query = UserModel.findOne({ _id: userId });
 
     if (includePassword) {
       query.select("+password");
     }
 
     const data = await query.exec();
-    // logger.info(`data from authrepo: ${JSON.stringify(data)}`);
     return data;
   };
 

@@ -5,16 +5,15 @@ import { env } from "@/env";
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { logger } from "@/middlewares/pino-logger";
 import { authService } from "@/modules/auth/auth.service";
-import { zParse } from "@/utils/validators.utils";
 
 export class AuthController {
   // Register
   register = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    // const { body } = await zParse(registerSchema, req);
     const { body } = req;
     logger.info(`from authcontroller: ${JSON.stringify(body)}`);
 
     const result = await authService.register(body);
+
     res.cookie("jwt", result.data.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
@@ -96,11 +95,11 @@ export class AuthController {
   });
 
   // ghin login
-  ghinLogin = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { ghinNo, ghinPassword } = req.body;
-    const result = await authService.ghinLogin({ ghinNo, ghinPassword });
-    return res.status(HTTPSTATUS.OK).json(result);
-  });
+  // ghinLogin = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  //   const { ghinNo, ghinPassword } = req.body;
+  //   const result = await authService.ghinLogin({ ghinNo, ghinPassword });
+  //   return res.status(HTTPSTATUS.OK).json(result);
+  // });
 
   // generate refresh token
   refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {

@@ -1,5 +1,4 @@
 import axios from "axios";
-import crypto from "node:crypto";
 
 import { transporter } from "@/config/nodemailer.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
@@ -13,8 +12,6 @@ import {
 import hashingUtils from "@/utils/hash.utils";
 import { jwtUtils } from "@/utils/jwt.utils";
 
-import type { LoginInput } from "./auth.type";
-
 import AdminModel from "../admin/admin.model";
 import ClubModel from "../club/club.model";
 import GolferModel from "../golfer/golfer.model";
@@ -23,10 +20,10 @@ import OTPModel from "./otp.model";
 
 export class AuthService {
   // Register
-  async register(data) {
+  async register(data: any) {
     const { fullName, email, password, role } = data;
-    logger.info(`data from service: ${JSON.stringify(data)}`);
     const existingUser = await authRepository.findUserByEmail(email!);
+
     if (existingUser) {
       throw new BadRequestException(
         "User with this email already exists",
@@ -42,7 +39,6 @@ export class AuthService {
       password: hashedPassword,
       role,
       isActive: true,
-      isEmailVerified: false,
     };
 
     const user = await authRepository.registerUser(userData);
@@ -50,18 +46,17 @@ export class AuthService {
     // Create dependent entity
     switch (user?.role) {
       case "golfer":
-        await new GolferModel({ userId: user._id,fullName:user.fullName }).save();
+        await new GolferModel({ userId: user._id, fullName: user.fullName }).save();
         break;
       case "golf_club":
-        await new ClubModel({ userId: user._id,fullName:user.fullName }).save();
+        await new ClubModel({ userId: user._id, clubName: user.fullName }).save();
         break;
       default:
-        await new AdminModel({ userId: user?._id,fullName:user?.fullName }).save();
+        await new AdminModel({ userId: user?._id, fullName: user?.fullName }).save();
         break;
     }
 
     const payload = {
-      fullName:user!.fullName,
       userId: user!._id,
       email: user!.email,
       role: user!.role,
@@ -89,7 +84,11 @@ export class AuthService {
 
   // refresh token
   async refreshToken(token: string) {
-    const payload = jwtUtils.verifyRefreshToken(token);
+    const payload = jwtUtils.verifyRefreshToken(token) as { userId: string };
+
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
+      throw new UnauthorizedException("Invalid token payload", ErrorCodeEnum.AUTH_TOKEN_INVALID);
+    }
 
     const user = await authRepository.findUserById(payload.userId);
 
@@ -98,7 +97,6 @@ export class AuthService {
     }
 
     const tokenPayload = {
-      fullName:user.fullName,
       userId: user._id,
       email: user.email,
       role: user.role,
@@ -193,7 +191,7 @@ export class AuthService {
   }
 
   // login service
-  async login(loginData: LoginInput["body"]) {
+  async login(loginData: any) {
     const { email, password } = loginData;
 
     const user = await authRepository.findUserByEmail(email, true);
@@ -208,7 +206,7 @@ export class AuthService {
     }
 
     const tokenPayload = {
-      fullName:user.fullName,
+      fullName: user.fullName,
       userId: user._id,
       email: user.email,
       role: user.role,
@@ -221,7 +219,7 @@ export class AuthService {
       data: {
         user: {
           id: user._id,
-          fullName:user.fullName,
+          fullName: user.fullName,
           email: user.email,
           role: user.role,
           isActive: user.isActive,
@@ -235,49 +233,49 @@ export class AuthService {
   }
 
   // ghin login
-  async ghinLogin({ ghinNo, ghinPassword }) {
-    try {
-      const payload = {
-        user: {
-          email_or_ghin: ghinNo,
-          password: ghinPassword,
-        },
-        token: "123",
-      };
+  // async ghinLogin({ ghinNo, ghinPassword }) {
+  //   try {
+  //     const payload = {
+  //       user: {
+  //         email_or_ghin: ghinNo,
+  //         password: ghinPassword,
+  //       },
+  //       token: "123",
+  //     };
 
-      const response = await axios.post(
-        "https://api.ghin.com/api/v1/golfer_login.json",
-        payload,
-      );
+  //     const response = await axios.post(
+  //       "https://api.ghin.com/api/v1/golfer_login.json",
+  //       payload,
+  //     );
 
-      // ✅ golfers is an array — grab the first item
-      const golfer = response.data?.golfer_user?.golfers?.[0];
-      const ghinData = golfer?.display;
-      const userData = {
-        fullName: ghinData?.name,
-        email: ghinData?.email,
-        password: ghinData?.password,
-        role: "golfer",
-        isActive: true,
-        isEmailVerified: true,
-      };
-      return ghinData || { error: "Invalid data format" };
-    }
-    catch (err) {
-      if (err.response) {
-        console.error("Error response:", err.response.status, err.response.data);
-        return { error: err.response.data };
-      }
-      else if (err.request) {
-        console.error("No response received:", err.request);
-        return { error: "No response from server" };
-      }
-      else {
-        console.error("Axios error:", err.message);
-        return { error: err.message };
-      }
-    }
-  }
+  //     // ✅ golfers is an array — grab the first item
+  //     const golfer = response.data?.golfer_user?.golfers?.[0];
+  //     const ghinData = golfer?.display;
+  //     const userData = {
+  //       fullName: ghinData?.name,
+  //       email: ghinData?.email,
+  //       password: ghinData?.password,
+  //       role: "golfer",
+  //       isActive: true,
+  //       isEmailVerified: true,
+  //     };
+  //     return ghinData || { error: "Invalid data format" };
+  //   }
+  //   catch (err) {
+  //     if (err.response) {
+  //       console.error("Error response:", err.response.status, err.response.data);
+  //       return { error: err.response.data };
+  //     }
+  //     else if (err.request) {
+  //       console.error("No response received:", err.request);
+  //       return { error: "No response from server" };
+  //     }
+  //     else {
+  //       console.error("Axios error:", err.message);
+  //       return { error: err.message };
+  //     }
+  //   }
+  // }
 }
 
 export const authService = new AuthService();

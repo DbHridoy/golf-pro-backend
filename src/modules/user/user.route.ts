@@ -7,9 +7,9 @@ import { userController } from "./user.controller";
 const router = Router();
 
 router.get("/", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), userController.getUsers);
-router.post("/forgot-password", userController.sendOtp);
-router.post("/reset-password", userController.sendOtp);
-router.post("/verify-email", userController.verifyEmail); // verify email
+// router.post("/forgot-password", userController.sendOtp);
+// router.post("/reset-password", userController.sendOtp);
+// router.post("/verify-email", userController.verifyEmail); // verify email
 router.post("/change-email", userController.changeEmail); // Change email (TODO: Add auth middleware)
 
 // Media routes

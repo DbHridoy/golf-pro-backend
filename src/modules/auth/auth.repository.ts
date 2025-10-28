@@ -18,7 +18,8 @@ export class AuthRepository {
 
   // find user by email
   async findUserByEmail(email: string, includePassword = false) {
-    const query = UserModel.findOne({ email: email.toLowerCase() });
+    logger.info(`from repository layer - email: ${email}`);
+    const query = UserModel.findOne({ email });
 
     if (includePassword) {
       query.select("+password");
@@ -55,6 +56,12 @@ export class AuthRepository {
       { new: true },
     );
   }
+
+  // async findOrCreateUser(email: string, name: string) {
+  //   let user = await UserModel.findOne({ email });
+   
+  //   return user;
+  // }
 }
 
 export const authRepository = new AuthRepository();

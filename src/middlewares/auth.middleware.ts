@@ -1,21 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 
-import type { JWTPayload } from "@/modules/auth/auth.interface";
-
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { authRepository } from "@/modules/auth/auth.repository.js";
 import { UnauthorizedException } from "@/utils/app-error.utils";
 import { jwtUtils } from "@/utils/jwt.utils.js";
 
 import { logger } from "./pino-logger.js";
+import { JwtPayload } from "jsonwebtoken";
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JWTPayload;
-    }
-  }
-}
 
 // JWT Authentication Middleware
 export class AuthMiddleware {
@@ -49,7 +41,7 @@ export class AuthMiddleware {
         );
       }
 
-      const payload = jwtUtils.verifyAccessToken(token);
+      const payload = jwtUtils.verifyAccessToken(token) as JwtPayload;
       // logger.info(`payload from auth middleware: ${JSON.stringify(payload)}`);
       const user = await authRepository.findUserById(payload.userId);
 

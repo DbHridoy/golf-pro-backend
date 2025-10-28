@@ -1,4 +1,5 @@
 import axios from "axios";
+import e from "express";
 
 import { transporter } from "@/config/nodemailer.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
@@ -79,6 +80,48 @@ export class AuthService {
         refreshToken,
       },
       message: "User registered successfully. Please verify your email.",
+    };
+  }
+
+  // login service
+  async login(loginData: any) {
+    const { email, password } = loginData;
+
+    const user = await authRepository.findUserByEmail(email, true);
+
+    if (!user) {
+      throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
+    }
+
+    const isPasswordValid = await hashingUtils.comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
+    }
+
+    const tokenPayload = {
+      fullName: user.fullName,
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
+
+    return {
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+          isEmailVerified: user.isEmailVerified,
+        },
+        accessToken,
+        refreshToken,
+      },
+      message: "Login successful",
     };
   }
 
@@ -190,92 +233,80 @@ export class AuthService {
     return { success: true, message: "Password updated successfully" };
   }
 
-  // login service
-  async login(loginData: any) {
-    const { email, password } = loginData;
-
-    const user = await authRepository.findUserByEmail(email, true);
-
-    if (!user) {
-      throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
-    }
-
-    const isPasswordValid = await hashingUtils.comparePassword(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
-    }
-
-    const tokenPayload = {
-      fullName: user.fullName,
-      userId: user._id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
-
-    return {
-      success: true,
-      data: {
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          isActive: user.isActive,
-          isEmailVerified: user.isEmailVerified,
-        },
-        accessToken,
-        refreshToken,
-      },
-      message: "Login successful",
-    };
-  }
-
   // ghin login
-  // async ghinLogin({ ghinNo, ghinPassword }) {
-  //   try {
-  //     const payload = {
-  //       user: {
-  //         email_or_ghin: ghinNo,
-  //         password: ghinPassword,
-  //       },
-  //       token: "123",
-  //     };
+  async ghinLogin({ ghinNo, ghinPassword }) {
+    logger.info(`from service layer - ghinNo: ${ghinNo}, ghinPassword: ${ghinPassword}`);
+    try {
+      const payload = {
+        user: {
+          email_or_ghin: ghinNo,
+          password: ghinPassword,
+        },
+        token: "123",
+      };
+      logger.info(`from service layer - payload: ${JSON.stringify(payload)}`);
+      const response = await axios.post(
+        "https://api.ghin.com/api/v1/golfer_login.json",
+        payload,
+      );
 
-  //     const response = await axios.post(
-  //       "https://api.ghin.com/api/v1/golfer_login.json",
-  //       payload,
-  //     );
-
-  //     // ✅ golfers is an array — grab the first item
-  //     const golfer = response.data?.golfer_user?.golfers?.[0];
-  //     const ghinData = golfer?.display;
-  //     const userData = {
-  //       fullName: ghinData?.name,
-  //       email: ghinData?.email,
-  //       password: ghinData?.password,
-  //       role: "golfer",
-  //       isActive: true,
-  //       isEmailVerified: true,
-  //     };
-  //     return ghinData || { error: "Invalid data format" };
-  //   }
-  //   catch (err) {
-  //     if (err.response) {
-  //       console.error("Error response:", err.response.status, err.response.data);
-  //       return { error: err.response.data };
-  //     }
-  //     else if (err.request) {
-  //       console.error("No response received:", err.request);
-  //       return { error: "No response from server" };
-  //     }
-  //     else {
-  //       console.error("Axios error:", err.message);
-  //       return { error: err.message };
-  //     }
-  //   }
-  // }
+      // ✅ golfers is an array — grab the first item
+      const golfer = response.data?.golfer_user?.golfers?.[0];
+      let user = await authRepository.findUserByEmail(golfer.email, true);
+      if (!user) {
+        const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
+        const newUser = {
+          fullName: golfer.player_name,
+          email: golfer.email,
+          password: hashedPassword,
+          role: "golfer",
+          handicapIndex:golfer.display,
+          isActive: true,
+        };
+        logger.info(`from service layer - newUser: ${JSON.stringify(newUser)}`);
+        user = await authRepository.registerUser(newUser);
+      }
+      // const user = await authRepository.findOrCreateUser(userData.email, userData.fullName);
+      const tokenPayload = {
+        fullName: user.fullName,
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      };
+      const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
+      return {
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            handicapIndex: user.handicapIndex,
+            isActive: user.isActive,
+            isEmailVerified: user.isEmailVerified,
+          },
+          accessToken,
+          refreshToken,
+        },
+        message: "Login successful",
+      };
+    }
+    catch (err) {
+      if (err.response) {
+        console.error("Error response:", err.response.status, err.response.data);
+        return { error: err.response.data };
+      }
+      else if (err.request) {
+        console.error("No response received:", err.request);
+        return { error: "No response from server" };
+      }
+      else {
+        console.error("Axios error:", err.message);
+        return { error: err.message };
+      }
+    }
+  }
 }
 
 export const authService = new AuthService();

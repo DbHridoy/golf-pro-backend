@@ -49,7 +49,7 @@ export class GolferRepository {
       .lean();
   }
 
-  async findGolferById(userId: string): Promise<IGolferProfile | null> {
+  async findGolferById(userId: string){
     // logger.info('golfer id from reposotory', golferid);
     const profile = await GolferProfileModel.findOne({ userId }).lean();
     if (!profile)

@@ -1,11 +1,17 @@
 import type { NextFunction, Request, Response } from "express";
 
+import { OAuth2Client } from "google-auth-library";
+import jwt from "jsonwebtoken";
+
 import { HTTPSTATUS } from "@/config/http.config";
+import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { env } from "@/env";
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { logger } from "@/middlewares/pino-logger";
 import { authService } from "@/modules/auth/auth.service";
 
+import { authRepository } from "./auth.repository";
+// const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export class AuthController {
   // Register
   register = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
@@ -89,40 +95,107 @@ export class AuthController {
       data: {
         user: result.data.user,
         accessToken: result.data.accessToken,
+        refreshToken: result.data.refreshToken,
       },
       message: result.message,
     });
   });
 
-  // ghin login
-  // ghinLogin = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-  //   const { ghinNo, ghinPassword } = req.body;
-  //   const result = await authService.ghinLogin({ ghinNo, ghinPassword });
-  //   return res.status(HTTPSTATUS.OK).json(result);
+  // Endpoint: frontend sends the token here
+  //  async googleLogin (req, res) => {
+  //   const { credential } = req.body; // token from frontend (Google ID token)
+  //   try {
+  //     // Verify the token with Google
+  //     const ticket = await client.verifyIdToken({
+  //       idToken: credential,
+  //       audience: process.env.GOOGLE_CLIENT_ID,
+  //     });
+  //     const payload = ticket.getPayload();
+
+  //     // Extract useful info
+  //     const { email, name, picture, sub: googleId } = payload;
+
+  //     // TODO: find or create user in your DB
+  //     let user = await authRepository.findOrCreateUser({ email, name, picture, googleId });
+
+  //     // Create your own JWT
+  //     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+  //       expiresIn: "7d",
+  //     });
+
+  //     res.json({ token, user });
+  //   } catch (err) {
+  //     console.error("Google auth error:", err);
+  //     res.status(401).json({ error: "Invalid Google token" });
+  //   }
   // });
 
-  // generate refresh token
-  refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    // const { cookies }: RefreshAuthInput = await zParse(refreshAuthSchema, req);
-    const cookies = req.cookies;
-
-    const result = await authService.refreshToken(cookies.jwt);
-
-    res.cookie("jwt", result.data.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    return res.status(HTTPSTATUS.OK).json({
-      success: result.success,
-      data: {
-        accessToken: result.data.accessToken,
-      },
-      message: result.message,
-    });
+  // ghin login
+  ghinLogin = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const { ghinNo, ghinPassword } = req.body;
+    const result = await authService.ghinLogin({ ghinNo, ghinPassword });
+    return res.status(HTTPSTATUS.OK).json(result);
   });
+
+  // generate refresh token
+  // refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  //   // const { cookies }: RefreshAuthInput = await zParse(refreshAuthSchema, req);
+  //   const cookies = req.cookies;
+
+  //   const result = await authService.refreshToken(cookies.jwt);
+
+  //   res.cookie("jwt", result.data.refreshToken, {
+  //     httpOnly: true,
+  //     secure: env.NODE_ENV === "production",
+  //     sameSite: "strict",
+  //     maxAge: 7 * 24 * 60 * 60 * 1000,
+  //   });
+
+  //   return res.status(HTTPSTATUS.OK).json({
+  //     success: result.success,
+  //     data: {
+  //       accessToken: result.data.accessToken,
+  //     },
+  //     message: result.message,
+  //   });
+  // });
+
+  refreshToken = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      let refreshToken = req.cookies?.jwt;
+      if (!refreshToken && req.headers.authorization?.startsWith("Bearer ")) {
+        refreshToken = req.headers.authorization.split(" ")[1];
+      }
+
+      if (!refreshToken) {
+        return res.status(HTTPSTATUS.UNAUTHORIZED).json({
+          success: false,
+          message: "Refresh token is required",
+          errorCode: ErrorCodeEnum.AUTH_TOKEN_NOT_FOUND,
+        });
+      }
+
+      const result = await authService.refreshToken(refreshToken);
+
+      // Optionally update the cookie with new refresh token
+      res.cookie("jwt", result.data.refreshToken, {
+        httpOnly: true,
+        // secure: env.NODE_ENV === "production",
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      const responseData = {
+        ...result,
+        data: {
+          accessToken: result.data.accessToken, // include only what you need
+        },
+      };
+
+      res.status(HTTPSTATUS.OK).json(responseData);
+    },
+  );
 
   // logout
   logout = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {

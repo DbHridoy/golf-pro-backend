@@ -30,8 +30,8 @@ class GolferService {
   //   };
   // }
   
-  getMyProfile(userId: string) {
-    const profile = golferRepository.findByUserId(userId);
+  getMyProfile(userId) {
+    const profile = golferRepository.findGolferByUserId(userId);
     return profile;
   }
 
@@ -40,7 +40,7 @@ class GolferService {
     body: UpdateGolferProfileRequest["body"],
     files: { [fieldname: string]: Express.Multer.File[] } = {},
   ) {
-    const existing = await golferRepository.findByUserId(userId);
+    const existing = await golferRepository.findGolferByUserId(userId);
     if (!existing)
       throw new NotFoundException("Golfer profile not found");
 

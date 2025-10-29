@@ -89,7 +89,7 @@ export class AuthMiddleware {
             ErrorCodeEnum.AUTH_UNAUTHORIZED_ACCESS,
           );
         }
-
+        logger.info(`from authorize middleware: ${JSON.stringify(req.user)}`);
         const userRole = req.user.role;
         const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 

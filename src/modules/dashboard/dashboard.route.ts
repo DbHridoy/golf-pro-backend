@@ -1,17 +1,18 @@
-// import { Router } from "express";
+import { Router } from "express";
 
-// import { authMiddleware } from "@/middlewares/auth.middleware";
+import { authMiddleware } from "@/middlewares/auth.middleware";
 
-// import { dashboardController } from "./dashboard.controller";
+import { dashboardController } from "./dashboard.controller";
 
-// const router = Router();
+const router = Router();
 
-// router.get("/dashboard-data", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getDashboardData);
-// router.get("/stats", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getUserStats);
-// router.get("/get-all-golfers", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getAllGolfers);
-// router.get("/analytics", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getAnalyticsData);
-// router.get("/users-except-admin", authMiddleware.authenticate, authMiddleware.authorize(["admin"]), dashboardController.getUsersExceptAdmin);
-// router.get("/reports", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getReports);
+router.get("/get-all-golfers", dashboardController.getAllGolfers);
+router.get("/get-all-clubs", dashboardController.getAllClubs);
+router.get("/dashboard-data", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getDashboardData);
+router.get("/stats", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getUserStats);
+router.get("/analytics", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getAnalyticsData);
+router.get("/users-except-admin", authMiddleware.authenticate, authMiddleware.authorize(["admin"]), dashboardController.getUsersExceptAdmin);
+router.get("/reports", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getReports);
 // router.get(
 //   "/get-golfer-profile/:id",
 //   authMiddleware.authenticate,
@@ -26,4 +27,4 @@
 //   golferProfileController.toggleGolferStatus,
 // );
 
-// export default router;
+export default router;

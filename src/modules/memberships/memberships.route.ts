@@ -6,7 +6,7 @@ import { membershipController } from "./memberships.controller";
 
 const router = Router();
 
-router.post("/create-membership-request", authMiddleware.authenticate,authMiddleware.authorize(["golfer"]), membershipController.sendMembershipRequest);
+router.post("/send-membership-request", authMiddleware.authenticate,authMiddleware.authorize(["golfer"]), membershipController.sendMembershipRequest);
 router.get("/get-membership-requests", authMiddleware.authenticate,authMiddleware.authorize(["golf_club"]), membershipController.getMembershipRequests);
 router.patch("/approve-membership-request", authMiddleware.authenticate,authMiddleware.authorize(["golf_club"]), membershipController.approveMembershipRequest);
 router.patch("/reject-membership-request", authMiddleware.authenticate,authMiddleware.authorize(["golf_club"]), membershipController.rejectMembershipRequest);

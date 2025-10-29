@@ -89,6 +89,13 @@ class FriendService {
   getAllFriendships() {
     return friendRepository.getAllFriendships();
   }
+ async cancelFriendRequest(data) {
+    const updatedData = {
+      ...data,
+      status: "cancelled",
+    };
+    return await friendRepository.cancelFriendRequest(updatedData);
+  }
 }
 
 export const friendService = new FriendService();

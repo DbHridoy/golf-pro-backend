@@ -28,10 +28,17 @@ class FriendRepository {
     logger.info(updatedFriendship, "from repository upated");
     return updatedFriendship.save();
   }
+  cancelFriendRequest(data) {
+    logger.info(data, "from cancel repository");
+    const friendship = FriendModel.findOneAndUpdate({ receiverId: data.receiverId, requesterId: data.requesterId }, { status: data.status }, { new: true });
+    // logger.info(friendship, "from repository upated");
+    return friendship;
+  }
 
   getAllFriendships() {
     return FriendModel.find();
   }
+  
 }
 
 export const friendRepository = new FriendRepository();

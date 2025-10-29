@@ -1,14 +1,17 @@
 import { HTTPSTATUS } from "@/config/http.config";
 import { logger } from "@/middlewares/pino-logger";
 
+import { golferRepository } from "../golfer/golfer.repository";
 import { membershipService } from "./memberships.service";
 
 class MembershipController {
   // golfer send the request
   async sendMembershipRequest(req: any, res: any) {
     const { userId } = req.user!;
+    const golfer = golferRepository.findGolferByUserId(userId);
+
     const clubId = req.body.clubId;
-    const result = await membershipService.sendMembershipRequest({userId, clubId });
+    const result = await membershipService.sendMembershipRequest({ userId: golfer._id, clubId });
     return res.status(HTTPSTATUS.CREATED).json(result);
   }
 
@@ -32,7 +35,8 @@ class MembershipController {
 
   async getAllClubsOfaGolfer(req, res) {
     const { userId } = req.user!;
-    const result = await membershipService.getAllClubsOfaGolfer(userId);
+    const golfer = golferRepository.findGolferByUserId(userId);
+    const result = await membershipService.getAllClubsOfaGolfer(golfer._id);
     return res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "All clubs of a golfer",
@@ -49,16 +53,18 @@ class MembershipController {
       data: result,
     });
   }
+
   async approveMembershipRequest(req: any, res: any) {
     const { golferId } = req.body!;
     logger.info(`golferId from controller: ${golferId}`);
-    const result = await membershipService.approveMembershipRequest( golferId );
+    const result = await membershipService.approveMembershipRequest(golferId);
     return res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "Membership request approved successfully",
       data: result,
     });
   }
+
   async rejectMembershipRequest(req: any, res: any) {
     const { golferId } = req.body!;
     logger.info(`golferId from controller: ${golferId}`);

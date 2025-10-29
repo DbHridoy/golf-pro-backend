@@ -4,6 +4,7 @@ import authRouter from "@/modules/auth/auth.route";
 import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
 import conversationRouter from "@/modules/conversation/conversation.route";
+import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import friendsRouter from "@/modules/friends/friends.route";
 import golferRouter from "@/modules/golfer/golfer.route";
 import likesRouter from "@/modules/likes/likes.route";
@@ -57,10 +58,10 @@ const moduleRoutes = [
     path: "/send-push-notification",
     route: notificationRouter,
   },
-  // {
-  //   path: "/dashboard",
-  //   route: dashboardRouter,
-  // },
+  {
+    path: "/dashboard",
+    route: dashboardRouter,
+  },
   // routes/index.ts
   {
     path: "/conversation",

@@ -12,7 +12,7 @@ class FriendController {
     // get user id of the current user
     const userId = req.user!.userId;
     // get golfer id of the current user
-    const golfer = await golferRepository.findGolferById(userId);
+    const golfer = await golferRepository.findGolferByUserId(userId);
     logger.info(`golfer from friendt controller: ${JSON.stringify(golfer)}`);
     // create a document
     const friendship = {
@@ -43,7 +43,7 @@ class FriendController {
     const { requesterId } = req.body;
     // logger.info(requesterId, "from controller");
     const userId = req.user!.userId;
-    const golfer = await golferRepository.findGolferById(userId);
+    const golfer = await golferRepository.findGolferByUserId(userId);
     const friendship = {
       requesterId,
       receiverId: golfer._id,
@@ -63,7 +63,7 @@ class FriendController {
     const { requesterId } = req.body;
     // logger.info(requesterId, "from controller");
     const userId = req.user!.userId;
-    const golfer = await golferRepository.findGolferById(userId);
+    const golfer = await golferRepository.findGolferByUserId(userId);
     const friendship = {
       requesterId,
       receiverId: golfer._id,
@@ -80,7 +80,7 @@ class FriendController {
 
   async getMyRequests(req: Request, res: Response, _next: NextFunction) {
     const userId = req.user!.userId;
-    const golfer = await golferRepository.findGolferById(userId);
+    const golfer = await golferRepository.findGolferByUserId(userId);
     const friendship = {
       receiverId: golfer._id,
     };
@@ -90,7 +90,7 @@ class FriendController {
 
   async getMySentRequest(req: Request, res: Response, _next: NextFunction) {
     const userId = req.user!.userId;
-    const golfer = await golferRepository.findGolferById(userId);
+    const golfer = await golferRepository.findGolferByUserId(userId);
     const friendship = {
       requesterId: golfer._id,
     };
@@ -100,11 +100,21 @@ class FriendController {
 
   async getMyFriends(req: Request, res: Response, _next: NextFunction) {
     const userId = req.user!.userId;
-    const golfer = await golferRepository.findGolferById(userId);
+    const golfer = await golferRepository.findGolferByUserId(userId);
     friendService.getMyFriends(golfer._id).then(data => res.status(200).json(data));
   }
   async getAllFriendships(req: Request, res: Response, _next: NextFunction) {
     friendService.getAllFriendships().then(data => res.status(200).json(data));
+  }
+  async cancelFriendRequest(req: Request, res: Response, _next: NextFunction) {
+    const { receiverId } = req.body;
+    const userId = req.user!.userId;
+    const golfer = await golferRepository.findGolferByUserId(userId);
+    const friendship = {
+      requesterId:golfer._id,
+      receiverId,
+    };
+    friendService.cancelFriendRequest(friendship).then(data => res.status(200).json(data));
   }
 }
 

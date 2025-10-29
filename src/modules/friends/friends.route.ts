@@ -7,6 +7,7 @@ import { friendController } from "./friends.controller";
 const router = Router();
 
 router.post("/send-friend-request", authMiddleware.authenticate, friendController.sendFriendRequest);
+router.post("/cancel-friend-request", authMiddleware.authenticate, friendController.cancelFriendRequest);
 router.post("/accept-friend-request", authMiddleware.authenticate, friendController.acceptFriendRequest);
 router.post("/reject-friend-request", authMiddleware.authenticate, friendController.rejectFriendRequest);
 router.get("/get-my-requests", authMiddleware.authenticate, friendController.getMyRequests);

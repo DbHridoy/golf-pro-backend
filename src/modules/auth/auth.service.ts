@@ -210,18 +210,12 @@ export class AuthService {
     return { success: true, message: "OTP verified successfully" };
   }
 
-  async setNewPassword(email: string, oldPassword: string, newPassword: string) {
-    logger.info(`from service layer - email: ${email}, oldPassword: ${oldPassword}, newPassword: ${newPassword}`);
+  async setNewPassword(email: string, newPassword: string) {
+    logger.info(`from service layer - email: ${email}, newPassword: ${newPassword}`);
     // Find user by email
-    const user = await authRepository.findUserByEmail(email, true);
+    const user = await authRepository.findUserByEmail(email);
     if (!user) {
       return { success: false, message: "User not found" };
-    }
-
-    // Verify old password
-    const isMatch = await hashingUtils.comparePassword(oldPassword, user.password);
-    if (!isMatch) {
-      return { success: false, message: "Old password is incorrect" };
     }
 
     // Hash new password
@@ -260,7 +254,7 @@ export class AuthService {
           email: golfer.email,
           password: hashedPassword,
           role: "golfer",
-          handicapIndex:golfer.display,
+          handicapIndex: golfer.display,
           isActive: true,
         };
         logger.info(`from service layer - newUser: ${JSON.stringify(newUser)}`);

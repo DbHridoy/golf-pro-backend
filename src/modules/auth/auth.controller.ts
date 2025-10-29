@@ -52,10 +52,10 @@ export class AuthController {
   });
 
   setNewPassword = asyncHandler(async (req, res) => {
-    const { email, oldPassword, newPassword, confirmPassword } = req.body;
+    const { email,newPassword, confirmPassword } = req.body;
 
     // Basic validation
-    if (!oldPassword || !newPassword || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       return res.status(HTTPSTATUS.BAD_REQUEST).json({
         success: false,
         message: "All fields are required",
@@ -70,7 +70,7 @@ export class AuthController {
     }
 
     // Call service
-    const result = await authService.setNewPassword(email, oldPassword, newPassword);
+    const result = await authService.setNewPassword(email, newPassword);
 
     return res.status(result.success ? HTTPSTATUS.OK : HTTPSTATUS.BAD_REQUEST).json(result);
   });

@@ -16,6 +16,10 @@ export class AuthRepository {
     }
   }
 
+  async updateUser(email: string, userData: any) {
+    return UserModel.findOneAndUpdate({ email }, userData, { new: true });
+  }
+
   // find user by email
   async findUserByEmail(email: string, includePassword = false) {
     logger.info(`from repository layer - email: ${email}`);
@@ -59,7 +63,7 @@ export class AuthRepository {
 
   // async findOrCreateUser(email: string, name: string) {
   //   let user = await UserModel.findOne({ email });
-   
+
   //   return user;
   // }
 }

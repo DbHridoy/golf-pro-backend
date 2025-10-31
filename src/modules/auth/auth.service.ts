@@ -1,5 +1,4 @@
 import axios from "axios";
-import e from "express";
 
 import { transporter } from "@/config/nodemailer.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
@@ -259,6 +258,20 @@ export class AuthService {
         };
         logger.info(`from service layer - newUser: ${JSON.stringify(newUser)}`);
         user = await authRepository.registerUser(newUser);
+      }
+      else {
+        const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
+
+        const newUser = {
+          fullName: golfer.player_name,
+          email: golfer.email,
+          password: hashedPassword,
+          role: "golfer",
+          handicapIndex: golfer.display,
+          isActive: true,
+        };
+
+        await authRepository.updateUser(user.email, newUser);
       }
       // const user = await authRepository.findOrCreateUser(userData.email, userData.fullName);
       const tokenPayload = {

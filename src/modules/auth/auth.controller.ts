@@ -39,7 +39,7 @@ export class AuthController {
 
   // reset password
   sendOtp = asyncHandler (async (req, res) => {
-    const { email } = req.body; // 6-digit OTP
+    const { email } = req.body; 
     const result = await authService.sendOtp(email);
     logger.info(result);
     res.status(HTTPSTATUS.OK).json(result);

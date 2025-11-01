@@ -3,7 +3,7 @@ import axios from "axios";
 import { transporter } from "@/config/nodemailer.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { env } from "@/env";
-import { logger } from "@/middlewares/pino-logger";
+import { logger, logger } from "@/middlewares/pino-logger";
 import {
   BadRequestException,
   NotFoundException,
@@ -162,7 +162,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException("User not found", ErrorCodeEnum.AUTH_USER_NOT_FOUND);
     }
-    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000); // 6-digit OTP
 
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min expiry
 
@@ -194,6 +194,7 @@ export class AuthService {
   }
 
   async verifyOtp(email: string, otp: string) {
+    logger.info(`from service layer - email: ${email}, otp: ${otp}`);
     const record = await authRepository.matchOtp(email, otp);
     if (!record) {
       return { success: false, message: "Invalid OTP" };

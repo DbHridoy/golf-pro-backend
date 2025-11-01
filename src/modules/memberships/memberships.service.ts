@@ -6,35 +6,38 @@ import { membershipRepository } from "./memberships.repository";
 
 class MembershipService {
   async sendMembershipRequest({userId, clubId }: any) {
-    const golferId=await golferRepository.findByUserId(userId);
+    const golfer=await golferRepository.findGolferByUserId(userId);
+    const golferId=golfer._id;
     const club=await clubRepository.findClubById(clubId);
     if (!club) {
       return { success: false, message: "Club not found" };
     }
-    if (!golferId) {
+    if (!golfer) {
       return { success: false, message: "Golfer not found" };
     }
     return await membershipRepository.sendMembershipRequest({ golferId, clubId });
   }
 
   async getMembershipRequests(userId: string) {
-    const clubId=await clubRepository.findClubByUserId(userId);
+    const club=await clubRepository.findClubById(userId);
+    const clubId=club._id;
     if (!clubId) {
       return { success: false, message: "Club not found" };
     }
-    return await membershipRepository.getMembershipRequests(clubId._id);
+    return await membershipRepository.getMembershipRequests(clubId);
   }
 
   async createMembership({ userId, golferId }: any) {
     logger.info(`into service layer`);
-    const club = await clubRepository.findClubById(userId);
+    const club = await clubRepository.findClubByUserId(userId);
+    const clubId=club._id;
     if (!club) {
       return { success: false, message: "Club not found" };
     }
 
     // logger.info(`from membership service: ${JSON.stringify(clubId)}`);
 
-    const golfer = await golferRepository.findByUserId(golferId);
+    const golfer = await golferRepository.findGolferByUserId(golferId);
     logger.info(`golfer from membership service: ${JSON.stringify(golfer)}`);
     if (!golfer) {
       return { success: false, message: "Golfer not found" };

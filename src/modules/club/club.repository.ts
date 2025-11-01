@@ -29,6 +29,10 @@ export class ClubRepository {
     const clubs = ClubModel.find({}).lean();
     return clubs;
   }
+  findClubById(clubId: string) {
+    const club = ClubModel.findById(clubId).lean();
+    return club;
+  }
 }
 
 export const clubRepository = new ClubRepository();

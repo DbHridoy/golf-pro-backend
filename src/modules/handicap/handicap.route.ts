@@ -1,7 +1,9 @@
 import { Router } from "express";
 
-const router=Router();
+import handicapController from "./handicap.controller";
 
-router.post("/calculate-handicap", asyncHandler)
+const router = Router();
+
+router.post("/calculate-handicap", handicapController.updatePlayerHandicap);
 
 export default router;

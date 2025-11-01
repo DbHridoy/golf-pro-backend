@@ -8,10 +8,9 @@ class MembershipController {
   // golfer send the request
   async sendMembershipRequest(req: any, res: any) {
     const { userId } = req.user!;
-    const golfer = golferRepository.findGolferByUserId(userId);
 
     const clubId = req.body.clubId;
-    const result = await membershipService.sendMembershipRequest({ userId: golfer._id, clubId });
+    const result = await membershipService.sendMembershipRequest({ userId, clubId });
     return res.status(HTTPSTATUS.CREATED).json(result);
   }
 

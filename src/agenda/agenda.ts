@@ -3,7 +3,7 @@ import type Job from "agenda";
 import Agenda from "agenda";
 
 import { env } from "@/env.js";
-import EventModel from "@/modules/events/events.model.js";
+import EventModel from "@/modules/events/event.model.js";
 
 /* One agenda instance for the whole app */
 const agenda = new Agenda({

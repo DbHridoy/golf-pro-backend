@@ -12,20 +12,29 @@ const MembershipSchema = new Schema(
       ref: "Golfer",
       required: true,
     },
-    requestStatus: {
+    status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "active", "rejected", "left", "removed"],
       default: "pending",
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now,
+      required: true,
+    },
+    respondedAt: {
+      type: Date,
+      default: null,
+    },
+    joinedAt: {
+      type: Date,
+      default: null,
     },
     isActive: {
       type: Boolean,
       default: true,
     },
-    joinedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    leftAt: {
+    endedAt: {
       type: Date,
       default: null,
     },

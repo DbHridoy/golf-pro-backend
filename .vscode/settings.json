@@ -48,5 +48,12 @@
     "pcss",
     "postcss"
   ],
-  "CodeGPT.apiKey": "CodeGPT Enterprise"
+  "CodeGPT.apiKey": "CodeGPT Enterprise",
+  "cSpell.words": [
+    "bango",
+    "Participations",
+    "stableford",
+    "clubdocket",
+    "adminsdk"
+  ]
 }

@@ -6,7 +6,7 @@ const UserSchema = new Schema({
     required: true,
     trim: true,
     default: null,
-    maxlength: 100,
+    max_length: 100,
   },
   email: {
     type: String,
@@ -32,12 +32,16 @@ const UserSchema = new Schema({
     required: false,
     default: true,
   },
+  // USGA Handicap Index
   handicapIndex: {
     type: Number,
-    required: false,
-    min: [0, "Handicap index cannot be negative"],
-    max: [54, "Handicap index cannot exceed 54"],
+    default: null, // null until calculated
+    min: -5.0, // Maximum handicap improvement
+    max: 54.0, // Maximum handicap
   },
+  // Handicap calculation metadata
+  handicapLastUpdated: { type: Date },
+  totalRoundsPosted: { type: Number, default: 0 },
 }, {
   timestamps: true,
   toJSON: {

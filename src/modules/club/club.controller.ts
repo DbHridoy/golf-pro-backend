@@ -6,7 +6,7 @@ import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { clubService } from "./club.service";
 
 export class ClubController {
- getClubProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  getClubProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const userId = req.user!.userId; // From auth middleware
     const profile = await clubService.getClubProfile(userId);
     return res.status(HTTPSTATUS.OK).json(profile);

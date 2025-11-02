@@ -6,6 +6,11 @@ const GolferSchema = new Schema({
     required: true,
     ref: "User",
   },
+  clubId: [{
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: "Golf_club",
+  }],
   fullName: {
     type: String,
     trim: true,

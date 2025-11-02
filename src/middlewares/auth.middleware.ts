@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import type { JwtPayload } from "jsonwebtoken";
 
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { authRepository } from "@/modules/auth/auth.repository.js";
@@ -6,8 +7,22 @@ import { UnauthorizedException } from "@/utils/app-error.utils";
 import { jwtUtils } from "@/utils/jwt.utils.js";
 
 import { logger } from "./pino-logger.js";
-import { JwtPayload } from "jsonwebtoken";
 
+interface JWTPayload {
+  userId: string;
+  email?: string;
+  role?: "golfer" | "golf_club" | "system_admin";
+  iat?: number;
+  exp?: number;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JWTPayload;
+    }
+  }
+}
 
 // JWT Authentication Middleware
 export class AuthMiddleware {
@@ -43,30 +58,40 @@ export class AuthMiddleware {
 
       const payload = jwtUtils.verifyAccessToken(token) as JwtPayload;
       // logger.info(`payload from auth middleware: ${JSON.stringify(payload)}`);
-      const user = await authRepository.findUserById(payload.userId);
 
-      if (!user) {
-        logger.warn({ requestId, userId: payload.userId }, "User not found for valid token");
-        throw new UnauthorizedException(
-          "User not found",
-          ErrorCodeEnum.AUTH_USER_NOT_FOUND,
-        );
+      function isJwtPayload(payload: any): payload is JWTPayload {
+        return (payload as JWTPayload).userId !== undefined;
       }
 
-      req.user = {
-        userId: payload.userId,
-        email: payload.email,
-        role: payload.role,
-      };
+      if (isJwtPayload(payload)) {
+        const user = await authRepository.findUserById(payload.userId);
 
-      logger.info({
-        requestId,
-        userId: payload.userId,
-        email: payload.email,
-        role: payload.role,
-      }, "User authenticated successfully");
+        if (!user) {
+          logger.warn({ requestId, userId: payload.userId }, "User not found for valid token");
+          throw new UnauthorizedException(
+            "User not found",
+            ErrorCodeEnum.AUTH_USER_NOT_FOUND,
+          );
+        }
 
-      next();
+        req.user = {
+          userId: payload.userId,
+          email: payload.email,
+          role: payload.role,
+        };
+
+        logger.info({
+          requestId,
+          userId: payload.userId,
+          email: payload.email,
+          role: payload.role,
+        }, "User authenticated successfully");
+
+        next();
+      }
+      else {
+        throw new UnauthorizedException("Invalid token payload");
+      }
     }
     catch (error) {
       // logger.error({
@@ -93,7 +118,7 @@ export class AuthMiddleware {
         const userRole = req.user.role;
         const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-        if (!roles.includes(userRole)) {
+        if (userRole && !roles.includes(userRole)) {
           // logger.warn({
           //   requestId: req.id,
           //   userId: req.user.userId,
@@ -135,7 +160,7 @@ export class AuthMiddleware {
       const currentUserId = req.user.userId;
 
       // System admin can access any resource
-      if (req.user.role === "admin") {
+      if (req.user.role === "system_admin") {
         return next();
       }
 

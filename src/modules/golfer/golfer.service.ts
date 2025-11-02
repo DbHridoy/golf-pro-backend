@@ -30,7 +30,7 @@ class GolferService {
   //   };
   // }
   
-  getMyProfile(userId) {
+  getMyProfile(userId: string) {
     const profile = golferRepository.findGolferByUserId(userId);
     return profile;
   }

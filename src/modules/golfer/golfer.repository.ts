@@ -43,10 +43,10 @@ export class GolferRepository {
   //     .lean();
   // }
 
-  async findGolferByUserId(userId) {
-    // logger.info('golfer id from reposotory', golferid);
+  async findGolferByUserId(userId:string) {
+    logger.info('golfer id from reposotory', userId);
     const profile = await GolferModel.findOne({ userId })
-      .populate({ path: "userId", select: "fullName email" })
+      .populate({ path: "userId", select: "fullName email handicapIndex" })
       .lean();
 
     if (!profile)
@@ -60,7 +60,7 @@ export class GolferRepository {
       profileId,
       { $set: updateData },
       { new: true, runValidators: true },
-    ).populate({ path: "userId", select: "fullName email" }).lean();
+    ).populate({ path: "userId", select: "fullName email handicapIndex" }).lean();
 
     if (!profile) {
       throw new NotFoundException("Golfer profile not found");

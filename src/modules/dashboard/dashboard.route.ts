@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { authMiddleware } from "@/middlewares/auth.middleware";
 
+import adminController from "../admin/admin.controller";
 import { dashboardController } from "./dashboard.controller";
 
 const router = Router();
@@ -13,6 +14,8 @@ router.get("/stats", authMiddleware.authenticate, authMiddleware.authorize(["adm
 router.get("/analytics", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getAnalyticsData);
 router.get("/users-except-admin", authMiddleware.authenticate, authMiddleware.authorize(["admin"]), dashboardController.getUsersExceptAdmin);
 router.get("/reports", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), dashboardController.getReports);
+router.get("/get-any-user/:userId", authMiddleware.authenticate, authMiddleware.authorize(["admin"]), adminController.getAnyUser);
+router.get("/get-all-users", authMiddleware.authenticate, authMiddleware.authorize(["admin"]), adminController.getAllUsers);
 // router.get(
 //   "/get-golfer-profile/:id",
 //   authMiddleware.authenticate,

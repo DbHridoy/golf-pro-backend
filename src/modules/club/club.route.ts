@@ -18,4 +18,5 @@ router.patch(
   ]),
   clubController.updateProfile,
 );
+router.get("/get-club-profile/:clubId", authMiddleware.authenticate, clubController.getClubProfile);
 export default router;

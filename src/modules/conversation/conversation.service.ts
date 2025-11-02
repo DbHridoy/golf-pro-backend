@@ -1,29 +1,35 @@
 import { Types } from "mongoose";
 
 import ClubModel from "../club/club.model";
+import { golferRepository } from "../golfer/golfer.repository";
 import ParticipantModel from "./conversation-participant.model";
 import ConversationModel from "./conversation.model";
 
 class ConversationService {
   /* private DM (a,b) — idempotent */
-  async getOrCreatePrivate(a: string, b: string) {
+  async getOrCreatePrivate(userId: string, golferId: string) {
+    const myGolferId = (await golferRepository.findGolferByUserId(userId))?._id;
     const existing = await ConversationModel.aggregate([
-      { $match: { type: "private" } },
-      { $lookup: {
-        from: "conversationparticipants",
-        localField: "_id",
-        foreignField: "convId",
-        as: "parts",
-      } },
-      { $match: { "parts.userId": { $all: [new Types.ObjectId(a), new Types.ObjectId(b)] } } },
+      {
+        $match: { type: "private" },
+      },
+      {
+        $lookup: {
+          from: "conversationparticipants",
+          localField: "_id",
+          foreignField: "convId",
+          as: "parts",
+        },
+      },
+      { $match: { "parts.userId": { $all: [new Types.ObjectId(myGolferId), new Types.ObjectId(golferId)] } } },
     ]);
     if (existing[0])
       return existing[0];
 
-    const conv = await ConversationModel.create({ type: "private", createdBy: a });
+    const conv = await ConversationModel.create({ type: "private", createdBy: myGolferId });
     await ParticipantModel.insertMany([
-      { convId: conv._id, userId: a, role: "owner" },
-      { convId: conv._id, userId: b, role: "member" },
+      { convId: conv._id, userId: myGolferId, role: "owner" },
+      { convId: conv._id, userId: golferId, role: "member" },
     ]);
     return conv;
   }
@@ -57,15 +63,23 @@ class ConversationService {
   /* list all conversations for UI inbox */
   listForUser(userId: string) {
     return ParticipantModel.aggregate([
-      { $match: { userId: new Types.ObjectId(userId) } },
-      { $lookup: {
-        from: "conversations",
-        localField: "convId",
-        foreignField: "_id",
-        as: "conv",
-      } },
-      { $unwind: "$conv" },
-      { $project: { _id: 0, role: 1, conv: 1 } },
+      {
+        $match: { userId: new Types.ObjectId(userId) },
+      },
+      {
+        $lookup: {
+          from: "conversations",
+          localField: "convId",
+          foreignField: "_id",
+          as: "conv",
+        },
+      },
+      {
+        $unwind: "$conv",
+      },
+      {
+        $project: { _id: 0, role: 1, conv: 1 },
+      },
     ]);
   }
 

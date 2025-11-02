@@ -9,7 +9,7 @@ class ConversationController {
   createPrivate = asyncHandler(async (req: Request, res: Response) => {
     const conv = await conversationService.getOrCreatePrivate(
       req.user!.userId,
-      req.body.userId,
+      req.body.golferId,
     );
     res.status(201).json({ success: true, data: conv });
   });

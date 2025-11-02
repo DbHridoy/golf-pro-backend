@@ -18,5 +18,5 @@ const ParticipantSchema = new Schema({
   },
 }, { timestamps: true });
 
-ParticipantSchema.index({ convId: 1, userId: 1 }, { unique: true });
-export default model("ConversationParticipant", ParticipantSchema);
+const ConversationParticipantModel = model("ConversationParticipant", ParticipantSchema);
+export default ConversationParticipantModel;

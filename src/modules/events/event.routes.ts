@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { authMiddleware } from "@/middlewares/auth.middleware.js";
 
+import { acceptEventInvitation, declineEventInvitation } from "./event-invitation.service.js";
 import { completeEvent, createEvent, deleteEvent, getAllEvents, getEventById, joinEvent, startEvent, updateEvent } from "./event.controller.js";
 
 const router = Router();
@@ -22,5 +23,9 @@ router.post("/:eventId/complete", authMiddleware.authorize(["golf_club", "admin"
 
 // Golfer routes
 router.post("/:eventId/join", joinEvent);
+
+// Invitation management
+router.post("/invitations/:invitationId/accept", authMiddleware.authorize(["golfer"]), acceptEventInvitation);
+router.post("/invitations/:invitationId/decline", authMiddleware.authorize(["golfer"]), declineEventInvitation);
 
 export default router;

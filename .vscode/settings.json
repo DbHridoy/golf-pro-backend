@@ -50,10 +50,12 @@
   ],
   "CodeGPT.apiKey": "CodeGPT Enterprise",
   "cSpell.words": [
+    "adminsdk",
     "bango",
-    "Participations",
-    "stableford",
     "clubdocket",
-    "adminsdk"
+    "HTTPSTATUS",
+    "maxlength",
+    "Participations",
+    "stableford"
   ]
 }

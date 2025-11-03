@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
 import { env } from "@/env.js";
+import { logger } from "@/middlewares/pino-logger.js";
 
 import { broadcastEventStatus } from "../../services/websocket-service.js";
 import ClubModel from "../club/club.model.js";
@@ -31,7 +32,7 @@ export async function createEvent(req: Request, res: Response) {
     // ============================================
     // 1. AUTHORIZATION CHECK
     // ============================================
-    if (userRole !== "golf_club" && userRole !== "system_admin") {
+    if (userRole !== "golf_club" && userRole !== "admin") {
       return res.status(403).json({
         message: "Access denied. Only clubs and admins can create events.",
       });
@@ -79,7 +80,7 @@ export async function createEvent(req: Request, res: Response) {
           });
         }
       }
-      else if (userRole === "system_admin") {
+      else if (userRole === "admin") {
         const club = await ClubModel.findById(clubId);
         if (!club) {
           return res.status(404).json({ message: "Club not found" });
@@ -104,10 +105,6 @@ export async function createEvent(req: Request, res: Response) {
             "Content-Type": "application/json",
           },
         });
-
-        console.log("===========================================================================");
-        console.log(courseApiResponse);
-        console.log("===========================================================================");
 
         if (!courseApiResponse.ok) {
           return res.status(404).json({
@@ -247,6 +244,9 @@ export async function createEvent(req: Request, res: Response) {
       invitedAt: new Date(),
       expiresAt: eventDateTime,
     }));
+
+    logger.info("----------------------");
+    logger.info(invitations, "GOLFER INFORMATION");
 
     const createdInvitations = await EventInvitationModel.insertMany(invitations);
 

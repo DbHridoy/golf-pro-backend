@@ -68,7 +68,16 @@ export async function acceptEventInvitation(req: Request, res: Response) {
     const gender = golfer?.gender === "female" ? "female" : "male";
 
     // Find selected tee box by teeID
-    const teeBox = course.tees.find((tee: { teeID: string }) => tee.teeID === selectedTeeID);
+    const teeBox = course.tees.find((tee: {
+      teeID: string;
+      teeName?: string;
+      teeColor?: string;
+      holeLengths?: number[];
+      courseRatingMen?: number;
+      slopeMen?: number;
+      courseRatingWomen?: number;
+      slopeWomen?: number;
+    }) => tee.teeID === selectedTeeID);
 
     if (!teeBox) {
       return res.status(400).json({
@@ -182,6 +191,36 @@ export async function acceptEventInvitation(req: Request, res: Response) {
   }
   catch (error) {
     console.error("Error accepting invitation:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+/**
+ * Decline event invitation
+ */
+export async function declineEventInvitation(req: Request, res: Response) {
+  try {
+    const { invitationId } = req.params;
+    const userId = req.user!.userId;
+
+    const invitation = await EventInvitationModel.findById(invitationId)
+      .populate("golferId");
+
+    if (!invitation) {
+      return res.status(404).json({ message: "Invitation not found" });
+    }
+
+    if (invitation.golferId.userId.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    invitation.invitationStatus = "declined";
+    invitation.respondedAt = new Date();
+    await invitation.save();
+
+    return res.status(200).json({ message: "Invitation declined" });
+  }
+  catch (error) {
+    console.error("Error declining invitation:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

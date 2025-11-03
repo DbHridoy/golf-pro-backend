@@ -1,4 +1,3 @@
-// file: src/modules/handicaps/handicap-history.model.ts
 import { model, Schema } from "mongoose";
 
 const HandicapHistorySchema = new Schema({

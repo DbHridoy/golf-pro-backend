@@ -1,11 +1,12 @@
+// file: src/modules/courses/course.model.ts
 import { model, Schema } from "mongoose";
 
-const HoleDataSchema = new Schema({
-  holeNumber: { type: Number, required: true, min: 1, max: 18 },
-  par: { type: Number, required: true, min: 3, max: 5 },
-  strokeIndex: { type: Number, required: true, min: 1, max: 18 }, // handicap index for each hole
-  length: { type: Number, required: true }, // in meters or yards
-}, { _id: false });
+// const HoleDataSchema = new Schema({
+//   holeNumber: { type: Number, required: true, min: 1, max: 18 },
+//   par: { type: Number, required: true, min: 3, max: 5 },
+//   strokeIndex: { type: Number, required: true, min: 1, max: 18 }, // handicap index for each hole
+//   length: { type: Number, required: true }, // in meters or yards
+// }, { _id: false });
 
 const TeeBoxSchema = new Schema({
   teeID: { type: String, required: true },
@@ -89,6 +90,7 @@ const CourseSchema = new Schema({
 
 }, { timestamps: true });
 
+// Indexes for performance
 CourseSchema.index({ courseID: 1 });
 CourseSchema.index({ clubID: 1 });
 CourseSchema.index({ "location.city": 1, "location.country": 1 });

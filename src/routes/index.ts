@@ -4,7 +4,7 @@ import authRouter from "@/modules/auth/auth.route";
 import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
 import conversationRouter from "@/modules/conversation/conversation.route";
-import eventRouter from "@/modules/events/events.route";
+import eventRouter from "@/modules/events/event.routes";
 import friendsRouter from "@/modules/friends/friends.route";
 import golferRouter from "@/modules/golfer/golfer.route";
 import likesRouter from "@/modules/likes/likes.route";

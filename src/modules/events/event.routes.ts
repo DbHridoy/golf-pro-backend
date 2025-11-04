@@ -3,7 +3,7 @@ import { Router } from "express";
 import { authMiddleware } from "@/middlewares/auth.middleware.js";
 
 import { acceptEventInvitation, declineEventInvitation } from "./event-invitation.service.js";
-import { completeEvent, createEvent, deleteEvent, getAllEvents, getEventById, joinEvent, startEvent, updateEvent } from "./event.controller.js";
+import { completeEvent, createEvent, deleteEvent, getAllEvents, getEventById, getEventInvitations, getEventParticipants, joinEvent, startEvent, updateEvent } from "./event.controller.js";
 
 const router = Router();
 
@@ -13,6 +13,11 @@ router.get("/:eventId", getEventById);
 
 // Protected routes - require authentication
 router.use(authMiddleware.authenticate);
+//  Get event invitations
+router.get("/:eventId/invitations", getEventInvitations);
+
+//  Get event participants
+router.get("/:eventId/participants", getEventParticipants);
 
 // Club/Admin only routes
 router.post("/", authMiddleware.authorize(["golf_club", "admin"]), createEvent);

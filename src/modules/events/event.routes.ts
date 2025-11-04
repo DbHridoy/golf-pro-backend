@@ -26,9 +26,6 @@ router.delete("/:eventId", authMiddleware.authorize(["golf_club", "admin"]), del
 router.post("/:eventId/start", authMiddleware.authorize(["golf_club", "admin"]), startEvent);
 router.post("/:eventId/complete", authMiddleware.authorize(["golf_club", "admin"]), completeEvent);
 
-// Golfer routes
-router.post("/:eventId/join", joinEvent);
-
 // Invitation management
 router.post("/invitations/:invitationId/accept", authMiddleware.authorize(["golfer"]), acceptEventInvitation);
 router.post("/invitations/:invitationId/decline", authMiddleware.authorize(["golfer"]), declineEventInvitation);

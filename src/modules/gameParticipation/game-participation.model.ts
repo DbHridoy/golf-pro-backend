@@ -31,6 +31,10 @@ const GameParticipationSchema = new Schema({
     default: "registered",
   },
 
+  // add date 5-11-2025 (maybe will delete this)
+  scoreToPar: { type: Number }, // e.g., -11, +3, E (for even par)
+  thru: { type: Number }, // Number of holes completed (e.g., "F" for finished, or "12" for through 12)
+
   playedAt: { type: Date },
 }, { timestamps: true });
 

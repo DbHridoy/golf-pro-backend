@@ -16,7 +16,7 @@ const server = createServer(app);
 initSocket(server);
 
 // Start the server
-server.listen(port, async () => {
+server.listen(port,"0.0.0.0", async () => {
   await connectDB();
   logger.info(`Listening: http://localhost:${port}`);
   logger.info(`API Documentation: http://localhost:${port}/api/v1/docs`);

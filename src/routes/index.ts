@@ -12,6 +12,7 @@ import membershipRouter from "@/modules/memberships/memberships.route";
 import notificationRouter from "@/modules/notification/notification.route";
 import postsRouter from "@/modules/posts/posts.route";
 import userRouter from "@/modules/user/user.route";
+import dashboardRouter from "@/modules/dashboard/dashboard.route"
 
 import docsRouter from "./docs.route";
 
@@ -58,10 +59,10 @@ const moduleRoutes = [
     path: "/send-push-notification",
     route: notificationRouter,
   },
-  // {
-  //   path: "/dashboard",
-  //   route: dashboardRouter,
-  // },
+  {
+    path: "/dashboard",
+    route: dashboardRouter,
+  },
   // routes/index.ts
   {
     path: "/conversation",

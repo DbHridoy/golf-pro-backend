@@ -1,5 +1,17 @@
 import { model, Schema } from "mongoose";
 
+const LocationSchema = new Schema ({
+  type: {
+    type: String,
+    enum: ["Point"],
+    default: "Point",
+  },
+  coordinates: {
+    type: [Number],
+    required: true,
+  },
+}, { _id: false });
+
 const GolferSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
@@ -75,11 +87,36 @@ const GolferSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  // ===== NEW: LOCATION TRACKING FIELDS =====
+  currentLocation: {
+    type: LocationSchema,
+    default: null,
+  },
+  locationUpdatedAt: {
+    type: Date,
+    default: null,
+  },
+  isLocationSharingEnabled: {
+    type: Boolean,
+    default: true, // Default: enabled
+  },
+  currentEventId: {
+    type: Schema.Types.ObjectId,
+    ref: "Event",
+    default: null, // Set when golfer is actively playing an event
+  },
+  currentHole: {
+    type: Number,
+    min: 1,
+    max: 18,
+    default: null, // Which hole they're currently on
+  },
 }, {
   timestamps: true,
 });
 
 GolferSchema.index({ userId: 1 }, { unique: true });
+GolferSchema.index({ currentLocation: "2dsphere" });
 
 const GolferModel = model("Golfer", GolferSchema);
 

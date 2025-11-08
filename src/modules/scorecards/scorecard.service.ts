@@ -1,7 +1,10 @@
 import type { Request, Response } from "express";
 
+import { joinEventRoom, leaveEventRoom } from "@/services/socket-service";
+
 import EventModel from "../events/event.model";
 import GameParticipationModel from "../gameParticipation/game-participation.model";
+import GolferModel from "../golfer/golfer.model";
 import { sendFCMNotification } from "../notifications/fcm.service";
 import UserModel from "../user/user.model";
 import ScorecardModel from "./scorecard.model";
@@ -96,6 +99,12 @@ export async function updateHoleScore(req: Request, res: Response) {
     // Apply ESC (Equitable Stroke Control) for handicap calculation
     hole.adjustedStrokes = applyESC(strokes, par, scorecard.handicapUsed || 0);
 
+    // ===== NEW: UPDATE CURRENT HOLE IN GOLFER PROFILE =====
+    await GolferModel.findByIdAndUpdate(scorecard.playerId._id, {
+      currentHole: holeNumber,
+      lastActiveAt: new Date(),
+    });
+
     // Update scorecard status
     if (scorecard.status === "not_started") {
       scorecard.status = "in_progress";
@@ -115,6 +124,12 @@ export async function updateHoleScore(req: Request, res: Response) {
       scorecard.status = "completed";
       scorecard.completedAt = new Date();
     }
+    // ===== NEW: CLEAR CURRENT EVENT =====
+    await GolferModel.findByIdAndUpdate(scorecard.playerId._id, {
+      currentEventId: null,
+      currentHole: null,
+    });
+
     scorecard.lastHoleCompletedAt = new Date();
     await scorecard.save();
 
@@ -473,6 +488,16 @@ export async function startRound(req: Request, res: Response) {
       { status: "playing" },
     );
 
+    // ===== NEW: SET CURRENT EVENT IN GOLFER PROFILE =====
+    await GolferModel.findByIdAndUpdate(scorecard.playerId._id, {
+      currentEventId: scorecard.eventId,
+      currentHole: 1, // Starting at hole 1
+      isLocationSharingEnabled: true, // Ensure location sharing is enabled
+    });
+
+    // ===== NEW: Join event room for real-time location updates =====
+    joinEventRoom(userId, scorecard.eventId.toString());
+
     return res.status(200).json({
       message: "Round started successfully",
       scorecard: {
@@ -490,6 +515,55 @@ export async function startRound(req: Request, res: Response) {
   }
   catch (error) {
     console.error("Error starting round:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// ===== ADD: Function to complete round and leave event room =====
+export async function completeRound(req: Request, res: Response) {
+  try {
+    const { scorecardId } = req.params;
+    const userId = req.user!.userId;
+
+    const scorecard = await ScorecardModel.findById(scorecardId)
+      .populate("playerId");
+
+    if (!scorecard) {
+      return res.status(404).json({ message: "Scorecard not found" });
+    }
+
+    if (scorecard.status !== "in_progress") {
+      return res.status(400).json({
+        message: "Round is not in progress",
+      });
+    }
+
+    scorecard.status = "completed";
+    scorecard.completedAt = new Date();
+    await scorecard.save();
+
+    await updateGameParticipation(scorecard);
+    await updateLiveLeaderboard(scorecard.eventId);
+
+    // ===== NEW: Leave event room and clear current event =====
+    leaveEventRoom(userId, scorecard.eventId.toString());
+
+    await GolferModel.findByIdAndUpdate(scorecard.playerId._id, {
+      currentEventId: null,
+      currentHole: null,
+    });
+
+    return res.status(200).json({
+      message: "Round completed successfully",
+      scorecard: {
+        id: scorecard._id,
+        status: scorecard.status,
+        completedAt: scorecard.completedAt,
+      },
+    });
+  }
+  catch (error) {
+    console.error("Error completing round:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

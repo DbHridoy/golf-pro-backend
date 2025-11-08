@@ -11,7 +11,7 @@ import { logger } from "./pino-logger.js";
 interface JWTPayload {
   userId: string;
   email?: string;
-  role?: "golfer" | "golf_club" | "system_admin";
+  role?: "golfer" | "golf_club" | "admin";
   iat?: number;
   exp?: number;
 }
@@ -160,7 +160,7 @@ export class AuthMiddleware {
       const currentUserId = req.user.userId;
 
       // System admin can access any resource
-      if (req.user.role === "system_admin") {
+      if (req.user.role === "admin") {
         return next();
       }
 

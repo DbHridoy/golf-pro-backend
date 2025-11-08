@@ -1,3 +1,4 @@
+// file: src/modules/scorecards/scorecard.model.ts (UPDATE)
 import { model, Schema } from "mongoose";
 
 const HoleScoreSchema = new Schema({

@@ -3,7 +3,7 @@ import axios from "axios";
 import { transporter } from "@/config/nodemailer.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { env } from "@/env";
-import { logger, logger } from "@/middlewares/pino-logger";
+import { logger } from "@/middlewares/pino-logger";
 import {
   BadRequestException,
   NotFoundException,

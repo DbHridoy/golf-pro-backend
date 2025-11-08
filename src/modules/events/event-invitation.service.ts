@@ -123,7 +123,7 @@ export async function acceptEventInvitation(req: Request, res: Response) {
     // Validate ratings exist
     if (!courseRating || !slopeRating) {
       return res.status(400).json({
-        message: `Course rating and slope not available for ${gender} golfers on tee "${teeBox.teeName}"`,
+        message: `Course rating and slope not available for ${gender} golfers on tee "${selectedTee.teeName}"`,
       });
     }
 

@@ -27,6 +27,22 @@ export async function updateHoleScore(req: Request, res: Response) {
 
     const userId = req.user!.userId;
 
+    if (!holeNumber || holeNumber < 1 || holeNumber > 18) {
+      return res.status(400).json({ message: "Invalid hole number" });
+    }
+
+    if (!strokes || strokes < 1 || strokes > 20) {
+      return res.status(400).json({ message: "Invalid strokes count" });
+    }
+
+    if (putts !== undefined && (putts < 0 || putts > 10)) {
+      return res.status(400).json({ message: "Invalid putts count" });
+    }
+
+    if (penalties !== undefined && (penalties < 0 || penalties > 10)) {
+      return res.status(400).json({ message: "Invalid penalties count" });
+    }
+
     const scorecard = await ScorecardModel.findById(scorecardId)
       .populate("playerId");
 
@@ -79,12 +95,6 @@ export async function updateHoleScore(req: Request, res: Response) {
 
     // Apply ESC (Equitable Stroke Control) for handicap calculation
     hole.adjustedStrokes = applyESC(strokes, par, scorecard.handicapUsed || 0);
-
-    // Update scorecard status
-    if (scorecard.status === "not_started") {
-      scorecard.status = "in_progress";
-      scorecard.startedAt = new Date();
-    }
 
     // Update scorecard status
     if (scorecard.status === "not_started") {
@@ -269,6 +279,12 @@ function recalculateScorecardTotals(scorecard: any) {
  * Update GameParticipation with final scores and stats
  */
 async function updateGameParticipation(scorecard: any) {
+  const completedHoles = scorecard.holes.filter((h: any) => h.strokes > 0).length;
+
+  // Calculate par for completed holes
+  const coursePar = scorecard.holes.reduce((sum: number, h: any) => sum + h.par, 0); // Should be 72 typically
+  const scoreToPar = scorecard.totalGrossScore - coursePar;
+
   const firPercentage = scorecard.fairwaysTotal > 0
     ? (scorecard.fairwaysHit / scorecard.fairwaysTotal) * 100
     : 0;
@@ -280,6 +296,8 @@ async function updateGameParticipation(scorecard: any) {
     {
       finalScore: scorecard.totalGrossScore,
       netScore: scorecard.totalNetScore,
+      scoreToPar, // added as new field
+      thru: completedHoles === 18 ? "F" : completedHoles, // added as new field
       handicapUsed: scorecard.handicapUsed,
       totalPutts: scorecard.totalPutts,
       girPercentage: Math.round(girPercentage),
@@ -299,23 +317,44 @@ async function updateGameParticipation(scorecard: any) {
  * Update live leaderboard for event
  */
 async function updateLiveLeaderboard(eventId: any) {
-  // Get all completed and in-progress participations
   const participations = await GameParticipationModel.find({
     eventId,
     status: { $in: ["playing", "completed"] },
   })
-    .sort({ netScore: 1, finalScore: 1 }) // Sort by net score, then gross
-    .select("_id playerId finalScore netScore");
+    .populate("playerId", "fullName profileImage")
+    .sort({ netScore: 1, finalScore: 1 })
+    .lean();
+
+  let currentPosition = 1;
+  let previousScore: number | null = null;
+  let playersAtPosition = 0;
+
+  for (let i = 0; i < participations.length; i++) {
+    const participation = participations[i];
+
+    // If score is same as previous, keep same position
+    if (previousScore !== null && participation.netScore === previousScore) {
+      participation.position = currentPosition;
+      playersAtPosition++;
+    }
+    else {
+      // New score, update position
+      currentPosition += playersAtPosition;
+      participation.position = currentPosition;
+      playersAtPosition = 1;
+    }
+
+    previousScore = participation.netScore;
+
+    // Save position
+    await GameParticipationModel.findByIdAndUpdate(
+      participation._id,
+      { position: participation.position },
+    );
+  }
 
   // Update event leaderboard
   const leaderboardIds = participations.map(p => p._id);
-
-  // Assign positions
-  participations.forEach((p, index) => {
-    p.position = index + 1;
-    p.save();
-  });
-
   await EventModel.findByIdAndUpdate(eventId, {
     leaderboard: leaderboardIds,
   });
@@ -393,6 +432,64 @@ export async function getLiveLeaderboard(req: Request, res: Response) {
   }
   catch (error) {
     console.error("Error fetching leaderboard:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// start round
+export async function startRound(req: Request, res: Response) {
+  try {
+    const { scorecardId } = req.params;
+    const userId = req.user!.userId;
+
+    const scorecard = await ScorecardModel.findById(scorecardId).populate("playerId");
+
+    if (!scorecard) {
+      return res.status(404).json({ message: "Scorecard not found" });
+    }
+
+    // Verify ownership
+    if (scorecard.playerId.userId.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Check if already started
+    if (scorecard.status !== "not_started") {
+      return res.status(400).json({
+        message: `Round already ${scorecard.status}`,
+      });
+    }
+
+    // Start the round
+    scorecard.status = "in_progress";
+    scorecard.startedAt = new Date();
+    scorecard.lastOnlineAt = new Date();
+    scorecard.isPlayerOnline = true;
+    await scorecard.save();
+
+    // Update GameParticipation status
+    await GameParticipationModel.findByIdAndUpdate(
+      scorecard.gameParticipationId,
+      { status: "playing" },
+    );
+
+    return res.status(200).json({
+      message: "Round started successfully",
+      scorecard: {
+        id: scorecard._id,
+        status: scorecard.status,
+        startedAt: scorecard.startedAt,
+        holes: scorecard.holes.map((h: any) => ({
+          holeNumber: h.holeNumber,
+          par: h.par,
+          strokeIndex: h.strokeIndex,
+          length: h.length,
+        })),
+      },
+    });
+  }
+  catch (error) {
+    console.error("Error starting round:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

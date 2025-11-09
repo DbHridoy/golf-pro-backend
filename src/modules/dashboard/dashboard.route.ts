@@ -23,11 +23,11 @@ router.get("/get-all-users", authMiddleware.authenticate, authMiddleware.authori
 //   golferProfileController.getSingleGolferProfile,
 // );
 
-// router.patch(
-//   "/toggle-golfer-status/:id",
-//   authMiddleware.authenticate,
-//   authMiddleware.authorize(["admin", "golf_club"]),
+router.patch(
+  "/toggle-golfer-status/:id",
+  authMiddleware.authenticate,
+  authMiddleware.authorize(["admin", "golf_club"]),
 //   golferProfileController.toggleGolferStatus,
-// );
+);
 
 export default router;

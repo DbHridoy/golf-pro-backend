@@ -4,6 +4,8 @@ import { HTTPSTATUS } from "@/config/http.config";
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
 
 import { clubService } from "./club.service";
+import { clubRepository } from "./club.repository";
+import { success } from "zod/v4";
 
 export class ClubController {
   getClubProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
@@ -33,6 +35,14 @@ export class ClubController {
 
     return res.status(HTTPSTATUS.OK).json(result);
   });
+  getAllClubs=asyncHandler(async(req,res)=>{
+    const allClubs=await clubRepository.getAllClubs()
+    res.status(HTTPSTATUS.OK).json({
+      success:true,
+      message:"All clubs fetched successfully",
+      data:allClubs
+    })
+  })
 }
 
 export const clubController = new ClubController();

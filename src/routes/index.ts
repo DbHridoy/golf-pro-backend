@@ -12,7 +12,9 @@ import membershipRouter from "@/modules/memberships/memberships.route";
 import notificationRouter from "@/modules/notification/notification.route";
 import postsRouter from "@/modules/posts/posts.route";
 import userRouter from "@/modules/user/user.route";
-import dashboardRouter from "@/modules/dashboard/dashboard.route"
+import dashboardRouter from "@/modules/dashboard/dashboard.route";
+import reportRouter from "@/modules/report/report.route";
+import channelRouter from "@/modules/conversation/conversation.route";
 
 import docsRouter from "./docs.route";
 
@@ -63,7 +65,6 @@ const moduleRoutes = [
     path: "/dashboard",
     route: dashboardRouter,
   },
-  // routes/index.ts
   {
     path: "/conversation",
     route: conversationRouter,
@@ -76,7 +77,15 @@ const moduleRoutes = [
     path: "/events",
     route: eventRouter,
   },
+  {
+    path: "/report",
+    route: reportRouter,
+  },
+  {
+    path: "/channel",
+    route: channelRouter,
+  },
 ];
 
-moduleRoutes.forEach(route => router.use(route.path, route.route));
+moduleRoutes.forEach((route) => router.use(route.path, route.route));
 export default router;

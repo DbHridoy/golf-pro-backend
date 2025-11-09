@@ -15,9 +15,8 @@ export class ClubRepository {
     const profile = await ClubModel.findByIdAndUpdate(
       profileId,
       { $set: updateData },
-      { new: true, runValidators: true },
-    )
-      .lean();
+      { new: true, runValidators: true }
+    ).lean();
 
     if (!profile) {
       throw new NotFoundException("Club profile not found");
@@ -25,8 +24,8 @@ export class ClubRepository {
 
     return profile;
   }
-  getAllClubs() {
-    const clubs = ClubModel.find({}).lean();
+  async getAllClubs() {
+    const clubs = await ClubModel.find().lean();
     return clubs;
   }
   findClubById(clubId: string) {

@@ -22,7 +22,8 @@ router.patch(
   golferController.updateProfile,
 );
 
-// router.get("/get-single-golfer", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golf_club", "golfer"]), golferProfileController.getSingleGolfer);
+router.get("/get-single-golfer", authMiddleware.authenticate, golferController.getSingleGolfer);
+router.post("/report-profile",authMiddleware.authenticate,golferController.reportProfile)
 
 // router.patch("/upload", upload.any(), async (req, res) => {
 //   try {

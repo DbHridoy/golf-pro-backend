@@ -7,23 +7,51 @@ import { golferService } from "./golfer.service";
 
 class GolferController {
   // Get My Profile
-  getMyProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const userId = req.user!.userId; // From auth middleware
-    const profile = await golferService.getMyProfile(userId);
-    return res.status(HTTPSTATUS.OK).json(profile);
-  });
+  getMyProfile = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const userId = req.user!.userId; // From auth middleware
+      const profile = await golferService.getMyProfile(userId);
+      return res.status(HTTPSTATUS.OK).json(profile);
+    }
+  );
+  getSingleGolfer = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { body } = req;
+      const userId = req.user!.userId; // From auth middleware
 
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      const result = await golferService.updateProfile(userId, body, files);
+
+      return res.status(HTTPSTATUS.OK).json(result);
+    }
+  );
   // Update Profile
-  updateProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { body } = req;
-    const userId = req.user!.userId; // From auth middleware
+  updateProfile = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { body } = req;
+      const userId = req.user!.userId; // From auth middleware
 
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    const result = await golferService.updateProfile(userId, body, files);
+      const result = await golferService.updateProfile(userId, body, files);
 
-    return res.status(HTTPSTATUS.OK).json(result);
-  });
+      return res.status(HTTPSTATUS.OK).json(result);
+    }
+  );
+  reportProfile = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { body } = req;
+
+      const userId = req.user!.userId; // From auth middleware
+
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      const result = await golferService.updateProfile(userId, body, files);
+
+      return res.status(HTTPSTATUS.OK).json(result);
+    }
+  );
 }
 
 export const golferController = new GolferController();

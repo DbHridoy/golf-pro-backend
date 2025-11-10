@@ -8,6 +8,7 @@ import { title } from "process";
 import { channel } from "diagnostics_channel";
 import { HTTPSTATUS } from "@/config/http.config";
 import { success } from "zod/v4";
+import conversationRepository from "./conversation.repository";
 
 class ConversationController {
   createPrivate = asyncHandler(async (req: Request, res: Response) => {
@@ -44,6 +45,14 @@ class ConversationController {
       success: true,
       message: "New channel created successfully",
       data: newChannel,
+    });
+  });
+  getAllChannels = asyncHandler(async (req, res) => {
+    const channels = await conversationRepository.getAllChannels();
+    res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "All channels fetched successfully",
+      data: channels,
     });
   });
 }

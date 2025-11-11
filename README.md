@@ -1,30 +1,32 @@
 # Express API Starter with Typescript
 
-A JavaScript Express v5 starter template with sensible defaults.
+## socket io 
 
-Includes API Server utilities:
+CLIENT                                    SERVER
+  |                                         |
+  |------ socket:connect ------>           |
+  |                                         |
+  |------ location:init ------>            |
+  |      (userId, token)                    |
+  |                                         |
+  |<----- location:initialized -------     |
+  |                                         |
+  |------ startLocationTracking()           |
+  |      (watchPosition)                    |
+  |                                         |
+  |------ location:update ------>          |
+  |      (lat, lng, hole, eventId)          |---> Update DB
+  |      [REAL-TIME, every position change] |---> Broadcast to clubs
+  |                                         |     & events
+  |<----- location:update-confirmed --     |
+  |<----- location:updated -----------     | (from other users)
+  |      (other user's location)            |
+  |                                         |
+  |------ location:disconnect ------>      |
+  |                                         |---> Clear location
+  |                                         |
+  |<----- location:disconnected -------    |
 
-- [morgan](https://www.npmjs.com/package/morgan)
-  - HTTP request logger middleware for node.js
-- [helmet](https://www.npmjs.com/package/helmet)
-  - Helmet helps you secure your Express apps by setting various HTTP headers. It's not a silver bullet, but it can help!
-- [cors](https://www.npmjs.com/package/cors)
-  - CORS is a node.js package for providing a Connect/Express middleware that can be used to enable CORS with various options.
-
-Development utilities:
-
-- [typescript](https://www.npmjs.com/package/typescript)
-  - TypeScript is a language for application-scale JavaScript.
-- [tsx](https://www.npmjs.com/package/tsx)
-  - The easiest way to run TypeScript in Node.js
-- [eslint](https://www.npmjs.com/package/eslint)
-  - ESLint is a tool for identifying and reporting on patterns found in ECMAScript/JavaScript code.
-- [vitest](https://www.npmjs.com/package/vitest)
-  - Next generation testing framework powered by Vite.
-- [zod](https://www.npmjs.com/package/zod)
-  - Validated TypeSafe env with zod schema
-- [supertest](https://www.npmjs.com/package/supertest)
-  - HTTP assertions made easy via superagent.
 
 ## Setup
 

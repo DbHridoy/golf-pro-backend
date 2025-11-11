@@ -20,7 +20,7 @@ initSocket(server);
 // Initialize Socket.io
 const io = new SocketIOServer(server, {
   cors: {
-    origin: env.FRONTEND_URL || "*",
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -35,7 +35,7 @@ const io = new SocketIOServer(server, {
 initializeSocket(io);
 
 // Start the server
-server.listen(port,"0.0.0.0", async () => {
+server.listen(port, "0.0.0.0", async () => {
   await connectDB();
   logger.info(`Listening: http://localhost:${port}`);
   logger.info(`API Documentation: http://localhost:${port}/api/v1/docs`);
@@ -44,9 +44,10 @@ server.listen(port,"0.0.0.0", async () => {
 // Server on error
 server.on("error", (err) => {
   if ("code" in err && err.code === "EADDRINUSE") {
-    console.error(`Port ${env.PORT} is already in use. Please choose another port or stop the process using it.`);
-  }
-  else {
+    console.error(
+      `Port ${env.PORT} is already in use. Please choose another port or stop the process using it.`
+    );
+  } else {
     console.error("Failed to start server:", err);
   }
   process.exit(1);

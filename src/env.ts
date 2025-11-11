@@ -19,7 +19,6 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string(),
   FIREBASE_CLIENT_EMAIL: z.string(),
   FIREBASE_PRIVATE_KEY: z.string(),
-  FRONTEND_URL: z.string(),
   GMAIL_USER: z.string(),
   GMAIL_PASS: z.string(),
   GOLF_API_KEY: z.string().default("5821ef48-e3ee-473b-a20d-140800c2b914"),

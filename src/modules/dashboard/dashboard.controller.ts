@@ -9,8 +9,38 @@ import { golferService } from "../golfer/golfer.service";
 import { dashboardService } from "./dashboard.service";
 
 class DashboardController {
+  /**
+   * Get complete analytic dashboard data (all metrics in one call)
+   */
+  async getCompleteDashboard(req: Request, res: Response): Promise<void> {
+    try {
+      // const requestId = req.id || req.headers["x-request-id"] as string;
+
+      // logger.info({
+      //   requestId,
+      //   userId: req.user?.userId,
+      //   method: "getCompleteDashboard",
+      // }, "Fetching complete dashboard");
+
+      const dashboardData = await dashboardService.getCompleteDashboard();
+
+      res.status(200).json({
+        success: true,
+        message: "Dashboard data retrieved successfully",
+        data: dashboardData,
+      });
+    }
+    catch (error) {
+      logger.error({
+        error: error instanceof Error ? error.message : "Unknown error",
+        method: "getCompleteDashboard",
+      }, "Failed to fetch dashboard");
+      throw error;
+    }
+  }
+
   async getDashboardData(_req: Request, res: Response, _next: NextFunction) {
-    const dashboardData = await dashboardService.dashboardData();
+    const dashboardData = await dashboardService.getDashboardMetrics();
     res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "Dashboard data fetched successfully",

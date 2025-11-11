@@ -57,6 +57,7 @@
     "HTTPSTATUS",
     "maxlength",
     "Participations",
+    "Signups",
     "stableford"
   ]
 }

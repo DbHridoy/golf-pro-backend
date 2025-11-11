@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { authMiddleware } from "@/middlewares/auth.middleware";
 
 import adminController from "../admin/admin.controller";
@@ -8,6 +9,20 @@ import { dashboardController } from "./dashboard.controller";
 const router = Router();
 
 router.use(authMiddleware.authenticate);
+/**
+ * @route   GET /api/dashboard/analytics
+ * @desc    Get complete dashboard data (all metrics in one call)
+ * @access  Private (Admin only)
+ */
+router.get(
+  "/analytics",
+  authMiddleware.authenticate.bind(authMiddleware),
+  authMiddleware.authorize("admin"),
+  asyncHandler(
+    dashboardController.getCompleteDashboard.bind(dashboardController)
+  )
+);
+
 router.get("/get-all-golfers", dashboardController.getAllGolfers);
 router.get("/get-all-clubs", dashboardController.getAllClubs);
 

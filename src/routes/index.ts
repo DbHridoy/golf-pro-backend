@@ -1,13 +1,20 @@
 import express from "express";
 
 import authRouter from "@/modules/auth/auth.route";
+import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
+import conversationRouter from "@/modules/conversation/conversation.route";
+import eventRouter from "@/modules/events/event.routes";
 import friendsRouter from "@/modules/friends/friends.route";
 import golferRouter from "@/modules/golfer/golfer.route";
 import likesRouter from "@/modules/likes/likes.route";
+import membershipRouter from "@/modules/memberships/memberships.route";
 import notificationRouter from "@/modules/notification/notification.route";
 import postsRouter from "@/modules/posts/posts.route";
 import userRouter from "@/modules/user/user.route";
+import dashboardRouter from "@/modules/dashboard/dashboard.route";
+import reportRouter from "@/modules/report/report.route";
+import channelRouter from "@/modules/conversation/conversation.route";
 
 import docsRouter from "./docs.route";
 
@@ -31,6 +38,10 @@ const moduleRoutes = [
     route: golferRouter,
   },
   {
+    path: "/club",
+    route: clubRouter,
+  },
+  {
     path: "/posts",
     route: postsRouter,
   },
@@ -50,7 +61,31 @@ const moduleRoutes = [
     path: "/send-push-notification",
     route: notificationRouter,
   },
+  {
+    path: "/dashboard",
+    route: dashboardRouter,
+  },
+  {
+    path: "/conversation",
+    route: conversationRouter,
+  },
+  {
+    path: "/membership",
+    route: membershipRouter,
+  },
+  {
+    path: "/events",
+    route: eventRouter,
+  },
+  {
+    path: "/report",
+    route: reportRouter,
+  },
+  {
+    path: "/channel",
+    route: channelRouter,
+  },
 ];
 
-moduleRoutes.forEach(route => router.use(route.path, route.route));
+moduleRoutes.forEach((route) => router.use(route.path, route.route));
 export default router;

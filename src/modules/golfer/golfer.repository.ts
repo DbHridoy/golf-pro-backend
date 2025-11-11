@@ -1,24 +1,15 @@
-import type { IGolferProfile } from "@/modules/golfer/golfer.interface";
+import mongoose from "mongoose";
 
 import { logger } from "@/middlewares/pino-logger";
-import { NotFoundException } from "@/utils/app-error.utils";
-import { PaginationHelper } from "@/utils/pagination-helper";
 
 import "../club/club.model";
-import type {
-  GolferProfileFilters,
-  LocationInput,
-  NearbyGolferSearch,
-} from "./golfer.type";
+import { NotFoundException } from "@/utils/app-error.utils";
 
-import GolferProfileModel from "./golfer.model";
+import GolferModel from "./golfer.model";
 
-export class GolferProfileRepository {
-  /**
-   * Create new golfer profile
-   */
-  async createProfile(userId: string, profileData: Partial<IGolferProfile>): Promise<IGolferProfile> {
-    const profile = new GolferProfileModel({
+export class GolferRepository {
+  async createProfile(userId: string, profileData) {
+    const profile = new GolferModel({
       userId,
       ...profileData,
     });
@@ -26,41 +17,50 @@ export class GolferProfileRepository {
     return await profile.save();
   }
 
-  /**
-   * Find golfer profile by user ID
-   */
-  async findByUserId(userId: string): Promise<IGolferProfile | null> {
-    return await GolferProfileModel.findOne({ userId })
-      .populate("clubs", "name")
-      .populate("friends", "fullName")
-      .lean();
+  async toggleGolferActiveStatus(
+    userId: string,
+    isActive: boolean,
+  ) {
+    logger.info("from golfer repository");
+
+    const updatedGolfer = await GolferModel.findOneAndUpdate(
+      { userId },
+      { isActive },
+      { new: true, lean: true },
+    );
+
+    if (!updatedGolfer) {
+      logger.warn(`No golfer found with userId: ${userId}`);
+      return null;
+    }
+
+    logger.info(updatedGolfer, "updated from golfer repository");
+    return updatedGolfer;
   }
 
-  /**
-   * Find golfer profile by profile ID
-   */
-  async findGolferById(golferid: string): Promise<IGolferProfile | null> {
-    return await GolferProfileModel.findById(golferid)
-      .populate("clubs", "clubName")
-      .populate("friends", "fullName")
+  // async findByUserId(userId: string)= {
+  //   return await GolferModel.findOne({ userId })
+  //     .lean();
+  // }
+
+  async findGolferByUserId(userId:string) {
+    logger.info('golfer id from reposotory', userId);
+    const profile = await GolferModel.findOne({ userId })
+      .populate({ path: "userId", select: "fullName email handicapIndex" })
       .lean();
+
+    if (!profile)
+      throw new NotFoundException("Golfer profile not found");
+    logger.info(profile, "findbyid in repository");
+    return profile;
   }
 
-  /**
-   * Update golfer profile
-   */
-  async updateInDB(profileId: string, updateData: Partial<IGolferProfile>): Promise<IGolferProfile> {
-    // console.log(updateData, "------------------updatedata");
-    const profile = await GolferProfileModel.findByIdAndUpdate(
+  async updateInDB(profileId: string, updateData) {
+    const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $set: updateData },
       { new: true, runValidators: true },
-    )
-      .populate("clubs", "name")
-      .lean();
-    // .populate("clubMemberships", "name description")
-    // .populate("friends", "fullName profileImage")
-    // .lean();
+    ).populate({ path: "userId", select: "fullName email handicapIndex" }).lean();
 
     if (!profile) {
       throw new NotFoundException("Golfer profile not found");
@@ -72,126 +72,130 @@ export class GolferProfileRepository {
   /**
    * Get paginated golfer profiles with filters
    */
-  async getAllGolfers(query: any, filters: GolferProfileFilters = {}) {
-    // logger.info(query, "Getting profiles from repository");
-    if (!query) {
-      return GolferProfileModel.find().lean();
-    }
+  // async getAllGolfers(query: any, filters: GolferProfileFilters = {}) {
+  //   // logger.info(query, "Getting profiles from repository");
+  //   if (!query) {
+  //     return GolferModel.find().lean();
+  //   }
 
-    const paginateOptions = PaginationHelper.parsePaginationParams(query);
+  //   const paginateOptions = PaginationHelper.parsePaginationParams(query);
 
-    // Build search filter
-    const searchFields = ["fullName", "bio", "city", "country"];
-    const filter = PaginationHelper.createSearchFilter(query, searchFields);
+  //   // Build search filter
+  //   const searchFields = ["fullName", "bio", "city", "country"];
+  //   const filter = PaginationHelper.createSearchFilter(query, searchFields);
 
-    // Add custom filters
-    if (filters.gender) {
-      filter.gender = filters.gender;
-    }
+  //   // Add custom filters
+  //   if (filters.gender) {
+  //     filter.gender = filters.gender;
+  //   }
 
-    if (filters.country) {
-      filter.country = new RegExp(filters.country, "i");
-    }
+  //   if (filters.country) {
+  //     filter.country = new RegExp(filters.country, "i");
+  //   }
 
-    if (filters.city) {
-      filter.city = new RegExp(filters.city, "i");
-    }
+  //   if (filters.city) {
+  //     filter.city = new RegExp(filters.city, "i");
+  //   }
 
-    if (filters.isProfilePublic !== undefined) {
-      filter.isProfilePublic = filters.isProfilePublic;
-    }
+  //   if (filters.isProfilePublic !== undefined) {
+  //     filter.isProfilePublic = filters.isProfilePublic;
+  //   }
 
-    if (filters.hasProfileImage !== undefined) {
-      filter.profileImage = filters.hasProfileImage ? { $exists: true, $ne: null } : { $exists: false };
-    }
+  //   if (filters.hasProfileImage !== undefined) {
+  //     filter.profileImage = filters.hasProfileImage ? { $exists: true, $ne: null } : { $exists: false };
+  //   }
 
-    // Age filter (requires aggregation)
-    if (filters.minAge !== undefined || filters.maxAge !== undefined) {
-      const today = new Date();
-      const currentYear = today.getFullYear();
+  //   // Age filter (requires aggregation)
+  //   if (filters.minAge !== undefined || filters.maxAge !== undefined) {
+  //     const today = new Date();
+  //     const currentYear = today.getFullYear();
 
-      if (filters.maxAge !== undefined) {
-        const minBirthYear = currentYear - filters.maxAge - 1;
-        filter.dateOfBirth = { ...filter.dateOfBirth, $gte: new Date(minBirthYear, 0, 1) };
-      }
+  //     if (filters.maxAge !== undefined) {
+  //       const minBirthYear = currentYear - filters.maxAge - 1;
+  //       filter.dateOfBirth = { ...filter.dateOfBirth, $gte: new Date(minBirthYear, 0, 1) };
+  //     }
 
-      if (filters.minAge !== undefined) {
-        const maxBirthYear = currentYear - filters.minAge;
-        filter.dateOfBirth = { ...filter.dateOfBirth, $lte: new Date(maxBirthYear, 11, 31) };
-      }
-    }
+  //     if (filters.minAge !== undefined) {
+  //       const maxBirthYear = currentYear - filters.minAge;
+  //       filter.dateOfBirth = { ...filter.dateOfBirth, $lte: new Date(maxBirthYear, 11, 31) };
+  //     }
+  //   }
 
-    const result = await GolferProfileModel.paginate(filter, {
-      ...paginateOptions,
-      populate: [
-        { path: "clubs", select: "clubName" },
-        { path: "friends", select: "fullName" },
-      ],
-    });
+  //   const result = await GolferModel.paginate(filter, {
+  //     ...paginateOptions,
+  //     populate: [
+  //       { path: "clubs", select: "clubName" },
+  //       { path: "friends", select: "fullName" },
+  //     ],
+  //   });
 
-    return PaginationHelper.formatResponse(result);
-  }
+  //   return PaginationHelper.formatResponse(result);
+  // }
   /**
    * Search nearby golfers using geospatial query
    */
 
-  async searchNearbyGolfers(searchParams: NearbyGolferSearch) {
-    const { latitude, longitude, radius, page = 1, limit = 10 } = searchParams;
-
-    const pipeline: any[] = [
-      {
-        $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: [longitude, latitude],
-          },
-          distanceField: "distance",
-          maxDistance: radius * 1000, // Convert km to meters
-          spherical: true,
-          query: {
-            isProfilePublic: true,
-            location: { $exists: true },
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "clubs",
-          localField: "clubMemberships",
-          foreignField: "_id",
-          as: "clubMemberships",
-          pipeline: [{ $project: { name: 1, description: 1 } }],
-        },
-      },
-      {
-        $addFields: {
-          distanceInKm: { $divide: ["$distance", 1000] },
-        },
-      },
-      {
-        $sort: { distance: 1 },
-      },
-    ];
-
-    const options = {
-      page,
-      limit,
-      // customLabels: PaginationHelper.formatResponse({} as any).pagination,
-    };
-
-    const result = await GolferProfileModel.aggregatePaginate(
-      GolferProfileModel.aggregate(pipeline),
-      options,
-    );
-
-    return PaginationHelper.formatResponse(result);
+  async getAllGolfers() {
+    return await GolferModel.find().lean();
   }
+
+  // async searchNearbyGolfers(searchParams) {
+  //   const { latitude, longitude, radius, page = 1, limit = 10 } = searchParams;
+
+  //   const pipeline: any[] = [
+  //     {
+  //       $geoNear: {
+  //         near: {
+  //           type: "Point",
+  //           coordinates: [longitude, latitude],
+  //         },
+  //         distanceField: "distance",
+  //         maxDistance: radius * 1000, // Convert km to meters
+  //         spherical: true,
+  //         query: {
+  //           isProfilePublic: true,
+  //           location: { $exists: true },
+  //         },
+  //       },
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: "clubs",
+  //         localField: "clubMemberships",
+  //         foreignField: "_id",
+  //         as: "clubMemberships",
+  //         pipeline: [{ $project: { name: 1, description: 1 } }],
+  //       },
+  //     },
+  //     {
+  //       $addFields: {
+  //         distanceInKm: { $divide: ["$distance", 1000] },
+  //       },
+  //     },
+  //     {
+  //       $sort: { distance: 1 },
+  //     },
+  //   ];
+
+  //   const options = {
+  //     page,
+  //     limit,
+  //     // customLabels: PaginationHelper.formatResponse({} as any).pagination,
+  //   };
+
+  //   const result = await GolferModel.aggregatePaginate(
+  //     GolferModel.aggregate(pipeline),
+  //     options,
+  //   );
+
+  //   return PaginationHelper.formatResponse(result);
+  // }
 
   /**
    * Check if golfer profile exists
    */
   async profileExists(userId: string): Promise<boolean> {
-    const profile = await GolferProfileModel.findOne({ userId }).lean();
+    const profile = await GolferModel.findOne({ userId }).lean();
     return !!profile;
   }
 
@@ -199,15 +203,15 @@ export class GolferProfileRepository {
    * Delete golfer profile
    */
   async deleteProfile(profileId: string): Promise<boolean> {
-    const result = await GolferProfileModel.findByIdAndDelete(profileId);
+    const result = await GolferModel.findByIdAndDelete(profileId);
     return !!result;
   }
 
   /**
    * Update online status
    */
-  async updateOnlineStatus(profileId: string, isOnline: boolean): Promise<void> {
-    await GolferProfileModel.findByIdAndUpdate(profileId, {
+  async updateOnlineStatus(profileId: string, isOnline: boolean) {
+    await GolferModel.findByIdAndUpdate(profileId, {
       isOnline,
       lastActiveAt: new Date(),
     });
@@ -216,8 +220,8 @@ export class GolferProfileRepository {
   /**
    * Add friend to golfer's friend list
    */
-  async addFriend(profileId: string, friendId: string): Promise<IGolferProfile> {
-    const profile = await GolferProfileModel.findByIdAndUpdate(
+  async addFriend(profileId: string, friendId: string) {
+    const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $addToSet: { friends: friendId } },
       { new: true },
@@ -233,8 +237,8 @@ export class GolferProfileRepository {
   /**
    * Remove friend from golfer's friend list
    */
-  async removeFriend(profileId: string, friendId: string): Promise<IGolferProfile> {
-    const profile = await GolferProfileModel.findByIdAndUpdate(
+  async removeFriend(profileId: string, friendId: string) {
+    const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $pull: { friends: friendId } },
       { new: true },
@@ -250,8 +254,8 @@ export class GolferProfileRepository {
   /**
    * Add club membership
    */
-  async addClubMembership(profileId: string, clubId: string): Promise<IGolferProfile> {
-    const profile = await GolferProfileModel.findByIdAndUpdate(
+  async addClubMembership(profileId: string, clubId: string) {
+    const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $addToSet: { clubMemberships: clubId } },
       { new: true },
@@ -267,8 +271,8 @@ export class GolferProfileRepository {
   /**
    * Remove club membership
    */
-  async removeClubMembership(profileId: string, clubId: string): Promise<IGolferProfile> {
-    const profile = await GolferProfileModel.findByIdAndUpdate(
+  async removeClubMembership(profileId: string, clubId: string) {
+    const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $pull: { clubMemberships: clubId } },
       { new: true },
@@ -282,4 +286,4 @@ export class GolferProfileRepository {
   }
 }
 
-export const golferProfileRepository = new GolferProfileRepository();
+export const golferRepository = new GolferRepository();

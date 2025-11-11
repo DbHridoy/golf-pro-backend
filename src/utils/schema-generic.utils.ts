@@ -6,7 +6,7 @@ export const objectIdGeneric = z
   .refine(
     val => isValidObjectId(val),
     {
-      message: "Invalid ObjectId format",
+      message: "Invalid ObjectId format from here.",
     },
   );
 

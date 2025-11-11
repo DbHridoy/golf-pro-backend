@@ -27,6 +27,7 @@ function formatZodError(res: Response, error: z.ZodError, requestId?: string) {
     timestamp: new Date().toISOString(),
   });
 }
+
 // MongoDB error handler
 function handleMongoDBError(error: any, requestId?: string) {
   // Mongoose Validation Error
@@ -128,6 +129,7 @@ export const errorHandler: ErrorRequestHandler = (
   }
 
   const mongoError = handleMongoDBError(error, String(requestId));
+  
   if (mongoError) {
     return res.status(mongoError.statusCode).json({
       success: false,

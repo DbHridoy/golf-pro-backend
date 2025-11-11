@@ -1,15 +1,19 @@
 import { Router } from "express";
 
-import { authMiddleware } from "@/middlewares/jwt-auth.middleware";
+import { authMiddleware } from "@/middlewares/auth.middleware";
 
 import { authController } from "./auth.controller";
 
 const router = Router();
 
-// Public routes
 router.post("/register", authController.register);
+router.post("/send-otp", authController.sendOtp);
+router.post("/verify-otp", authController.verifyOtp);
+router.post("/set-password", authController.setNewPassword);
 router.post("/login", authController.login);
+// router.post("/google-login", authController.googleLogin);
+router.post("/ghin-login", authController.ghinLogin);
 router.post("/refresh", authController.refreshToken);
-router.post("/logout", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "admin"]), authController.logout);
+router.post("/logout", authMiddleware.authenticate, authController.logout);
 
 export default router;

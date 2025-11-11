@@ -1,0 +1,118 @@
+import { Types } from "mongoose";
+
+import ClubModel from "../club/club.model";
+import { golferRepository } from "../golfer/golfer.repository";
+import ParticipantModel from "./conversation-participant.model";
+import ConversationModel from "./conversation.model";
+import conversationRepository from "./conversation.repository";
+import { logger } from "@/middlewares/pino-logger";
+
+class ConversationService {
+  /* private DM (a,b) — idempotent */
+  async getOrCreatePrivate(userId: string, golferId: string) {
+    const myGolferId = (await golferRepository.findGolferByUserId(userId))?._id;
+    const existing = await ConversationModel.aggregate([
+      {
+        $match: { type: "private" },
+      },
+      {
+        $lookup: {
+          from: "conversationparticipants",
+          localField: "_id",
+          foreignField: "convId",
+          as: "parts",
+        },
+      },
+      {
+        $match: {
+          "parts.userId": {
+            $all: [
+              new Types.ObjectId(myGolferId),
+              new Types.ObjectId(golferId),
+            ],
+          },
+        },
+      },
+    ]);
+    if (existing[0]) return existing[0];
+
+    const conv = await ConversationModel.create({
+      type: "private",
+      createdBy: myGolferId,
+    });
+    await ParticipantModel.insertMany([
+      { convId: conv._id, userId: myGolferId, role: "owner" },
+      { convId: conv._id, userId: golferId, role: "member" },
+    ]);
+    return conv;
+  }
+
+  /* club chat — everyone in club */
+  async createClubConversation(
+    creatorId: string,
+    clubId: string,
+    title: string
+  ) {
+    const club = await ClubModel.findById(clubId).lean();
+    if (!club) throw new Error("Club not found");
+
+    // TODO: adapt to your club-membership store
+    const memberIds: string[] = club.members as any;
+
+    const conv = await ConversationModel.create({
+      type: "club",
+      clubId,
+      title,
+      createdBy: creatorId,
+    });
+
+    await ParticipantModel.insertMany(
+      memberIds.map((uid) => ({
+        convId: conv._id,
+        userId: uid,
+        role: uid === creatorId ? "owner" : "member",
+      }))
+    );
+    return conv;
+  }
+
+  /* list all conversations for UI inbox */
+  listForUser(userId: string) {
+    return ParticipantModel.aggregate([
+      {
+        $match: { userId: new Types.ObjectId(userId) },
+      },
+      {
+        $lookup: {
+          from: "conversations",
+          localField: "convId",
+          foreignField: "_id",
+          as: "conv",
+        },
+      },
+      {
+        $unwind: "$conv",
+      },
+      {
+        $project: { _id: 0, role: 1, conv: 1 },
+      },
+    ]);
+  }
+
+  async isParticipant(convId: string, userId: string) {
+    return !!(await ParticipantModel.exists({ convId, userId }));
+  }
+  async createChannel(data) {
+    const newChannel = await conversationRepository.createNewChannel(data);
+    const newParticipant=await ParticipantModel.insertMany(
+      data.members.map((uid) => ({
+        convId: newChannel._id,
+        userId: uid,
+      }))
+    );
+    logger.info(`from conversation service ${newParticipant}`)
+    return newChannel;
+  }
+}
+
+export const conversationService = new ConversationService();

@@ -1,6 +1,6 @@
 import { model, Schema } from "mongoose";
 
-const ClubProfileSchema = new Schema({
+const ClubSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -16,7 +16,6 @@ const ClubProfileSchema = new Schema({
   city: {
     type: String,
     default: null,
-
   },
   address: {
     type: String,
@@ -34,34 +33,35 @@ const ClubProfileSchema = new Schema({
     type: String,
     default: null,
   },
-  clubMembers: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "GolferProfile",
-      },
-    ],
-    default: [],
+  isProfilePublic: {
+    type: Boolean,
+    default: true,
   },
-  clubMembershipRequests: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "GolferProfile",
-      },
-    ],
-    default: [],
+  isActive: {
+    type: Boolean,
+    default: true,
   },
-  notifications: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Notification",
-      },
-    ],
-    default: null,
+  isOnline: {
+    type: Boolean,
+    default: false,
+  },
+  lastActiveAt: {
+    type: Date,
+    default: Date.now,
+  },
+}, {
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform(_doc: Record<string, any>, ret: Record<string, any>) {
+      delete ret.__v;
+      return ret;
+    },
   },
 });
 
-const ClubProfileModel = model("Club", ClubProfileSchema);
-export default ClubProfileModel;
+ClubSchema.index({ userId: 1 }, { unique: true });
+
+const ClubModel = model("Club", ClubSchema);
+
+export default ClubModel;

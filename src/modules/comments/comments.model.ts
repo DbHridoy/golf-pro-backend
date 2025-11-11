@@ -14,9 +14,16 @@ const CommentSchema = new Schema({
   content: {
     type: String,
     required: true,
-  }
+  },
 }, {
   timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform(_doc: Record<string, any>, ret: Record<string, any>) {
+      delete ret.__v;
+      return ret;
+    },
+  },
 });
 
 const CommentModel = model("Comment", CommentSchema);

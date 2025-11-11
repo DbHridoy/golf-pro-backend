@@ -1,79 +1,79 @@
-import type mongoose from "mongoose";
+import axios from "axios";
 
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import crypto from "node:crypto";
-
-import type { IUser } from "@/modules/user/user.interface";
-
+import { transporter } from "@/config/nodemailer.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { env } from "@/env";
 import { logger } from "@/middlewares/pino-logger";
 import {
   BadRequestException,
+  NotFoundException,
   UnauthorizedException,
 } from "@/utils/app-error.utils";
+import hashingUtils from "@/utils/hash.utils";
+import { jwtUtils } from "@/utils/jwt.utils";
 
-import type { AuthResponse, JWTPayload, RefreshTokenResponse } from "./auth.interface";
-import type { LoginInput, RegisterInput } from "./auth.type";
-
+import AdminModel from "../admin/admin.model";
+import ClubModel from "../club/club.model";
+import GolferModel from "../golfer/golfer.model";
 import { authRepository } from "./auth.repository";
+import OTPModel from "./otp.model";
 
 export class AuthService {
-  private readonly jwtSecret: string;
-  private readonly jwtRefreshSecret: string;
-  private readonly accessTokenExpiry: string;
-  private readonly refreshTokenExpiry: string;
-  private readonly saltRounds: number;
+  // Register
+  async register(data: any) {
+    const { fullName, email, password, role } = data;
+    const existingUser = await authRepository.findUserByEmail(email!);
 
-  constructor() {
-    this.jwtSecret = env.JWT_SECRET as string;
-    this.jwtRefreshSecret = env.JWT_REFRESH_SECRET as string;
-    this.accessTokenExpiry = env.JWT_EXPIRY as string;
-    this.refreshTokenExpiry = env.JWT_REFRESH_EXPIRY as string;
-    this.saltRounds = env.SALT_ROUNDS;
-  }
-
-  // Authentication methods
-  async register(registerData: RegisterInput["body"]): Promise<AuthResponse> {
-    // Check if user already exists
-    logger.info(registerData, "Service layer.");
-    const { email, password, role } = registerData;
-
-    const existingUser = await authRepository.emailExists(email);
     if (existingUser) {
-      throw new BadRequestException("User with this email already exists", ErrorCodeEnum.RESOURCE_CONFLICT);
+      throw new BadRequestException(
+        "User with this email already exists",
+        ErrorCodeEnum.RESOURCE_CONFLICT,
+      );
     }
 
-    const hashedPassword = await this.hashPassword(password);
+    const hashedPassword = await hashingUtils.hashPassword(password!);
 
-    const userData: Partial<IUser> = {
-      email: email.toLowerCase(),
+    const userData = {
+      fullName,
+      email,
       password: hashedPassword,
       role,
       isActive: true,
-      isEmailVerified: false,
     };
 
-    const user = await authRepository.createUser(userData);
+    const user = await authRepository.registerUser(userData);
 
-    const tokenPayload: Omit<JWTPayload, "iat" | "exp"> = {
-      userId: (user._id as mongoose.Types.ObjectId).toString(),
-      email: user.email,
-      role: user.role,
+    // Create dependent entity
+    switch (user?.role) {
+      case "golfer":
+        await new GolferModel({ userId: user._id, fullName: user.fullName }).save();
+        break;
+      case "golf_club":
+        await new ClubModel({ userId: user._id, clubName: user.fullName }).save();
+        break;
+      default:
+        await new AdminModel({ userId: user?._id, fullName: user?.fullName }).save();
+        break;
+    }
+
+    const payload = {
+      userId: user!._id,
+      email: user!.email,
+      role: user!.role,
     };
 
-    const { accessToken, refreshToken } = this.generateTokens(tokenPayload);
+    const { accessToken, refreshToken } = jwtUtils.generateTokens(payload);
 
     return {
       success: true,
       data: {
         user: {
-          id: (user._id as mongoose.Types.ObjectId).toString(),
-          email: user.email,
-          role: user.role,
-          isActive: user.isActive,
-          isEmailVerified: user.isEmailVerified,
+          id: user!._id,
+          fullName: user!.fullName,
+          email: user!.email,
+          role: user!.role,
+          isActive: user!.isActive,
+          isEmailVerified: user!.isEmailVerified,
         },
         accessToken,
         refreshToken,
@@ -83,7 +83,7 @@ export class AuthService {
   }
 
   // login service
-  async login(loginData: LoginInput["body"]): Promise<AuthResponse> {
+  async login(loginData: any) {
     const { email, password } = loginData;
 
     const user = await authRepository.findUserByEmail(email, true);
@@ -92,24 +92,26 @@ export class AuthService {
       throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
     }
 
-    const isPasswordValid = await this.comparePassword(password, user.password);
+    const isPasswordValid = await hashingUtils.comparePassword(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid email or password", ErrorCodeEnum.AUTH_INVALID_CREDENTIALS);
     }
 
-    const tokenPayload: Omit<JWTPayload, "iat" | "exp"> = {
-      userId: (user._id as mongoose.Types.ObjectId).toString(),
+    const tokenPayload = {
+      fullName: user.fullName,
+      userId: user._id,
       email: user.email,
       role: user.role,
     };
 
-    const { accessToken, refreshToken } = this.generateTokens(tokenPayload);
+    const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
 
     return {
       success: true,
       data: {
         user: {
-          id: (user._id as mongoose.Types.ObjectId).toString(),
+          id: user._id,
+          fullName: user.fullName,
           email: user.email,
           role: user.role,
           isActive: user.isActive,
@@ -123,8 +125,12 @@ export class AuthService {
   }
 
   // refresh token
-  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
-    const payload = this.verifyRefreshToken(refreshToken);
+  async refreshToken(token: string) {
+    const payload = jwtUtils.verifyRefreshToken(token) as { userId: string };
+
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
+      throw new UnauthorizedException("Invalid token payload", ErrorCodeEnum.AUTH_TOKEN_INVALID);
+    }
 
     const user = await authRepository.findUserById(payload.userId);
 
@@ -132,13 +138,13 @@ export class AuthService {
       throw new UnauthorizedException("User not found", ErrorCodeEnum.AUTH_USER_NOT_FOUND);
     }
 
-    const tokenPayload: Omit<JWTPayload, "iat" | "exp"> = {
-      userId: (user._id as mongoose.Types.ObjectId).toString(),
+    const tokenPayload = {
+      userId: user._id,
       email: user.email,
       role: user.role,
     };
 
-    const tokens = this.generateTokens(tokenPayload);
+    const tokens = jwtUtils.generateTokens(tokenPayload);
 
     return {
       success: true,
@@ -150,54 +156,164 @@ export class AuthService {
     };
   }
 
-  // utility methods
+  async sendOtp(email: string) {
+    const user = await authRepository.findUserByEmail(email, true);
 
-  async hashPassword(password: string): Promise<string> {
-    return await bcrypt.hash(password, this.saltRounds);
-  }
+    if (!user) {
+      throw new NotFoundException("User not found", ErrorCodeEnum.AUTH_USER_NOT_FOUND);
+    }
+    const otp = Math.floor(1000 + Math.random() * 9000); // 6-digit OTP
 
-  async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
-    return await bcrypt.compare(password, hashedPassword);
-  }
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min expiry
 
-  generateTokens(payload: Omit<JWTPayload, "iat" | "exp">): { accessToken: string; refreshToken: string } {
-    const accessToken = jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.accessTokenExpiry,
-    } as jwt.SignOptions);
+    // Save or update OTP in DB
+    await OTPModel.findOneAndUpdate(
+      { email },
+      { otp, expiresAt },
+      { upsert: true, new: true },
+    );
 
-    const refreshToken = jwt.sign(payload, this.jwtRefreshSecret, {
-      expiresIn: this.refreshTokenExpiry,
-    } as jwt.SignOptions);
-
-    return { accessToken, refreshToken };
-  }
-
-  verifyAccessToken(token: string): JWTPayload {
     try {
-      return jwt.verify(token, this.jwtSecret) as JWTPayload;
-    }
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    catch (error: unknown) {
-      throw new UnauthorizedException("Invalid or expired access token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
-    }
-  }
+      await transporter.sendMail({
+        from: `"My App" <${env.GMAIL_USER}>`,
+        to: email,
+        subject: "Your OTP Code",
+        html: `
+        <h3>Password Reset</h3>
+        <p>Your OTP code is: <b>${otp}</b></p>
+        <p>This code will expire in 5 minutes.</p>
+      `,
+      });
 
-  verifyRefreshToken(token: string): JWTPayload {
-    try {
-      return jwt.verify(token, this.jwtRefreshSecret) as JWTPayload;
+      return { success: true, message: "OTP sent successfully" };
     }
-    // eslint-disable-next-line unused-imports/no-unused-vars
     catch (error) {
-      throw new UnauthorizedException("Invalid or expired refresh token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
+      console.error("Email error:", error);
+      return { success: false, message: "Failed to send OTP" };
     }
   }
 
-  generateEmailVerificationToken(): string {
-    return crypto.randomBytes(32).toString("hex");
+  async verifyOtp(email: string, otp: string) {
+    logger.info(`from service layer - email: ${email}, otp: ${otp}`);
+    const record = await authRepository.matchOtp(email, otp);
+    if (!record) {
+      return { success: false, message: "Invalid OTP" };
+    }
+
+    if (record.expiresAt < new Date()) {
+      return { success: false, message: "OTP expired" };
+    }
+
+    // Optionally, delete OTP after verification
+    await authRepository.deleteOtp(record._id);
+
+    return { success: true, message: "OTP verified successfully" };
   }
 
-  generatePasswordResetToken(): string {
-    return crypto.randomBytes(32).toString("hex");
+  async setNewPassword(email: string, newPassword: string) {
+    logger.info(`from service layer - email: ${email}, newPassword: ${newPassword}`);
+    // Find user by email
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+
+    // Hash new password
+    const hashedPassword = await hashingUtils.hashPassword(newPassword);
+
+    // Update user password
+    await authRepository.updateUserPassword(user._id, hashedPassword);
+
+    return { success: true, message: "Password updated successfully" };
+  }
+
+  // ghin login
+  async ghinLogin({ ghinNo, ghinPassword }) {
+    logger.info(`from service layer - ghinNo: ${ghinNo}, ghinPassword: ${ghinPassword}`);
+    try {
+      const payload = {
+        user: {
+          email_or_ghin: ghinNo,
+          password: ghinPassword,
+        },
+        token: "123",
+      };
+      logger.info(`from service layer - payload: ${JSON.stringify(payload)}`);
+      const response = await axios.post(
+        "https://api.ghin.com/api/v1/golfer_login.json",
+        payload,
+      );
+
+      // ✅ golfers is an array — grab the first item
+      const golfer = response.data?.golfer_user?.golfers?.[0];
+      let user = await authRepository.findUserByEmail(golfer.email, true);
+      if (!user) {
+        const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
+        const newUser = {
+          fullName: golfer.player_name,
+          email: golfer.email,
+          password: hashedPassword,
+          role: "golfer",
+          handicapIndex: golfer.display,
+          isActive: true,
+        };
+        logger.info(`from service layer - newUser: ${JSON.stringify(newUser)}`);
+        user = await authRepository.registerUser(newUser);
+      }
+      else {
+        const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
+
+        const newUser = {
+          fullName: golfer.player_name,
+          email: golfer.email,
+          password: hashedPassword,
+          role: "golfer",
+          handicapIndex: golfer.display,
+          isActive: true,
+        };
+
+        await authRepository.updateUser(user.email, newUser);
+      }
+      // const user = await authRepository.findOrCreateUser(userData.email, userData.fullName);
+      const tokenPayload = {
+        fullName: user.fullName,
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      };
+      const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
+      return {
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            handicapIndex: user.handicapIndex,
+            isActive: user.isActive,
+            isEmailVerified: user.isEmailVerified,
+          },
+          accessToken,
+          refreshToken,
+        },
+        message: "Login successful",
+      };
+    }
+    catch (err) {
+      if (err.response) {
+        console.error("Error response:", err.response.status, err.response.data);
+        return { error: err.response.data };
+      }
+      else if (err.request) {
+        console.error("No response received:", err.request);
+        return { error: "No response from server" };
+      }
+      else {
+        console.error("Axios error:", err.message);
+        return { error: err.message };
+      }
+    }
   }
 }
 

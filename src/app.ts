@@ -6,13 +6,11 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 
-import type MessageResponse from "@/interfaces/message-response.js";
-
-import api from "@/api/index.js";
 import { errorHandler } from "@/middlewares/error-handler.middleware";
 import { notFound } from "@/middlewares/not-found.middleware";
 import rootRouter from "@/routes/index.js";
 
+import { initAgenda } from "./agenda/agenda.js";
 import { env } from "./env.js";
 
 const app: Application = express();
@@ -22,11 +20,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 
-app.get<object, MessageResponse>("/", (req, res) => {
+app.get("/", (req, res) => {
   res.json({
-    message: "🦄R🌈A✨K👋I🌎B✨M🌈M🦄",
+    message: "<<<<<<<<<<<<<<<<<<<<  API is running in full speed!!!  >>>>>>>>>>>>>>>>>>>>>>>>>",
   });
 });
 
@@ -35,4 +33,12 @@ app.use(env.BASE_URL, rootRouter);
 app.use(notFound);
 app.use(errorHandler);
 
+try {
+  (async () => {
+    await initAgenda();
+  })();
+}
+catch (error) {
+  console.error("Agenda init failed:", error);
+}
 export default app;

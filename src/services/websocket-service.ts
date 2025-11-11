@@ -154,5 +154,18 @@ function getStatusMessage(status: string): string {
   return messages[status] || "Event status updated";
 }
 
+// =========================MATCH=================================
+/**
+ * Broadcast location update to all event participants
+ */
+export async function broadcastLocationUpdate(eventId: any, locationData: any) {
+  if (!io) {
+    console.warn("WebSocket not initialized");
+    return;
+  }
+
+  io.to(`event-${eventId}`).emit("location-update", locationData);
+}
+
 // Get WebSocket instance (for external use)
 export const getSocketIO = () => io;

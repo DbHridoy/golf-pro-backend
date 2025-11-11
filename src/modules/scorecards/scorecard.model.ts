@@ -108,3 +108,4 @@ ScorecardSchema.index({ eventId: 1, status: 1 });
 
 const ScorecardModel = model("Scorecard", ScorecardSchema);
 export default ScorecardModel;
+

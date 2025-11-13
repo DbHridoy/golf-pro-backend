@@ -4,6 +4,7 @@ import authRouter from "@/modules/auth/auth.route";
 import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
 import conversationRouter from "@/modules/conversation/conversation.route";
+import channelRouter from "@/modules/conversation/conversation.route";
 import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import eventRouter from "@/modules/events/event.routes";
 import friendsRouter from "@/modules/friends/friends.route";
@@ -13,10 +14,8 @@ import locationRouter from "@/modules/location/location.routes";
 import membershipRouter from "@/modules/memberships/memberships.route";
 import notificationRouter from "@/modules/notification/notification.route";
 import postsRouter from "@/modules/posts/posts.route";
-import userRouter from "@/modules/user/user.route";
-import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import reportRouter from "@/modules/report/report.route";
-import channelRouter from "@/modules/conversation/conversation.route";
+import userRouter from "@/modules/user/user.route";
 
 import docsRouter from "./docs.route";
 
@@ -81,7 +80,7 @@ const moduleRoutes = [
     route: eventRouter,
   },
   {
-    path: "/report",
+    path: "/reports",
     route: reportRouter,
   },
   {
@@ -94,5 +93,5 @@ const moduleRoutes = [
   },
 ];
 
-moduleRoutes.forEach((route) => router.use(route.path, route.route));
+moduleRoutes.forEach(route => router.use(route.path, route.route));
 export default router;

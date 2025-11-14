@@ -16,7 +16,7 @@ const EventSchema = new Schema({
   eventName: { type: String, required: true, trim: true, maxlength: 200 },
   clubId: { type: Schema.Types.ObjectId, ref: "Club" },
   createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+  courseId: { type: Schema.Types.ObjectId, ref: "Course" },
   eventDate: { type: Date, required: true },
   eventTime: { type: String, required: true },
   gameFormat: {

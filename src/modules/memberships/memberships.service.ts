@@ -80,6 +80,9 @@ class MembershipService {
     logger.info(`into service layer`);
     return membershipRepository.rejectMembershipRequest(golferId);
   }
+  getAllMembersOfClub(clubId: string) {
+    return membershipRepository.getAllMembersOfClub(clubId);
+  }
 }
 
 export const membershipService = new MembershipService();

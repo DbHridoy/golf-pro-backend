@@ -10,7 +10,10 @@ class MembershipController {
     const { userId } = req.user!;
 
     const clubId = req.body.clubId;
-    const result = await membershipService.sendMembershipRequest({ userId, clubId });
+    const result = await membershipService.sendMembershipRequest({
+      userId,
+      clubId,
+    });
     return res.status(HTTPSTATUS.CREATED).json(result);
   }
 
@@ -24,7 +27,10 @@ class MembershipController {
   async createMembership(req: any, res: any) {
     const { userId } = req.user!;
     const { golferId } = req.body!;
-    const result = await membershipService.createMembership({ userId, golferId });
+    const result = await membershipService.createMembership({
+      userId,
+      golferId,
+    });
     return res.status(HTTPSTATUS.CREATED).json({
       success: true,
       message: "Membership created successfully",
@@ -71,6 +77,16 @@ class MembershipController {
     return res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "Membership request rejected successfully",
+      data: result,
+    });
+  }
+  
+  async getMembersOfaClub(req: any, res: any) {
+    const { clubId } = req.params;
+    const result = await membershipService.getAllMembersOfClub(clubId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Members of a club",
       data: result,
     });
   }

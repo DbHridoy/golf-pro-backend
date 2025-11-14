@@ -1,7 +1,7 @@
-import { asyncHandler } from "@/middlewares/async-handler.middleware";
-import reportService from "./report.service";
-import { success } from "zod/v4";
 import { HTTPSTATUS } from "@/config/http.config";
+import { asyncHandler } from "@/middlewares/async-handler.middleware";
+
+import reportService from "./report.service";
 
 class ReportController {
   reportProfile = asyncHandler(async (req, res) => {
@@ -23,7 +23,7 @@ class ReportController {
   });
 
   getAllReports = asyncHandler(async (req, res) => {
-    const allReports =await reportService.getAllReports();
+    const allReports = await reportService.getAllReports();
     res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "Successfully fetched all the reports",

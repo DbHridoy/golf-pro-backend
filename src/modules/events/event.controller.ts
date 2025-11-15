@@ -686,8 +686,8 @@ export async function updateEvent(req: Request, res: Response) {
 export async function deleteEvent(req: Request, res: Response) {
   try {
     const { eventId } = req.params;
-    const userId = req.user._id;
-    const userRole = req.user.role;
+    const userId = req.user!.userId;
+    const userRole = req.user!.role;
 
     const event = await EventModel.findById(eventId);
     if (!event) {
@@ -701,13 +701,6 @@ export async function deleteEvent(req: Request, res: Response) {
     if (!isCreator && !isAdmin) {
       return res.status(403).json({
         message: "Access denied. Only event creator or admin can delete this event.",
-      });
-    }
-
-    // Prevent deletion if event is active
-    if (event.status === "active") {
-      return res.status(400).json({
-        message: "Cannot delete active event. Please cancel or complete it first.",
       });
     }
 

@@ -23,6 +23,7 @@ export function initSocket(server: HTTPServer) {
       const decoded = jwtUtils.verifyAccessToken(token);
 
       socket.userId = decoded.userId; // store verified userId
+      console.log(socket.userId);
       next();
     } catch (err) {
       next(new Error("Invalid token"));

@@ -10,8 +10,8 @@ const ConversationSchema = new Schema(
     title: {
       type: String,
     },
-    club: {
-      type: Types.ObjectId,
+    clubId: {
+      type: Schema.Types.ObjectId,
       ref: "Club",
     },
     members: [
@@ -33,6 +33,6 @@ const ConversationSchema = new Schema(
   }
 );
 
-const ConversationModel= model("Conversation", ConversationSchema);
+const ConversationModel = model("Conversation", ConversationSchema);
 
-export default ConversationModel
+export default ConversationModel;

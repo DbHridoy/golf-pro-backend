@@ -15,7 +15,7 @@ import MembershipModel from "../memberships/memberships.model";
 
 export async function updateMyLocation(req: Request, res: Response) {
   try {
-    const { latitude, longitude, currentHole } = req.body;
+    const { latitude, longitude, currentHole = null } = req.body;
 
     const userId = req.user!.userId;
 
@@ -389,6 +389,7 @@ export async function getEventParticipantsLocations(req: Request, res: Response)
 /**
  * Toggle location sharing on/off
  */
+
 export async function toggleLocationSharing(req: Request, res: Response) {
   try {
     const { enabled } = req.body;

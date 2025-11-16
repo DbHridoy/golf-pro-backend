@@ -42,7 +42,10 @@ router.get(
   authMiddleware.authorize(["golf_club"]),
   membershipController.getAllMembersOfaClub
 );
-router.get("/get-members-of-club/:clubId", membershipController.getMembersOfaClub);
+router.get(
+  "/get-members-of-club/:clubId",
+  membershipController.getMembersOfaClub
+);
 // router.patch("/update-membership/:id", );
 // router.delete("/delete-membership/:id", );
 

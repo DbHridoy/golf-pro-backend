@@ -57,7 +57,12 @@ class MembershipRepository {
   }
 
   async getAllMembersOfaClub(clubId: string) {
-    const members = await MembershipModel.find({ clubId }).lean();
+    const members = await MembershipModel.find(
+      { clubId, status: "approved" },
+      { golferId: 1 }
+    )
+      .populate("golferId", "fullName")
+      .lean();
     logger.info(`members from repo: ${JSON.stringify(members)}`);
     return members;
   }
@@ -104,7 +109,9 @@ class MembershipRepository {
   }
 
   async getAllMembersOfClub(clubId: string) {
-    const members = await MembershipModel.find({ clubId }).populate("golferId", "fullName").lean();
+    const members = await MembershipModel.find({ clubId, status: "approved" }, { golferId: 1 })
+      .populate("golferId", "fullName")
+      .lean();
     logger.info(`members from repo: ${JSON.stringify(members)}`);
     return members;
   }

@@ -5,11 +5,13 @@ class ConversationRepository {
     const newChannel = new ConversationModel(data);
     return await newChannel.save();
   }
-  async getAllChannels(){
-    const channels=ConversationModel.find({type:"channel"}).populate("club","clubName clubProfileImage").lean()
-    return channels
+
+  async getAllChannels() {
+    const channels = ConversationModel.find({ type: "channel" })
+      .populate("club", "clubName clubProfileImage")
+      .lean();
+    return channels;
   }
- 
 }
 
 const conversationRepository = new ConversationRepository();

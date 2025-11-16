@@ -68,10 +68,10 @@ const moduleRoutes = [
     route: dashboardRouter,
   },
   // routes/index.ts
-  {
-    path: "/conversation",
-    route: conversationRouter,
-  },
+  // {
+  //   path: "/conversation",
+  //   route: conversationRouter,
+  // },
   {
     path: "/membership",
     route: membershipRouter,

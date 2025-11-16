@@ -20,7 +20,7 @@ router.use(authMiddleware.authenticate);
 router.use(authMiddleware.authorize(["golfer"]));
 
 // Update current location
-// router.post("/my-location", updateMyLocation);
+router.post("/my-location", updateMyLocation);
 
 // Toggle location sharing
 router.patch("/location-sharing", toggleLocationSharing);
@@ -29,7 +29,10 @@ router.patch("/location-sharing", toggleLocationSharing);
 router.get("/clubs/:clubId/members-locations", getClubMembersLocations);
 
 // Get event participants' locations
-router.get("/events/:eventId/participants-locations", getEventParticipantsLocations);
+router.get(
+  "/events/:eventId/participants-locations",
+  getEventParticipantsLocations
+);
 
 // Find nearby golfers
 router.get("/nearby", findNearbyGolfers);

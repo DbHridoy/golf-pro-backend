@@ -7,8 +7,9 @@ class ConversationRepository {
   }
 
   async getAllChannels() {
-    const channels = ConversationModel.find({ type: "channel" })
-      .populate("club", "clubName clubProfileImage")
+    const channels = await ConversationModel.find({ type: "channel" })
+      .populate("clubId", "clubName clubProfileImage")
+      .populate("members", "fullName profileImage")
       .lean();
     return channels;
   }

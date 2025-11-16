@@ -59,6 +59,10 @@ class ConversationController {
       data: channels,
     });
   });
+  getChannelStats = asyncHandler(async (req: Request, res: Response) => {
+    const stats = await conversationService.getChannelStats();
+    res.json({ success: true, data: stats });
+  });
 }
 
 export const conversationController = new ConversationController();

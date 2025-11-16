@@ -31,4 +31,10 @@ router.get(
   conversationController.listMine
 );
 
+router.get(
+  "/get-channel-stats",
+  authMiddleware.authenticate,
+  conversationController.getChannelStats
+);
+
 export default router;

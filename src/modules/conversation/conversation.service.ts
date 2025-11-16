@@ -82,11 +82,19 @@ class ConversationService {
 
   async listForUser(userId: string) {
     logger.info(`from service layer - email: ${userId}`);
-    return await ParticipantModel.find({ userId }).lean();
+    const conversations = await ConversationModel.find({
+      members: userId,
+    })
+      .populate("members", "fullName profileImage") // optional: populate members details
+      .populate("clubId", "clubName clubProfileImage");
+    return conversations;
   }
 
   async isParticipant(convId: string, userId: string) {
     return !!(await ParticipantModel.exists({ convId, userId }));
+  }
+  getChannelStats() {
+    return ConversationModel.countDocuments({ type: "channel" });
   }
 }
 

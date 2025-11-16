@@ -1,4 +1,4 @@
-import { model, Schema, Types } from "mongoose";
+import { model, Schema } from "mongoose";
 
 const ConversationSchema = new Schema(
   {
@@ -30,7 +30,7 @@ const ConversationSchema = new Schema(
         return ret;
       },
     },
-  }
+  },
 );
 
 const ConversationModel = model("Conversation", ConversationSchema);

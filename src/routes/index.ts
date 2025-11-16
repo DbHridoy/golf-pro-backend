@@ -3,7 +3,7 @@ import express from "express";
 import authRouter from "@/modules/auth/auth.route";
 import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
-import conversationRouter from "@/modules/conversation/conversation.route";
+import channelRouter from "@/modules/conversation/conversation.route";
 import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import eventRouter from "@/modules/events/event.routes";
 import friendsRouter from "@/modules/friends/friends.route";
@@ -11,12 +11,11 @@ import golferRouter from "@/modules/golfer/golfer.route";
 import likesRouter from "@/modules/likes/likes.route";
 import locationRouter from "@/modules/location/location.routes";
 import membershipRouter from "@/modules/memberships/memberships.route";
+import messageRouter from "@/modules/message/message.routes";
 import notificationRouter from "@/modules/notification/notification.route";
 import postsRouter from "@/modules/posts/posts.route";
-import userRouter from "@/modules/user/user.route";
-import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import reportRouter from "@/modules/report/report.route";
-import channelRouter from "@/modules/conversation/conversation.route";
+import userRouter from "@/modules/user/user.route";
 
 import docsRouter from "./docs.route";
 
@@ -67,11 +66,6 @@ const moduleRoutes = [
     path: "/dashboard",
     route: dashboardRouter,
   },
-  // routes/index.ts
-  // {
-  //   path: "/conversation",
-  //   route: conversationRouter,
-  // },
   {
     path: "/membership",
     route: membershipRouter,
@@ -91,6 +85,10 @@ const moduleRoutes = [
   {
     path: "/locations",
     route: locationRouter,
+  },
+  {
+    path: "/message",
+    route: messageRouter,
   },
 ];
 

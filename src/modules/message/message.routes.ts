@@ -7,7 +7,7 @@ import { messageService } from "./message.services";
 // message.routes.ts
 const router = Router();
 router.get(
-  "/conversation/:convId/messages",
+  "/messages/:convId",
   authMiddleware.authenticate,
   async (req, res) => {
     const msgs = await messageService.getByConversation(req.params.convId);

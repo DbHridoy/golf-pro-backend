@@ -20,7 +20,7 @@ router.use(authMiddleware.authenticate);
 router.use(authMiddleware.authorize(["golfer"]));
 
 // Update current location
-// router.post("/my-location", updateMyLocation);
+router.post("/my-location", updateMyLocation);
 
 // Toggle location sharing
 router.patch("/location-sharing", toggleLocationSharing);

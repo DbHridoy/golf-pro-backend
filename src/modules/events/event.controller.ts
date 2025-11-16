@@ -724,8 +724,8 @@ export async function deleteEvent(req: Request, res: Response) {
 export async function startEvent(req: Request, res: Response) {
   try {
     const { eventId } = req.params;
-    const userId = req.user._id;
-    const userRole = req.user.role;
+    const userId = !req.user?.userId;
+    const userRole = req.user?.role;
 
     const event = await EventModel.findById(eventId);
     if (!event) {

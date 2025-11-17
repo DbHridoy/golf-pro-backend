@@ -1,4 +1,7 @@
 // src/modules/message/message.service.ts
+import { logger } from "@/middlewares/pino-logger";
+import ConversationModel from "../conversation/conversation.model";
+import { userRepository } from "../user/user.repository";
 import MessageModel from "./message.model";
 
 class MessageService {
@@ -6,12 +9,19 @@ class MessageService {
     return MessageModel.create(data);
   }
 
-  getByConversation(convId: string, limit = 50) {
-    return MessageModel
-      .find({ convId })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+  async getByConversation({ convId }: { convId: string }) {
+    const messages = await MessageModel.find({ convId })
+      .sort({ createdAt: -1 }) // ascending order, oldest first
+      .populate({
+        path: "senderId",
+        select: "_id role",
+        populate: [
+          { path: "golfer", select: "fullName profileImage" },
+          { path: "admin", select: "fullName profileImage" },
+        ],
+      });
+
+    return messages;
   }
 }
 

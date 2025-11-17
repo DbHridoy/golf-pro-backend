@@ -1,11 +1,11 @@
 import { Types } from "mongoose";
 
-import ClubModel from "../club/club.model";
-import { golferRepository } from "../golfer/golfer.repository";
+import { logger } from "@/middlewares/pino-logger";
+
+import AdminModel from "../admin/admin.model";
 import ConversationParticipantModel from "./conversation-participant.model";
 import ConversationModel from "./conversation.model";
 import conversationRepository from "./conversation.repository";
-import { logger } from "@/middlewares/pino-logger";
 
 class ConversationService {
   async getOrCreatePrivate(userId: string, golferId: string) {
@@ -23,12 +23,15 @@ class ConversationService {
 
   async createChannel(data: any) {
     // Create a new channel
+    const admins = await AdminModel.find();
+    data.members.push(...admins.map((admin) => admin.userId));
+    logger.info("Members array →", data.members);
     const newChannel = await conversationRepository.createNewChannel(data);
-    console.log("New channel created →", newChannel);
+    logger.info("New channel created →", newChannel);
 
     // Make sure members exist
     if (!data.members || !data.members.length) {
-      console.warn("No members provided to add as participants");
+      logger.warn("No members provided to add as participants");
       return newChannel;
     }
 
@@ -38,16 +41,16 @@ class ConversationService {
       userId: uid,
     }));
 
-    console.log("Participants array →", participants);
+    logger.info("Participants array →", participants);
 
     // Insert participants
     try {
       const inserted = await ConversationParticipantModel.insertMany(
         participants
       );
-      console.log("Participants inserted successfully →", inserted);
+      logger.info("Participants inserted successfully →", inserted);
     } catch (err) {
-      console.error("INSERT MANY ERROR →", err);
+      logger.error("INSERT MANY ERROR →", err);
     }
 
     return newChannel;

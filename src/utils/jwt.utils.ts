@@ -41,7 +41,7 @@ class JWT {
     }
     // eslint-disable-next-line unused-imports/no-unused-vars
     catch (error: unknown) {
-      throw new UnauthorizedException("Invalid or expired access token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
+      return new UnauthorizedException("Invalid or expired access token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
     }
   }
 
@@ -51,7 +51,7 @@ class JWT {
     }
     // eslint-disable-next-line unused-imports/no-unused-vars
     catch (error) {
-      throw new UnauthorizedException("Invalid or expired refresh token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
+      return new UnauthorizedException("Invalid or expired refresh token", ErrorCodeEnum.AUTH_TOKEN_INVALID);
     }
   }
 }

@@ -7,10 +7,11 @@ import { Server as SocketServer } from "socket.io";
 import GolferModel from "@/modules/golfer/golfer.model";
 import UserModel from "@/modules/user/user.model";
 
+import { logger } from "./middlewares/pino-logger.js";
 import ParticipantModel from "./modules/conversation/conversation-participant.model";
 import MessageModel from "./modules/message/message.model";
+import { UnauthorizedException } from "./utils/app-error.utils";
 import { jwtUtils } from "./utils/jwt.utils";
-import { logger } from "./middlewares/pino-logger";
 
 // eslint-disable-next-line import/no-mutable-exports
 let io: SocketServer;
@@ -26,15 +27,21 @@ export function initSocket(server: HTTPServer) {
   // ✅ Authenticate socket connection
   io.use((socket, next) => {
     try {
-      const authHeader = socket.handshake.headers.authorization;
-      if (!authHeader) return next(new Error("No token provided"));
+      const token = socket.handshake.query?.token;
+      logger.info(`Token: ${token}`);
+      if (!token) return next(new Error("No token provided"));
 
-      const token = authHeader.split(" ")[1];
-      const decoded = jwtUtils.verifyAccessToken(token);
-
-      socket.userId = decoded.userId;
+      const decoded = jwtUtils.verifyRefreshToken(token);
+      const decoded1 = jwtUtils.verifyAccessToken(token);
+      logger.info(`Decoded: ${JSON.stringify(decoded)}`);
+      logger.info(`Decoded1: ${JSON.stringify(decoded1)}`);
+      if (!(decoded instanceof UnauthorizedException)) {
+        socket.userId = decoded.userId;
+      }
+      else if (decoded1) {
+        socket.userId = decoded1.userId;
+      }
       next();
-      // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (err) {
       next(new Error("Invalid token"));
     }
@@ -78,7 +85,6 @@ export function initSocket(server: HTTPServer) {
         `User: ${userId}, convId: ${convId}, content: ${content}, type: ${type}`
       );
       console.log(`------------------------body------------------------------`);
-
       const ok = await ParticipantModel.exists({ convId, userId });
       if (!ok) {
         logger.info(
@@ -94,7 +100,7 @@ export function initSocket(server: HTTPServer) {
         messageType: type,
       });
 
-      io.to(convId).emit("new-msg", msg);
+      socket.to(convId).emit("new-msg", msg);
     });
 
     // Location events, disconnect, etc.

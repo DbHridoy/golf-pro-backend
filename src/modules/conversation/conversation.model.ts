@@ -9,8 +9,9 @@ const ConversationSchema = new Schema(
     },
     title: {
       type: String,
+      default: "",
     },
-    clubId: {
+    clubId: { // ensure this matches your backend payload
       type: Schema.Types.ObjectId,
       ref: "Club",
     },

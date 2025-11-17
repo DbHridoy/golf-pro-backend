@@ -60,22 +60,24 @@ export function initSocket(server: HTTPServer) {
     }
 
     // Conversation events
-    // socket.on("join", async ({ convId }) => {
-    //   logger.info(`User ${userId} joined conversation ${convId}`);
-    //   const ok = await ParticipantModel.exists({ convId, userId });
-    //   if (ok) socket.join(convId);
-    //   else {
-    //     logger.info(
-    //       `User ${userId} is not a participant of conversation ${convId}`
-    //     );
-    //     socket.emit("error", "You are not a participant");
-    //   }
-    // });
+    socket.on("join", async ({ convId }) => {
+      logger.info(`User ${userId} joined conversation ${convId}`);
+      const ok = await ParticipantModel.exists({ convId, userId });
+      if (ok) socket.join(convId);
+      else {
+        logger.info(
+          `User ${userId} is not a participant of conversation ${convId}`
+        );
+        socket.emit("error", "You are not a participant");
+      }
+    });
 
     socket.on("send-msg", async ({ convId, content, type }) => {
-      console.log(`------------------------body------------------------------`)
-      logger.info(`User: ${userId}, convId: ${convId}, content: ${content}, type: ${type}`);
-      console.log(`------------------------body------------------------------`)
+      console.log(`------------------------body------------------------------`);
+      logger.info(
+        `User: ${userId}, convId: ${convId}, content: ${content}, type: ${type}`
+      );
+      console.log(`------------------------body------------------------------`);
 
       const ok = await ParticipantModel.exists({ convId, userId });
       if (!ok) {

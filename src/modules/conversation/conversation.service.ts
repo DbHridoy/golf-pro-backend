@@ -2,11 +2,10 @@ import { Types } from "mongoose";
 
 import ClubModel from "../club/club.model";
 import { golferRepository } from "../golfer/golfer.repository";
-import ParticipantModel from "./conversation-participant.model";
+import ConversationParticipantModel from "./conversation-participant.model";
 import ConversationModel from "./conversation.model";
 import conversationRepository from "./conversation.repository";
 import { logger } from "@/middlewares/pino-logger";
-import PrivateConversationModel from "./private-conversation.model";
 
 class ConversationService {
   async getOrCreatePrivate(userId: string, golferId: string) {
@@ -15,7 +14,7 @@ class ConversationService {
       members: [userId, golferId],
     });
     logger.info(`from conversation service: ${JSON.stringify(newPrivateConv)}`);
-    await ParticipantModel.insertMany([
+    await ConversationParticipantModel.insertMany([
       { convId: newPrivateConv._id, userId },
       { convId: newPrivateConv._id, userId: golferId },
     ]);
@@ -23,14 +22,34 @@ class ConversationService {
   }
 
   async createChannel(data: any) {
+    // Create a new channel
     const newChannel = await conversationRepository.createNewChannel(data);
-    const newParticipant = await ParticipantModel.insertMany(
-      data.members.map((uid: any) => ({
-        convId: newChannel._id,
-        userId: uid,
-      }))
-    );
-    logger.info(`from conversation service ${newParticipant}`);
+    console.log("New channel created →", newChannel);
+
+    // Make sure members exist
+    if (!data.members || !data.members.length) {
+      console.warn("No members provided to add as participants");
+      return newChannel;
+    }
+
+    // Prepare participants array
+    const participants = data.members.map((uid: any) => ({
+      convId: newChannel._id,
+      userId: uid,
+    }));
+
+    console.log("Participants array →", participants);
+
+    // Insert participants
+    try {
+      const inserted = await ConversationParticipantModel.insertMany(
+        participants
+      );
+      console.log("Participants inserted successfully →", inserted);
+    } catch (err) {
+      console.error("INSERT MANY ERROR →", err);
+    }
+
     return newChannel;
   }
 
@@ -49,7 +68,7 @@ class ConversationService {
   //     title,
   //   });
 
-  //   await ParticipantModel.insertMany(
+  //   await ConversationParticipantModel.insertMany(
   //     memberIds.map((uid) => ({
   //       convId: conv._id,
   //       userId: uid,
@@ -58,27 +77,27 @@ class ConversationService {
   //   return conv;
   // }
 
-  async createClubConversation(clubId: string, title: string) {
-    const club = await ClubModel.findById(clubId)
-      .populate("userId", "fullName")
-      .lean();
-    if (!club) throw new Error("Club not found");
-    logger.info(`from conversation service: ${JSON.stringify(club)}`);
+  // async createClubConversation(clubId: string, title: string) {
+  //   const club = await ClubModel.findById(clubId)
+  //     .populate("userId", "fullName")
+  //     .lean();
+  //   if (!club) throw new Error("Club not found");
+  //   logger.info(`from conversation service: ${JSON.stringify(club)}`);
 
-    const conv = await ConversationModel.create({
-      type: "club",
-      name: club.userId.fullName,
-      title,
-    });
+  //   const conv = await ConversationModel.create({
+  //     type: "club",
+  //     name: club.userId.fullName,
+  //     title,
+  //   });
 
-    await ParticipantModel.insertMany(
-      memberIds.map((uid) => ({
-        convId: conv._id,
-        userId: uid,
-      }))
-    );
-    return conv;
-  }
+  //   await ConversationParticipantModel.insertMany(
+  //     memberIds.map((uid) => ({
+  //       convId: conv._id,
+  //       userId: uid,
+  //     }))
+  //   );
+  //   return conv;
+  // }
 
   async listForUser(userId: string) {
     logger.info(`from service layer - email: ${userId}`);
@@ -91,7 +110,7 @@ class ConversationService {
   }
 
   async isParticipant(convId: string, userId: string) {
-    return !!(await ParticipantModel.exists({ convId, userId }));
+    return !!(await ConversationParticipantModel.exists({ convId, userId }));
   }
   getChannelStats() {
     return ConversationModel.countDocuments({ type: "channel" });

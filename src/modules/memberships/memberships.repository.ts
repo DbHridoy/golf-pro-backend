@@ -110,9 +110,9 @@ class MembershipRepository {
 
   async getAllMembersOfClub(clubId: string) {
     const members = await MembershipModel.find({ clubId, status: "approved" }, { golferId: 1 })
-      .populate("golferId", "fullName")
+      .populate("golferId", "fullName userId")
       .lean();
-    logger.info(`members from repo: ${JSON.stringify(members)}`);
+    logger.info(`members from repo: ${JSON.stringify(members)}`); 
     return members;
   }
 }

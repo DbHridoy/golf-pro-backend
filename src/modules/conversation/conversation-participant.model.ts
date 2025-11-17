@@ -20,4 +20,5 @@ const ConversationParticipantModel = model(
   "ConversationParticipant",
   ParticipantSchema,
 );
+
 export default ConversationParticipantModel;

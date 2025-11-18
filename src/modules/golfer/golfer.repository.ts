@@ -47,7 +47,7 @@ export class GolferRepository {
       .lean();
 
     if (!profile) throw new NotFoundException("Golfer profile not found");
-    logger.info(`from golfer repository ${JSON.stringify(profile)}`);
+    logger.info(`from golfer repository user`, profile);
     return profile;
   }
 

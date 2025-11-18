@@ -55,7 +55,7 @@ const CourseSchema = new Schema({
 
   // Course details
   numHoles: { type: Number, default: 18 },
-  measure: { type: String, enum: ["m", "yards"], default: "m" }, // meters or yards
+  measure: { type: String, enum: ["m", "y"], default: "m" }, // meters or yards
   hasGPS: { type: Boolean, default: false },
 
   // Par and indexes for men and women

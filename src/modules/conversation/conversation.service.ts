@@ -9,6 +9,13 @@ import conversationRepository from "./conversation.repository";
 
 class ConversationService {
   async getOrCreatePrivate(userId: string, golferId: string) {
+    const existingConv = await ConversationModel.findOne({
+      type: "private",
+      members: [userId, golferId],
+    });
+    if (existingConv) {
+      return existingConv;
+    }
     const newPrivateConv = await ConversationModel.create({
       type: "private",
       members: [userId, golferId],

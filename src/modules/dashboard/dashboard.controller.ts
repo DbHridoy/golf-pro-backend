@@ -29,12 +29,14 @@ class DashboardController {
         message: "Dashboard data retrieved successfully",
         data: dashboardData,
       });
-    }
-    catch (error) {
-      logger.error({
-        error: error instanceof Error ? error.message : "Unknown error",
-        method: "getCompleteDashboard",
-      }, "Failed to fetch dashboard");
+    } catch (error) {
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+          method: "getCompleteDashboard",
+        },
+        "Failed to fetch dashboard"
+      );
       throw error;
     }
   }
@@ -96,11 +98,13 @@ class DashboardController {
     });
   }
 
-  getGolferProfiles = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    // logger.info(req, "Getting profiles from controller");
-    const result = await golferRepository.getAllGolfers();
-    return res.status(HTTPSTATUS.OK).json(result);
-  });
+  getGolferProfiles = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      // logger.info(req, "Getting profiles from controller");
+      const result = await golferRepository.getAllGolfers();
+      return res.status(HTTPSTATUS.OK).json(result);
+    }
+  );
 
   // getSingleGolferProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
   //   const { id } = req.params; // ← access the param
@@ -113,24 +117,55 @@ class DashboardController {
   //   const profile = await golferService.toggleGolferActiveStatus(id);
   //   return res.status(HTTPSTATUS.OK).json(profile);
   // }
-  getAllClubs = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const clubs = await dashboardService.getAllClubs();
-    res.status(HTTPSTATUS.OK).json({
-      success: true,
-      message: "Clubs fetched successfully",
-      data: clubs,
-    });
-  });
-  
-  getMembersOfaClub = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const clubId = req.params.clubId;
-    const club = await dashboardService.getMembersOfaClub(clubId);
-    res.status(HTTPSTATUS.OK).json({
-      success: true,
-      message: "Clubs members successfully",
-      data: club,
-    });
-  });
+  getAllClubs = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const clubs = await dashboardService.getAllClubs();
+      res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: "Clubs fetched successfully",
+        data: clubs,
+      });
+    }
+  );
+
+  getMembersOfaClub = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const clubId = req.params.clubId;
+      const club = await dashboardService.getMembersOfaClub(clubId);
+      res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: "Clubs members successfully",
+        data: club,
+      });
+    }
+  );
+
+  getMyProfile = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const userId = req.user?.userId;
+      const user = await dashboardService.getMyProfile(userId);
+      res.status(HTTPSTATUS.OK).json({
+        success: true,
+        message: "My profile fetched successfully",
+        data: user,
+      });
+    }
+  );
+
+  updateProfile = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { body } = req;
+      const userId = req.user!.userId; // From auth middleware
+
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      const result = await dashboardService.updateProfile(userId, body, files);
+
+      return res.status(HTTPSTATUS.OK).json(result);
+    }
+  );
+
 }
 
-export const dashboardController = new DashboardController();
+const dashboardController = new DashboardController();
+export default dashboardController;

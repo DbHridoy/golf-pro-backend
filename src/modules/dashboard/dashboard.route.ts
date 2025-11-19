@@ -2,9 +2,10 @@ import { Router } from "express";
 
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { authMiddleware } from "@/middlewares/auth.middleware";
+import { upload } from "@/middlewares/upload.middleware";
 
 import adminController from "../admin/admin.controller";
-import { dashboardController } from "./dashboard.controller";
+import dashboardController from "./dashboard.controller";
 
 const router = Router();
 
@@ -14,6 +15,17 @@ router.use(authMiddleware.authenticate);
  * @desc    Get complete dashboard data (all metrics in one call)
  * @access  Private (Admin only)
  */
+router.get("/get-my-profile", dashboardController.getMyProfile);
+
+router.patch(
+  "/update-my-profile",
+  upload.fields([
+    { name: "profileImage", maxCount: 1 },
+    { name: "coverImage", maxCount: 1 },
+  ]),
+  dashboardController.updateProfile,
+);
+
 router.get(
   "/analytics",
   authMiddleware.authenticate.bind(authMiddleware),

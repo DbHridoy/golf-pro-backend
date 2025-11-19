@@ -39,12 +39,21 @@ const EventSchema = new Schema({
     // ],
   },
 
+  // ✅ NEW: Event Type (club-organized vs friend event)
+  eventType: {
+    type: String,
+    enum: ["club", "friend"],
+    default: "club",
+  },
+
   currentParticipants: { type: Number, default: 0 }, // ✅ ADD THIS - Track accepted invitations
   status: {
     type: String,
     enum: ["draft", "upcoming", "active", "completed", "cancelled"],
     default: "draft",
   },
+
+  // maxParticipants: { type: Number, default: 8 },
   isPublic: { type: Boolean, default: true },
   description: { type: String, max_length: 1000 },
   prizePool: { type: Number, min: 0 },
@@ -57,6 +66,7 @@ const EventSchema = new Schema({
 EventSchema.index({ clubId: 1, status: 1 });
 EventSchema.index({ eventDate: 1, status: 1 });
 EventSchema.index({ createdBy: 1 });
+EventSchema.index({ eventType: 1, status: 1 }); // ✅ NEW: For friend events
 
 const EventModel = model("Event", EventSchema);
 

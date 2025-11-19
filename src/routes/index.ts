@@ -4,6 +4,7 @@ import authRouter from "@/modules/auth/auth.route";
 import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
 import channelRouter from "@/modules/conversation/conversation.route";
+import courseRouter from "@/modules/courses/course.routes";
 import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import eventRouter from "@/modules/events/event.routes";
 import friendsRouter from "@/modules/friends/friends.route";
@@ -75,7 +76,7 @@ const moduleRoutes = [
     route: eventRouter,
   },
   {
-    path: "/report",
+    path: "/reports",
     route: reportRouter,
   },
   {
@@ -85,6 +86,10 @@ const moduleRoutes = [
   {
     path: "/locations",
     route: locationRouter,
+  },
+  {
+    path: "/courses",
+    route: courseRouter,
   },
   {
     path: "/message",

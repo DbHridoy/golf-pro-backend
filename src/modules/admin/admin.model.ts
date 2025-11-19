@@ -14,10 +14,7 @@ const AdminSchema = new Schema({
   },
   gender: {
     type: String,
-    enum: {
-      values: ["male", "female", "other", "prefer_not_to_say"],
-      message: "Gender must be male, female, other, or prefer_not_to_say",
-    },
+   
   },
   dateOfBirth: {
     type: Date,

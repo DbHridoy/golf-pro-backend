@@ -28,7 +28,7 @@ export async function updateHoleScore(req: Request, res: Response) {
       chipIns,
     } = req.body;
 
-    const userId = req.user!.userId;
+    const userId = req.user?.userId;
 
     if (!holeNumber || holeNumber < 1 || holeNumber > 18) {
       return res.status(400).json({ message: "Invalid hole number" });
@@ -53,9 +53,19 @@ export async function updateHoleScore(req: Request, res: Response) {
       return res.status(404).json({ message: "Scorecard not found" });
     }
 
+    if (scorecard.status === "not_started" && holeNumber === 1) {
+      scorecard.status = "in_progress";
+
+      // Also update GameParticipation status
+      await GameParticipationModel.findByIdAndUpdate(
+        scorecard.gameParticipationId,
+        { status: "playing", playedAt: new Date() },
+      );
+    }
+
     // Verify ownership
     if (scorecard.playerId.userId.toString() !== userId) {
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: "Unauthorized to submit score." });
     }
 
     // Check if round is in valid status

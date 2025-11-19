@@ -3,6 +3,8 @@ import { logger } from "@/middlewares/pino-logger";
 import GolferModel from "../golfer/golfer.model";
 import PostModel from "../posts/posts.model";
 import UserModel from "../user/user.model";
+import { NotFoundException } from "@/utils/app-error.utils";
+import AdminModel from "../admin/admin.model";
 
 class DashboardRepository {
   async getUserStats() {
@@ -25,7 +27,10 @@ class DashboardRepository {
           monthly: [
             {
               $group: {
-                _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+                _id: {
+                  year: { $year: "$createdAt" },
+                  month: { $month: "$createdAt" },
+                },
                 count: { $sum: 1 },
               },
             },
@@ -51,7 +56,9 @@ class DashboardRepository {
         newUsers: w.count,
       })),
       monthly: rawStats[0].monthly.map((m: any) => ({
-        month: new Date(m._id.year, m._id.month - 1).toLocaleString("default", { month: "long" }),
+        month: new Date(m._id.year, m._id.month - 1).toLocaleString("default", {
+          month: "long",
+        }),
         newUsers: m.count,
       })),
       yearly: rawStats[0].yearly.map((y: any) => ({
@@ -64,12 +71,17 @@ class DashboardRepository {
   }
 
   async getActiveUsers() {
-    const users = await UserModel.find({role: { $in: ["golfer", "golf_club"] }, isActive: true }).countDocuments();
+    const users = await UserModel.find({
+      role: { $in: ["golfer", "golf_club"] },
+      isActive: true,
+    }).countDocuments();
     return users;
   }
 
   async getTotalUsers() {
-    const users = await UserModel.find({ role: { $in: ["golfer", "golf_club"] } }).countDocuments();
+    const users = await UserModel.find({
+      role: { $in: ["golfer", "golf_club"] },
+    }).countDocuments();
     return users;
   }
 
@@ -95,6 +107,23 @@ class DashboardRepository {
   async getAllGolfers() {
     const golfers = await GolferModel.find({}).lean();
     return golfers;
+  }
+
+  async updateInDB(profileId: string, updateData: any) {
+    const profile = await AdminModel.findByIdAndUpdate(
+      profileId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    )
+      .populate({ path: "userId", select: "fullName email handicapIndex" })
+      .lean();
+
+    if (!profile) {
+      throw new NotFoundException("Golfer profile not found");
+    }
+
+    logger.info(`from golfer repository ${profile}`);
+    return profile;
   }
 }
 

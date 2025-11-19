@@ -14,6 +14,7 @@ class GolferController {
       return res.status(HTTPSTATUS.OK).json(profile);
     }
   );
+
   getSingleGolfer = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
       const { body } = req;
@@ -26,7 +27,7 @@ class GolferController {
       return res.status(HTTPSTATUS.OK).json(result);
     }
   );
-  // Update Profile
+
   updateProfile = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
       const { body } = req;
@@ -39,6 +40,7 @@ class GolferController {
       return res.status(HTTPSTATUS.OK).json(result);
     }
   );
+
   reportProfile = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
       const { body } = req;

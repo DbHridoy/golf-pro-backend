@@ -6,6 +6,8 @@ import { golferRepository } from "../golfer/golfer.repository";
 import UserModel from "../user/user.model";
 import { dashboardRepository } from "./dashboard.repository";
 import { membershipRepository } from "../memberships/memberships.repository";
+import AdminModel from "../admin/admin.model";
+import fileUploadUtils from "@/utils/file-upload.utils";
 
 // interface DashboardMetrics {
 //   activeUsers: number;
@@ -474,15 +476,76 @@ class DashboardService {
     return stats;
   }
 
- async getMembersOfaClub(clubId: string) {
+  async getMembersOfaClub(clubId: string) {
     const club = await clubRepository.findClubById(clubId);
     if (!club) {
       throw new Error("Club not found");
     }
-    logger.info({club},"club from dashboard service");
+    logger.info({ club }, "club from dashboard service");
     const clubUserId = club.userId;
     const clubMembers = membershipRepository.findMembersByClubId(clubUserId);
     return clubMembers;
+  }
+
+  async getMyProfile(userId: string) {
+    const user = await UserModel.findById({ _id: userId }).populate(
+      "admin",
+    );
+    return user;
+  }
+
+  async updateProfile(
+    userId: string,
+    body: any,
+    files: { [fieldname: string]: Express.Multer.File[] } = {}
+  ) {
+    const existing = await AdminModel.findOne({ userId });
+    if (!existing) throw new Error("Golfer profile not found");
+
+    const update = { ...body };
+
+    // profile image
+    if (files.profileImage?.[0]) {
+      const f = files.profileImage[0];
+      const key = `uploads/golfers/${userId}/profile-${Date.now()}-${
+        f.originalname
+      }`;
+      update.profileImage = await fileUploadUtils.uploadToS3(
+        f.buffer,
+        key,
+        f.mimetype
+      );
+    }
+    
+    // cover image
+    if (files.coverImage?.[0]) {
+      const f = files.coverImage[0];
+      const key = `uploads/golfers/${userId}/cover-${Date.now()}-${
+        f.originalname
+      }`;
+      update.coverImage = await fileUploadUtils.uploadToS3(
+        f.buffer,
+        key,
+        f.mimetype
+      );
+    }
+    // strip undefined so we don’t overwrite existing fields
+    Object.keys(update).forEach(
+      (k) => (update as any)[k] == null && delete (update as any)[k]
+    );
+    console.log("update", update)
+    
+    const saved = await dashboardRepository.updateInDB(
+      existing._id as string,
+      update
+    );
+    console.log("saved", saved)
+
+    return {
+      success: true,
+      data: saved,
+      message: "Golfer profile updated successfully",
+    };
   }
 }
 

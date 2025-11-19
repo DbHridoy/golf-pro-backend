@@ -121,6 +121,16 @@ class DashboardController {
       data: clubs,
     });
   });
+  
+  getMembersOfaClub = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const clubId = req.params.clubId;
+    const club = await dashboardService.getMembersOfaClub(clubId);
+    res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Clubs members successfully",
+      data: club,
+    });
+  });
 }
 
 export const dashboardController = new DashboardController();

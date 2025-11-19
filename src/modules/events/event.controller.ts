@@ -26,6 +26,14 @@ export async function createEvent(req: Request, res: Response) {
       selectedGolfers,
     } = req.body;
 
+    logger.info(
+      "-------------------------------------body---------------------"
+    );
+    logger.info(req.body);
+    logger.info(
+      "-------------------------------------body---------------------"
+    );
+
     const userId = req.user!.userId;
     const userRole = req.user!.role;
 
@@ -45,14 +53,20 @@ export async function createEvent(req: Request, res: Response) {
     // Validate required fields
     if (!courseID || !eventDate || !eventTime || !gameFormat) {
       return res.status(400).json({
-        message: "Missing required fields: courseId, eventDate, eventTime, gameFormat",
+        message:
+          "Missing required fields: courseId, eventDate, eventTime, gameFormat",
       });
     }
 
     // Validate selected golfers
-    if (!selectedGolfers || !Array.isArray(selectedGolfers) || selectedGolfers.length < 2) {
+    if (
+      !selectedGolfers ||
+      !Array.isArray(selectedGolfers) ||
+      selectedGolfers.length < 2
+    ) {
       return res.status(400).json({
-        message: "Please select at least two club member to invite to the event.",
+        message:
+          "Please select at least two club member to invite to the event.",
       });
     }
 
@@ -77,11 +91,9 @@ export async function createEvent(req: Request, res: Response) {
         if (!golfClubInfo) {
           return res.status(403).json({
             message: "You can only create events for your own club",
-
           });
         }
-      }
-      else if (userRole === "admin") {
+      } else if (userRole === "admin") {
         const club = await ClubModel.findById(clubId);
         if (!club) {
           return res.status(404).json({ message: "Club not found" });
@@ -102,8 +114,7 @@ export async function createEvent(req: Request, res: Response) {
         const courseApiResponse = await fetch(apiUrl, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${env.GOLF_API_KEY}`,
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.GOLF_API_KEY}`,
           },
         });
 
@@ -112,9 +123,9 @@ export async function createEvent(req: Request, res: Response) {
             message: "Course not found in external API",
           });
         }
-
+        // logger.info(`Course found in external API: ${courseID}`);
         const courseData = await courseApiResponse.json();
-
+        logger.info(`Course found in external API`, courseData);
         const tees = courseData.tees.map((tee: any) => {
           const holeLengths = [];
           for (let i = 1; i <= 18; i++) {
@@ -122,7 +133,10 @@ export async function createEvent(req: Request, res: Response) {
           }
 
           // Calculate total length
-          const totalLength = holeLengths.reduce((sum: number, len: number) => sum + len, 0);
+          const totalLength = holeLengths.reduce(
+            (sum: number, len: number) => sum + len,
+            0
+          );
 
           return {
             teeID: tee.teeID,
@@ -176,9 +190,10 @@ export async function createEvent(req: Request, res: Response) {
           oldCourseIDs: courseData.oldCourseIDs || [],
         });
 
-        console.log(`✅ Course created: ${course.courseName} (${course.courseID})`);
-      }
-      catch (apiError) {
+        console.log(
+          `✅ Course created: ${course.courseName} (${course.courseID})`
+        );
+      } catch (apiError) {
         console.error("Error fetching course from API:", apiError);
         return res.status(500).json({
           message: "Failed to fetch course data from external API",
@@ -202,9 +217,9 @@ export async function createEvent(req: Request, res: Response) {
       });
 
       if (memberships.length !== selectedGolfers.length) {
-        const validGolferIds = memberships.map(m => m.golferId.toString());
+        const validGolferIds = memberships.map((m) => m.golferId.toString());
         const invalidGolfers = selectedGolfers.filter(
-          id => !validGolferIds.includes(id.toString()),
+          (id) => !validGolferIds.includes(id.toString())
         );
 
         return res.status(400).json({
@@ -240,7 +255,7 @@ export async function createEvent(req: Request, res: Response) {
     // ============================================
     // 7. CREATE EVENT INVITATIONS FOR SELECTED GOLFERS
     // ============================================
-    const invitations = selectedGolfers.map(golferId => ({
+    const invitations = selectedGolfers.map((golferId) => ({
       eventId: event._id,
       golferId,
       invitedBy: userId,
@@ -252,7 +267,9 @@ export async function createEvent(req: Request, res: Response) {
     logger.info("----------------------");
     logger.info(invitations, "GOLFER INFORMATION");
 
-    const createdInvitations = await EventInvitationModel.insertMany(invitations);
+    const createdInvitations = await EventInvitationModel.insertMany(
+      invitations
+    );
 
     // ============================================
     // 8. CREATE NOTIFICATIONS FOR INVITED GOLFERS
@@ -261,11 +278,13 @@ export async function createEvent(req: Request, res: Response) {
       _id: { $in: selectedGolfers },
     }).select("userId fullName");
 
-    const notifications = golfers.map(golfer => ({
+    const notifications = golfers.map((golfer) => ({
       recipientId: golfer.userId,
       type: "event_invitation",
       title: "New Event Invitation",
-      message: `You have been invited to participate in "${golfClubInfo?.clubName || "Golf Event"}" at ${course.courseName}`,
+      message: `You have been invited to participate in "${
+        golfClubInfo?.clubName || "Golf Event"
+      }" at ${course.courseName}`,
       relatedEntityType: "Event",
       relatedEntityId: event._id,
       isRead: false,
@@ -282,7 +301,10 @@ export async function createEvent(req: Request, res: Response) {
     const populatedEvent = await EventModel.findById(event._id)
       .populate("clubId", "clubName city country clubProfileImage")
       .populate("createdBy", "fullName email role")
-      .populate("courseId", "courseName clubName location courseID numHoles measure tees");
+      .populate(
+        "courseId",
+        "courseName clubName location courseID numHoles measure tees"
+      );
 
     // Get invitation details with golfer info
     const invitationsWithGolfers = await EventInvitationModel.find({
@@ -299,7 +321,8 @@ export async function createEvent(req: Request, res: Response) {
       .lean();
 
     return res.status(201).json({
-      message: "Event created successfully and invitations sent to selected golfers",
+      message:
+        "Event created successfully and invitations sent to selected golfers",
       event: populatedEvent,
       course: {
         courseID: course.courseID,
@@ -316,7 +339,7 @@ export async function createEvent(req: Request, res: Response) {
           totalLength: t.totalLength,
         })),
       },
-      invitations: invitationsWithGolfers.map(inv => ({
+      invitations: invitationsWithGolfers.map((inv) => ({
         invitationId: inv._id,
         golfer: inv.golferId
           ? {
@@ -338,8 +361,7 @@ export async function createEvent(req: Request, res: Response) {
         declinedCount: 0,
       },
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error creating event:", error);
 
     if (error instanceof Error) {
@@ -365,18 +387,21 @@ export async function createEvent(req: Request, res: Response) {
 // Get all events (with filters)
 export async function getAllEvents(req: Request, res: Response) {
   try {
-    const { status, gameFormat, clubId, isPublic, page = 1, limit = 10 } = req.query;
+    const {
+      status,
+      gameFormat,
+      clubId,
+      isPublic,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
     const filter: any = {};
 
-    if (status)
-      filter.status = status;
-    if (gameFormat)
-      filter.gameFormat = gameFormat;
-    if (clubId)
-      filter.clubId = clubId;
-    if (isPublic !== undefined)
-      filter.isPublic = isPublic === "true";
+    if (status) filter.status = status;
+    if (gameFormat) filter.gameFormat = gameFormat;
+    if (clubId) filter.clubId = clubId;
+    if (isPublic !== undefined) filter.isPublic = isPublic === "true";
 
     const skip = (Number(page) - 1) * Number(limit);
 
@@ -399,8 +424,7 @@ export async function getAllEvents(req: Request, res: Response) {
         eventsPerPage: Number(limit),
       },
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching events:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -419,7 +443,8 @@ export async function getEventById(req: Request, res: Response) {
       .populate("createdBy", "fullName email role profileImage")
       .populate({
         path: "courseId",
-        select: "courseID courseName clubName location numHoles measure tees parsMen parsWomen hasGPS",
+        select:
+          "courseID courseName clubName location numHoles measure tees parsMen parsWomen hasGPS",
       })
       .populate({
         path: "leaderboard",
@@ -452,7 +477,9 @@ export async function getEventById(req: Request, res: Response) {
       .lean();
 
     // ✅ Get all game participations (accepted players)
-    const participations = await GameParticipationModel.find({ eventId: event._id })
+    const participations = await GameParticipationModel.find({
+      eventId: event._id,
+    })
       .populate({
         path: "playerId",
         select: "fullName profileImage gender",
@@ -467,33 +494,45 @@ export async function getEventById(req: Request, res: Response) {
     // ✅ Calculate statistics
     const stats = {
       totalInvited: invitations.length,
-      pendingInvitations: invitations.filter(inv => inv.invitationStatus === "pending").length,
-      acceptedInvitations: invitations.filter(inv => inv.invitationStatus === "accepted").length,
-      declinedInvitations: invitations.filter(inv => inv.invitationStatus === "declined").length,
-      expiredInvitations: invitations.filter(inv => inv.invitationStatus === "expired").length,
+      pendingInvitations: invitations.filter(
+        (inv) => inv.invitationStatus === "pending"
+      ).length,
+      acceptedInvitations: invitations.filter(
+        (inv) => inv.invitationStatus === "accepted"
+      ).length,
+      declinedInvitations: invitations.filter(
+        (inv) => inv.invitationStatus === "declined"
+      ).length,
+      expiredInvitations: invitations.filter(
+        (inv) => inv.invitationStatus === "expired"
+      ).length,
       totalParticipants: participations.length,
-      registeredPlayers: participations.filter(p => p.status === "registered").length,
-      playingPlayers: participations.filter(p => p.status === "playing").length,
-      completedPlayers: participations.filter(p => p.status === "completed").length,
+      registeredPlayers: participations.filter((p) => p.status === "registered")
+        .length,
+      playingPlayers: participations.filter((p) => p.status === "playing")
+        .length,
+      completedPlayers: participations.filter((p) => p.status === "completed")
+        .length,
       spotsRemaining: event.maxParticipants - event.currentParticipants,
     };
 
     // ✅ Format course tees for display
-    const availableTees = event.courseId.tees?.map((tee: any) => ({
-      teeID: tee.teeID,
-      teeName: tee.teeName,
-      teeColor: tee.teeColor,
-      totalLength: tee.totalLength,
-      hasMensRatings: !!(tee.courseRatingMen && tee.slopeMen),
-      hasWomensRatings: !!(tee.courseRatingWomen && tee.slopeWomen),
-      courseRatingMen: tee.courseRatingMen,
-      slopeMen: tee.slopeMen,
-      courseRatingWomen: tee.courseRatingWomen,
-      slopeWomen: tee.slopeWomen,
-    })) || [];
+    const availableTees =
+      event.courseId.tees?.map((tee: any) => ({
+        teeID: tee.teeID,
+        teeName: tee.teeName,
+        teeColor: tee.teeColor,
+        totalLength: tee.totalLength,
+        hasMensRatings: !!(tee.courseRatingMen && tee.slopeMen),
+        hasWomensRatings: !!(tee.courseRatingWomen && tee.slopeWomen),
+        courseRatingMen: tee.courseRatingMen,
+        slopeMen: tee.slopeMen,
+        courseRatingWomen: tee.courseRatingWomen,
+        slopeWomen: tee.slopeWomen,
+      })) || [];
 
     // ✅ Format invitations for response
-    const formattedInvitations = invitations.map(inv => ({
+    const formattedInvitations = invitations.map((inv) => ({
       invitationId: inv._id,
       golfer: inv.golferId
         ? {
@@ -518,7 +557,7 @@ export async function getEventById(req: Request, res: Response) {
     }));
 
     // ✅ Format participants (accepted golfers)
-    const formattedParticipants = participations.map(participation => ({
+    const formattedParticipants = participations.map((participation) => ({
       participationId: participation._id,
       golfer: participation.playerId
         ? {
@@ -602,8 +641,7 @@ export async function getEventById(req: Request, res: Response) {
       leaderboard: event.leaderboard || [],
       stats,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching event:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -629,14 +667,16 @@ export async function updateEvent(req: Request, res: Response) {
 
     if (!isCreator && !isAdmin) {
       return res.status(403).json({
-        message: "Access denied. Only event creator or admin can update this event.",
+        message:
+          "Access denied. Only event creator or admin can update this event.",
       });
     }
 
     // Prevent status change if event is active/completed
     if (updates.status && event.status === "active") {
       return res.status(400).json({
-        message: "Cannot modify status of active event. Complete or cancel first.",
+        message:
+          "Cannot modify status of active event. Complete or cancel first.",
       });
     }
 
@@ -675,8 +715,7 @@ export async function updateEvent(req: Request, res: Response) {
       message: "Event updated successfully",
       event: updatedEvent,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error updating event:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -686,8 +725,8 @@ export async function updateEvent(req: Request, res: Response) {
 export async function deleteEvent(req: Request, res: Response) {
   try {
     const { eventId } = req.params;
-    const userId = req.user!.userId;
-    const userRole = req.user!.role;
+    const userId = req.user._id;
+    const userRole = req.user.role;
 
     const event = await EventModel.findById(eventId);
     if (!event) {
@@ -700,7 +739,16 @@ export async function deleteEvent(req: Request, res: Response) {
 
     if (!isCreator && !isAdmin) {
       return res.status(403).json({
-        message: "Access denied. Only event creator or admin can delete this event.",
+        message:
+          "Access denied. Only event creator or admin can delete this event.",
+      });
+    }
+
+    // Prevent deletion if event is active
+    if (event.status === "active") {
+      return res.status(400).json({
+        message:
+          "Cannot delete active event. Please cancel or complete it first.",
       });
     }
 
@@ -713,8 +761,7 @@ export async function deleteEvent(req: Request, res: Response) {
     return res.status(200).json({
       message: "Event deleted successfully",
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error deleting event:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -738,17 +785,22 @@ export async function startEvent(req: Request, res: Response) {
 
     if (!isCreator && !isAdmin) {
       return res.status(403).json({
-        message: "Access denied. Only event creator or admin can start this event.",
+        message:
+          "Access denied. Only event creator or admin can start this event.",
       });
     }
 
     // Validation
     if (event.status !== "upcoming") {
-      return res.status(400).json({ message: "Event is not in upcoming status" });
+      return res
+        .status(400)
+        .json({ message: "Event is not in upcoming status" });
     }
 
     if (event.currentParticipants < 2) {
-      return res.status(400).json({ message: "Need at least 2 participants to start event" });
+      return res
+        .status(400)
+        .json({ message: "Need at least 2 participants to start event" });
     }
 
     // Update status
@@ -762,8 +814,7 @@ export async function startEvent(req: Request, res: Response) {
       message: "Event started successfully",
       event,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error starting event:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -806,8 +857,7 @@ export async function completeEvent(req: Request, res: Response) {
       message: "Event completed successfully",
       event,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error completing event:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -849,7 +899,7 @@ export async function getEventInvitations(req: Request, res: Response) {
     return res.status(200).json({
       eventId,
       eventName: event.eventName,
-      invitations: invitations.map(inv => ({
+      invitations: invitations.map((inv) => ({
         invitationId: inv._id,
         golfer: inv.golferId
           ? {
@@ -873,8 +923,7 @@ export async function getEventInvitations(req: Request, res: Response) {
       })),
       count: invitations.length,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching event invitations:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -902,7 +951,10 @@ export async function getEventParticipants(req: Request, res: Response) {
           select: "handicapIndex email",
         },
       })
-      .populate("scorecardId", "status totalGrossScore totalNetScore front9Score back9Score")
+      .populate(
+        "scorecardId",
+        "status totalGrossScore totalNetScore front9Score back9Score"
+      )
       .sort({ position: 1, netScore: 1 })
       .lean();
 
@@ -910,7 +962,7 @@ export async function getEventParticipants(req: Request, res: Response) {
       eventId,
       eventName: event.eventName,
       eventStatus: event.status,
-      participants: participations.map(p => ({
+      participants: participations.map((p) => ({
         participationId: p._id,
         golfer: p.playerId
           ? {
@@ -947,8 +999,7 @@ export async function getEventParticipants(req: Request, res: Response) {
       })),
       count: participations.length,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching event participants:", error);
     return res.status(500).json({ message: "Internal server error" });
   }

@@ -5,6 +5,7 @@ import EventModel from "../events/event.model";
 import { golferRepository } from "../golfer/golfer.repository";
 import UserModel from "../user/user.model";
 import { dashboardRepository } from "./dashboard.repository";
+import { membershipRepository } from "../memberships/memberships.repository";
 
 // interface DashboardMetrics {
 //   activeUsers: number;
@@ -59,13 +60,16 @@ class DashboardService {
    * Get all dashboard metrics in a single call
    */
   async getDashboardMetrics() {
-    const [activeGameEvents] = await Promise.all([
-      this.getActiveGameEvents(),
-    ]);
+    const [activeGameEvents] = await Promise.all([this.getActiveGameEvents()]);
 
     const activeUsers = await dashboardRepository.getActiveUsers();
     const totalUsers = await dashboardRepository.getTotalUsers();
-    const dashboardData = { activeUsers, activeGameEvents, totalUsers, lastUpdated: new Date() };
+    const dashboardData = {
+      activeUsers,
+      activeGameEvents,
+      totalUsers,
+      lastUpdated: new Date(),
+    };
 
     return dashboardData;
   }
@@ -76,8 +80,8 @@ class DashboardService {
    */
   async getCompleteDashboard(): Promise<DashboardData> {
     try {
-      const [platformOverview, userMetrics, eventsOverview, eventsMetrics]
-        = await Promise.all([
+      const [platformOverview, userMetrics, eventsOverview, eventsMetrics] =
+        await Promise.all([
           this.getPlatformOverview(),
           dashboardRepository.getUserStats(),
           this.getEventsOverview(),
@@ -91,12 +95,14 @@ class DashboardService {
         eventsMetrics,
         lastUpdated: new Date(),
       };
-    }
-    catch (error) {
-      logger.error({
-        error: error instanceof Error ? error.message : "Unknown error",
-        method: "getCompleteDashboard",
-      }, "Error fetching complete dashboard");
+    } catch (error) {
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+          method: "getCompleteDashboard",
+        },
+        "Error fetching complete dashboard"
+      );
       throw error;
     }
   }
@@ -192,8 +198,7 @@ class DashboardService {
       });
 
       return count;
-    }
-    catch (error) {
+    } catch (error) {
       logger.error({ error }, "Error fetching active game events count");
       throw error;
     }
@@ -207,8 +212,8 @@ class DashboardService {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const [activeUsers, totalUsers, newSignups, activeEvents, totalEvents]
-        = await Promise.all([
+      const [activeUsers, totalUsers, newSignups, activeEvents, totalEvents] =
+        await Promise.all([
           // Active users: logged in within last 30 days
           UserModel.countDocuments({
             isActive: true,
@@ -240,8 +245,7 @@ class DashboardService {
         activeEvents,
         totalEvents,
       };
-    }
-    catch (error) {
+    } catch (error) {
       logger.error({ error }, "Error fetching platform overview");
       throw error;
     }
@@ -284,8 +288,7 @@ class DashboardService {
         upcoming,
         all,
       };
-    }
-    catch (error) {
+    } catch (error) {
       logger.error({ error }, "Error fetching events overview");
       throw error;
     }
@@ -295,7 +298,7 @@ class DashboardService {
    * Get user growth metrics by time period
    */
   async getUserGrowthMetrics(
-    period: "weekly" | "monthly" | "yearly",
+    period: "weekly" | "monthly" | "yearly"
   ): Promise<UserGrowthPoint[]> {
     try {
       let groupBy: any;
@@ -395,13 +398,15 @@ class DashboardService {
       ]);
 
       return metrics;
-    }
-    catch (error) {
-      logger.error({
-        error: error instanceof Error ? error.message : "Unknown error",
-        period,
-        method: "getUserGrowthMetrics",
-      }, "Error fetching user growth metrics");
+    } catch (error) {
+      logger.error(
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+          period,
+          method: "getUserGrowthMetrics",
+        },
+        "Error fetching user growth metrics"
+      );
       throw error;
     }
   }
@@ -426,7 +431,10 @@ class DashboardService {
           monthly: [
             {
               $group: {
-                _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+                _id: {
+                  year: { $year: "$createdAt" },
+                  month: { $month: "$createdAt" },
+                },
                 count: { $sum: 1 },
               },
             },
@@ -452,7 +460,9 @@ class DashboardService {
         newUsers: w.count,
       })),
       monthly: rawStats[0].monthly.map((m: any) => ({
-        month: new Date(m._id.year, m._id.month - 1).toLocaleString("default", { month: "long" }),
+        month: new Date(m._id.year, m._id.month - 1).toLocaleString("default", {
+          month: "long",
+        }),
         newUsers: m.count,
       })),
       yearly: rawStats[0].yearly.map((y: any) => ({
@@ -462,6 +472,17 @@ class DashboardService {
     };
 
     return stats;
+  }
+
+ async getMembersOfaClub(clubId: string) {
+    const club = await clubRepository.findClubById(clubId);
+    if (!club) {
+      throw new Error("Club not found");
+    }
+    logger.info({club},"club from dashboard service");
+    const clubUserId = club.userId;
+    const clubMembers = membershipRepository.findMembersByClubId(clubUserId);
+    return clubMembers;
   }
 }
 

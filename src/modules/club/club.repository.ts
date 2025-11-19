@@ -28,8 +28,8 @@ export class ClubRepository {
     const clubs = await ClubModel.find().lean();
     return clubs;
   }
-  async findClubById(clubId: string) {
-    const club = await ClubModel.findOne({ _id: clubId }).lean();
+  findClubById(clubId: string) {
+    const club = ClubModel.findById(clubId).lean();
     return club;
   }
 }

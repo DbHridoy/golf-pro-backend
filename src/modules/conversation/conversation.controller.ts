@@ -1,17 +1,18 @@
 // conversation.controller.ts
 import type { Request, Response } from "express";
 
-import { asyncHandler } from "@/middlewares/async-handler.middleware";
-
-import { conversationService } from "./conversation.service";
-import { title } from "process";
-import { channel } from "diagnostics_channel";
 import { HTTPSTATUS } from "@/config/http.config";
-import { success } from "zod/v4";
+import { asyncHandler } from "@/middlewares/async-handler.middleware";
+import { logger } from "@/middlewares/pino-logger";
+
 import conversationRepository from "./conversation.repository";
+import { conversationService } from "./conversation.service";
 
 class ConversationController {
   createPrivate = asyncHandler(async (req: Request, res: Response) => {
+    logger.info(
+      `from conversation controller: ${req.user!.userId} ${req.body.golferId}`
+    );
     const conv = await conversationService.getOrCreatePrivate(
       req.user!.userId,
       req.body.golferId
@@ -19,26 +20,13 @@ class ConversationController {
     res.status(201).json({ success: true, data: conv });
   });
 
-  createClub = asyncHandler(async (req: Request, res: Response) => {
-    const conv = await conversationService.createClubConversation(
-      req.user!.userId,
-      req.body.clubId,
-      req.body.title
-    );
-    res.status(201).json({ success: true, data: conv });
-  });
-
-  listMine = asyncHandler(async (req: Request, res: Response) => {
-    const list = await conversationService.listForUser(req.user!.userId);
-    res.json({ success: true, data: list });
-  });
   createChannel = asyncHandler(async (req, res) => {
     const { body } = req;
     const channel = {
       type: "channel",
-      title,
-      club: body.clubId,
-      members: body.memberId,
+      title: body.title,
+      clubId: body.clubId,
+      members: body.members,
     };
     const newChannel = await conversationService.createChannel(channel);
     res.status(HTTPSTATUS.OK).json({
@@ -47,6 +35,22 @@ class ConversationController {
       data: newChannel,
     });
   });
+
+  createClub = asyncHandler(async (req: Request, res: Response) => {
+    const conv = await conversationService.createClubConversation(
+      req.user!.userId,
+      req.body.club,
+      req.body.title
+    );
+    res.status(201).json({ success: true, data: conv });
+  });
+
+  listMine = asyncHandler(async (req: Request, res: Response) => {
+    logger.info(`from conversation controller: ${req.user!.userId}`);
+    const list = await conversationService.listForUser(req.user!.userId);
+    res.json({ success: true, data: list });
+  });
+
   getAllChannels = asyncHandler(async (req, res) => {
     const channels = await conversationRepository.getAllChannels();
     res.status(HTTPSTATUS.OK).json({
@@ -55,8 +59,8 @@ class ConversationController {
       data: channels,
     });
   });
-  getChannelStats = asyncHandler(async (req, res) => {
-    const stats = await conversationService.getChannelStats(req.params.id);
+  getChannelStats = asyncHandler(async (req: Request, res: Response) => {
+    const stats = await conversationService.getChannelStats();
     res.json({ success: true, data: stats });
   });
 }

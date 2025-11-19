@@ -17,16 +17,13 @@ export class GolferRepository {
     return await profile.save();
   }
 
-  async toggleGolferActiveStatus(
-    userId: string,
-    isActive: boolean,
-  ) {
+  async toggleGolferActiveStatus(userId: string, isActive: boolean) {
     logger.info("from golfer repository");
 
     const updatedGolfer = await GolferModel.findOneAndUpdate(
       { userId },
       { isActive },
-      { new: true, lean: true },
+      { new: true, lean: true }
     );
 
     if (!updatedGolfer) {
@@ -34,7 +31,7 @@ export class GolferRepository {
       return null;
     }
 
-    logger.info(updatedGolfer, "updated from golfer repository");
+    logger.info(`from golfer repository ${updatedGolfer}`);
     return updatedGolfer;
   }
 
@@ -43,15 +40,14 @@ export class GolferRepository {
   //     .lean();
   // }
 
-  async findGolferByUserId(userId:string) {
-    logger.info('golfer id from reposotory', userId);
+  async findGolferByUserId(userId: string) {
+    logger.info(`from golfer repository ${userId}`);
     const profile = await GolferModel.findOne({ userId })
       .populate({ path: "userId", select: "fullName email handicapIndex" })
       .lean();
 
-    if (!profile)
-      throw new NotFoundException("Golfer profile not found");
-    logger.info(profile, "findbyid in repository");
+    if (!profile) throw new NotFoundException("Golfer profile not found");
+    logger.info(`from golfer repository user`, profile);
     return profile;
   }
 
@@ -59,13 +55,16 @@ export class GolferRepository {
     const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $set: updateData },
-      { new: true, runValidators: true },
-    ).populate({ path: "userId", select: "fullName email handicapIndex" }).lean();
+      { new: true, runValidators: true }
+    )
+      .populate({ path: "userId", select: "fullName email handicapIndex" })
+      .lean();
 
     if (!profile) {
       throw new NotFoundException("Golfer profile not found");
     }
 
+    logger.info(`from golfer repository ${profile}`);
     return profile;
   }
 
@@ -224,7 +223,7 @@ export class GolferRepository {
     const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $addToSet: { friends: friendId } },
-      { new: true },
+      { new: true }
     ).lean();
 
     if (!profile) {
@@ -241,7 +240,7 @@ export class GolferRepository {
     const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $pull: { friends: friendId } },
-      { new: true },
+      { new: true }
     ).lean();
 
     if (!profile) {
@@ -258,7 +257,7 @@ export class GolferRepository {
     const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $addToSet: { clubMemberships: clubId } },
-      { new: true },
+      { new: true }
     ).lean();
 
     if (!profile) {
@@ -275,7 +274,7 @@ export class GolferRepository {
     const profile = await GolferModel.findByIdAndUpdate(
       profileId,
       { $pull: { clubMemberships: clubId } },
-      { new: true },
+      { new: true }
     ).lean();
 
     if (!profile) {

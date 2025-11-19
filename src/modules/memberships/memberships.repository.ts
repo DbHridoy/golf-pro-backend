@@ -28,7 +28,7 @@ class MembershipRepository {
   }
 
   async getMembershipRequests(clubId: string) {
-    logger.info("ClubId from member repo", clubId)
+    logger.info("ClubId from member repo", clubId);
     const requests = await MembershipModel.find({
       status: "pending",
       clubId,
@@ -118,6 +118,16 @@ class MembershipRepository {
       { new: true }
     );
     return membership;
+  }
+  async findMembersByClubId(clubId: string) {
+    console.warn(clubId);
+    const members = await MembershipModel.find(
+      { clubId, status: "approved" },
+      { golferId: 1 }
+    )
+      .populate("golferId", "fullName")
+      .lean();
+    return members;
   }
 }
 

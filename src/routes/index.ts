@@ -3,7 +3,6 @@ import express from "express";
 import authRouter from "@/modules/auth/auth.route";
 import clubRouter from "@/modules/club/club.route";
 import commentsRouter from "@/modules/comments/comments.route";
-import conversationRouter from "@/modules/conversation/conversation.route";
 import channelRouter from "@/modules/conversation/conversation.route";
 import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import eventRouter from "@/modules/events/event.routes";
@@ -12,6 +11,7 @@ import golferRouter from "@/modules/golfer/golfer.route";
 import likesRouter from "@/modules/likes/likes.route";
 import locationRouter from "@/modules/location/location.routes";
 import membershipRouter from "@/modules/memberships/memberships.route";
+import messageRouter from "@/modules/message/message.routes";
 import notificationRouter from "@/modules/notification/notification.route";
 import postsRouter from "@/modules/posts/posts.route";
 import reportRouter from "@/modules/report/report.route";
@@ -66,11 +66,6 @@ const moduleRoutes = [
     path: "/dashboard",
     route: dashboardRouter,
   },
-  // routes/index.ts
-  {
-    path: "/conversation",
-    route: conversationRouter,
-  },
   {
     path: "/membership",
     route: membershipRouter,
@@ -80,7 +75,7 @@ const moduleRoutes = [
     route: eventRouter,
   },
   {
-    path: "/reports",
+    path: "/report",
     route: reportRouter,
   },
   {
@@ -91,7 +86,11 @@ const moduleRoutes = [
     path: "/locations",
     route: locationRouter,
   },
+  {
+    path: "/message",
+    route: messageRouter,
+  },
 ];
 
-moduleRoutes.forEach(route => router.use(route.path, route.route));
+moduleRoutes.forEach((route) => router.use(route.path, route.route));
 export default router;

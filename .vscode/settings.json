@@ -58,7 +58,6 @@
     "maxlength",
     "Participations",
     "Signups",
-    "stableford",
-    "virtuals"
+    "stableford"
   ]
 }

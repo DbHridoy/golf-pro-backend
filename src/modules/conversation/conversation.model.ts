@@ -1,4 +1,4 @@
-import { model, Schema, Types } from "mongoose";
+import { model, Schema } from "mongoose";
 
 const ConversationSchema = new Schema(
   {
@@ -9,9 +9,10 @@ const ConversationSchema = new Schema(
     },
     title: {
       type: String,
+      default: "",
     },
-    club: {
-      type: Types.ObjectId,
+    clubId: { // ensure this matches your backend payload
+      type: Schema.Types.ObjectId,
       ref: "Club",
     },
     members: [
@@ -30,9 +31,9 @@ const ConversationSchema = new Schema(
         return ret;
       },
     },
-  }
+  },
 );
 
-const ConversationModel= model("Conversation", ConversationSchema);
+const ConversationModel = model("Conversation", ConversationSchema);
 
-export default ConversationModel
+export default ConversationModel;

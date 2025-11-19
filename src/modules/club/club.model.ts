@@ -1,4 +1,3 @@
-// file: src\modules\club\club.model.ts
 import { model, Schema } from "mongoose";
 
 const ClubSchema = new Schema({
@@ -66,4 +65,3 @@ ClubSchema.index({ userId: 1 }, { unique: true });
 const ClubModel = model("Club", ClubSchema);
 
 export default ClubModel;
-

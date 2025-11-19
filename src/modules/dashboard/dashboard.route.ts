@@ -51,6 +51,9 @@ router.get(
   authMiddleware.authorize(["admin", "golfer", "golf_club"]),
   dashboardController.getReports
 );
+
+router.get("/get-members-of-a-club/:clubId", dashboardController.getMembersOfaClub)
+
 router.get(
   "/get-any-user/:userId",
   authMiddleware.authorize(["admin"]),

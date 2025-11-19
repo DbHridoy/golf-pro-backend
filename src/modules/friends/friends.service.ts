@@ -19,8 +19,7 @@ class FriendService {
           senderName: "Friend", // You'll need to get the actual sender name
         },
       });
-    }
-    catch (error) {
+    } catch (error) {
       logger.error("Failed to send friend request notification:", error);
     }
 
@@ -89,7 +88,7 @@ class FriendService {
   getAllFriendships() {
     return friendRepository.getAllFriendships();
   }
- async cancelFriendRequest(data) {
+  async cancelFriendRequest(data) {
     const updatedData = {
       ...data,
       status: "cancelled",

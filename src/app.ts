@@ -10,7 +10,6 @@ import { errorHandler } from "@/middlewares/error-handler.middleware";
 import { notFound } from "@/middlewares/not-found.middleware";
 import rootRouter from "@/routes/index.js";
 
-import { initAgenda } from "./agenda/agenda.js";
 import { env } from "./env.js";
 
 const app: Application = express();
@@ -24,7 +23,8 @@ app.use(cors({ origin: true, credentials: true }));
 
 app.get("/", (req, res) => {
   res.json({
-    message: "<<<<<<<<<<<<<<<<<<<<  API is running in full speed!!!  >>>>>>>>>>>>>>>>>>>>>>>>>",
+    message:
+      "<<<<<<<<<<<<<<<<<<<<  API is running in full speed!!!  >>>>>>>>>>>>>>>>>>>>>>>>>",
   });
 });
 
@@ -33,12 +33,4 @@ app.use(env.BASE_URL, rootRouter);
 app.use(notFound);
 app.use(errorHandler);
 
-try {
-  (async () => {
-    await initAgenda();
-  })();
-}
-catch (error) {
-  console.error("Agenda init failed:", error);
-}
 export default app;

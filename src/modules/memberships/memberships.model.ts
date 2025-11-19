@@ -4,12 +4,12 @@ const MembershipSchema = new Schema(
   {
     clubId: {
       type: Schema.Types.ObjectId,
-      ref: "Club",
+      ref: "User",
       required: true,
     },
     golferId: {
       type: Schema.Types.ObjectId,
-      ref: "Golfer",
+      ref: "User",
       required: true,
     },
     status: {

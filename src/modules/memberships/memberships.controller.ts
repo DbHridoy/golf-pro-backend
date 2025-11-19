@@ -7,50 +7,23 @@ import { membershipService } from "./memberships.service";
 class MembershipController {
   // golfer send the request
   async sendMembershipRequest(req: any, res: any) {
-    const { userId } = req.user!;
-
+    const golferId = req.user.userId;
     const clubId = req.body.clubId;
-    const result = await membershipService.sendMembershipRequest({ userId, clubId });
+
+    console.log("Club information: ", golferId, clubId);
+    const result = await membershipService.sendMembershipRequest({
+      golferId,
+      clubId,
+    });
     return res.status(HTTPSTATUS.CREATED).json(result);
   }
 
   // get all requests
   async getMembershipRequests(req: any, res: any) {
-    const { userId } = req.user!;
-    const result = await membershipService.getMembershipRequests(userId);
+    const clubId = req.user?.userId;
+    logger.info({ clubId }, "ClubId from controller");
+    const result = await membershipService.getMembershipRequests(clubId);
     return res.status(HTTPSTATUS.OK).json(result);
-  }
-
-  async createMembership(req: any, res: any) {
-    const { userId } = req.user!;
-    const { golferId } = req.body!;
-    const result = await membershipService.createMembership({ userId, golferId });
-    return res.status(HTTPSTATUS.CREATED).json({
-      success: true,
-      message: "Membership created successfully",
-      data: result,
-    });
-  }
-
-  async getAllClubsOfaGolfer(req, res) {
-    const { userId } = req.user!;
-    const golfer = golferRepository.findGolferByUserId(userId);
-    const result = await membershipService.getAllClubsOfaGolfer(golfer._id);
-    return res.status(HTTPSTATUS.OK).json({
-      success: true,
-      message: "All clubs of a golfer",
-      data: result,
-    });
-  }
-
-  async getAllMembersOfaClub(req: any, res: any) {
-    const { userId } = req.user!;
-    const result = await membershipService.getAllMembersOfaClub(userId);
-    return res.status(HTTPSTATUS.OK).json({
-      success: true,
-      message: "All members of a club",
-      data: result,
-    });
   }
 
   async approveMembershipRequest(req: any, res: any) {
@@ -64,6 +37,28 @@ class MembershipController {
     });
   }
 
+  async getAllClubsOfaGolfer(req, res) {
+    const golferId = req.user.userId;
+    const result = await membershipService.getAllClubsOfaGolfer(golferId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "All clubs of a golfer",
+      data: result,
+    });
+  }
+
+  async getAllMembersOfaClub(req: any, res: any) {
+    const clubId = req.user.userId;
+    const result = await membershipService.getAllMembersOfaClub(clubId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "All members of a club",
+      data: result,
+    });
+  }
+
+
+
   async rejectMembershipRequest(req: any, res: any) {
     const { golferId } = req.body!;
     logger.info(`golferId from controller: ${golferId}`);
@@ -71,6 +66,20 @@ class MembershipController {
     return res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "Membership request rejected successfully",
+      data: result,
+    });
+  }
+
+  async createMembership(req: any, res: any) {
+    const { userId } = req.user!;
+    const { golferId } = req.body!;
+    const result = await membershipService.createMembership({
+      userId,
+      golferId,
+    });
+    return res.status(HTTPSTATUS.CREATED).json({
+      success: true,
+      message: "Membership created successfully",
       data: result,
     });
   }

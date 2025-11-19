@@ -5,33 +5,31 @@ import { golferRepository } from "../golfer/golfer.repository";
 import { membershipRepository } from "./memberships.repository";
 
 class MembershipService {
-  async sendMembershipRequest({userId, clubId }: any) {
-    const golfer=await golferRepository.findGolferByUserId(userId);
-    const golferId=golfer._id;
-    const club=await clubRepository.findClubById(clubId);
-    if (!club) {
-      return { success: false, message: "Club not found" };
-    }
-    if (!golfer) {
-      return { success: false, message: "Golfer not found" };
-    }
-    return await membershipRepository.sendMembershipRequest({ golferId, clubId });
+  async sendMembershipRequest({ golferId, clubId }: any) {
+    const club = await clubRepository.findClubById(clubId);
+    if (!club) return { success: false, message: "Club not found" };
+    logger.warn({ club }, "Club from member service");
+    const clubID = club.userId;
+    logger.warn({ clubID }, "ClubID from member service");
+    const result = await membershipRepository.sendMembershipRequest({
+      golferId,
+      clubId: clubID,
+    });
+    return result;
   }
 
-  async getMembershipRequests(userId: string) {
-    const club=await clubRepository.findClubById(userId);
-    const clubId=club._id;
-    if (!clubId) {
-      return { success: false, message: "Club not found" };
-    }
-    return await membershipRepository.getMembershipRequests(clubId);
+  async getMembershipRequests(clubId: string) {
+    logger.info("ClubId from service", clubId);
+    const requests = await membershipRepository.getMembershipRequests(clubId);
+    return requests;
   }
 
   async createMembership({ userId, golferId }: any) {
     logger.info(`into service layer`);
     const club = await clubRepository.findClubByUserId(userId);
-    const clubId=club._id;
-    if (!club) {
+    if (!club) return { success: false, message: "Club not found" };
+    const clubId = club._id;
+    if (!clubId) {
       return { success: false, message: "Club not found" };
     }
 
@@ -43,22 +41,18 @@ class MembershipService {
       return { success: false, message: "Golfer not found" };
     }
 
-    const data = { clubId: club._id, golferId: golfer._id, isActive: true };
+    const data = { clubId, golferId: golfer._id, isActive: true };
     logger.info(`from membership service: ${JSON.stringify(data)}`);
     const result = membershipRepository.createMembership(data);
     return result;
   }
 
-  async getAllClubsOfaGolfer(userId: string) {
-    return await membershipRepository.getAllClubsOfaGolfer(userId);
+  async getAllClubsOfaGolfer(golferId: string) {
+    return await membershipRepository.getAllClubsOfaGolfer(golferId);
   }
 
-  async getAllMembersOfaClub(userId: string) {
-    const club = await clubRepository.findClubByUserId(userId);
-    if (!club)
-      return { success: false, message: "Club not found" };
-    logger.info(`from memberservice club= ${JSON.stringify(club)}`);
-    return await membershipRepository.getAllMembersOfaClub(club._id);
+  async getAllMembersOfaClub(clubId: string) {
+    return await membershipRepository.getAllMembersOfaClub(clubId);
   }
 
   updateMembership(data) {

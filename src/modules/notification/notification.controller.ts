@@ -9,16 +9,10 @@ import { notificationService } from "./notification.service";
 export class NotificationController {
   getUserNotifications = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
-      const userId = req.user!.userId;
-      const { page, limit, unreadOnly } = req.query;
+      const { userId } = req.user;
 
       const notifications = await notificationService.getUserNotifications(
-        userId,
-        {
-          page: page ? parseInt(page as string) : 1,
-          limit: limit ? parseInt(limit as string) : 20,
-          unreadOnly: unreadOnly === "true",
-        }
+        userId
       );
 
       res.json({ success: true, data: notifications });

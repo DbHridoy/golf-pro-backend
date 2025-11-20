@@ -60,7 +60,7 @@ const moduleRoutes = [
     route: friendsRouter,
   },
   {
-    path: "/send-push-notification",
+    path: "/notification",
     route: notificationRouter,
   },
   {

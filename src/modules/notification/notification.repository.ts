@@ -8,9 +8,8 @@ export class NotificationRepository {
     recipientId: string;
     type: string;
     title: string;
-    body: string;
-    payload?: Record<string, any>;
-    data?: Record<string, any>;
+    message: string;
+    relatedEntityId?: string;
   }) {
     return NotificationModel.create(data);
   }
@@ -18,22 +17,9 @@ export class NotificationRepository {
   /**
    * Get notifications for a user
    */
-  async getUserNotifications(
-    userId: string,
-    options: { page?: number; limit?: number; unreadOnly?: boolean } = {}
-  ) {
-    const { page = 1, limit = 20, unreadOnly = false } = options;
-    const skip = (page - 1) * limit;
-
-    let query: any = { recipientId: userId };
-    if (unreadOnly) {
-      query.isRead = false;
-    }
-
-    return NotificationModel.find(query)
+  async getUserNotifications(userId: string) {
+    return NotificationModel.find({ recipientId: userId })
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
       .populate("recipientId", "fullName email");
   }
 

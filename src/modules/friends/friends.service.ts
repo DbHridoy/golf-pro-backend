@@ -2,6 +2,7 @@ import { logger } from "@/middlewares/pino-logger";
 
 import { notificationService } from "../notification/notification.service";
 import { friendRepository } from "./friends.repository";
+import FriendModel from "./friends.model";
 
 class FriendService {
   async createFriendRequest(data) {
@@ -71,16 +72,13 @@ class FriendService {
     return friendship;
   }
 
-  getMySentRequest(data) {
-    const friendship = friendRepository.findFriendship(data);
+  async getMySentRequest(data) {
+    const friendship = await friendRepository.findFriendship(data);
     return friendship;
   }
 
-  async getMyFriends(userId) {
-    const data = await friendRepository.findFriendship({
-      $or: [{ receiverId: userId }, { requesterId: userId }],
-      status: "accepted",
-    });
+  async getMyFriends(userId: string) {
+    const data = await friendRepository.findFriendship(userId);
 
     return {
       success: true,
@@ -94,11 +92,8 @@ class FriendService {
   }
 
   async cancelFriendRequest(data) {
-    const updatedData = {
-      ...data,
-      status: "cancelled",
-    };
-    return await friendRepository.cancelFriendRequest(updatedData);
+    const deletedRequest = await FriendModel.findOneAndDelete(data);
+    return deletedRequest;
   }
 }
 

@@ -8,8 +8,9 @@ export class NotificationRepository {
     recipientId: string;
     type: string;
     title: string;
-    message: string;
-    relatedEntityId?: string;
+    body: string;
+    payload?: Record<string, any>;
+    data?: Record<string, any>;
   }) {
     return NotificationModel.create(data);
   }
@@ -17,9 +18,22 @@ export class NotificationRepository {
   /**
    * Get notifications for a user
    */
-  async getUserNotifications(userId: string) {
-    return NotificationModel.find({ recipientId: userId })
+  async getUserNotifications(
+    userId: string,
+    options: { page?: number; limit?: number; unreadOnly?: boolean } = {},
+  ) {
+    const { page = 1, limit = 20, unreadOnly = false } = options;
+    const skip = (page - 1) * limit;
+
+    let query: any = { recipientId: userId };
+    if (unreadOnly) {
+      query.isRead = false;
+    }
+
+    return NotificationModel.find(query)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate("recipientId", "fullName email");
   }
 
@@ -30,7 +44,7 @@ export class NotificationRepository {
     return NotificationModel.findOneAndUpdate(
       { _id: notificationId, recipientId: userId },
       { isRead: true, readAt: new Date() },
-      { new: true }
+      { new: true },
     );
   }
 
@@ -40,7 +54,7 @@ export class NotificationRepository {
   async markAllNotificationsAsRead(userId: string) {
     return NotificationModel.updateMany(
       { recipientId: userId, isRead: false },
-      { isRead: true, readAt: new Date() }
+      { isRead: true, readAt: new Date() },
     );
   }
 
@@ -50,7 +64,7 @@ export class NotificationRepository {
   async deleteNotification(notificationId: string, userId: string) {
     return NotificationModel.findOneAndDelete({
       _id: notificationId,
-      recipientId: userId
+      recipientId: userId,
     });
   }
 
@@ -60,7 +74,7 @@ export class NotificationRepository {
   async getUnreadCount(userId: string) {
     return NotificationModel.countDocuments({
       recipientId: userId,
-      isRead: false
+      isRead: false,
     });
   }
 }

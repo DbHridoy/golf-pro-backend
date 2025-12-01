@@ -83,10 +83,7 @@ class FriendController {
 
   async getMySentRequest(req: Request, res: Response, _next: NextFunction) {
     const userId = req.user!.userId;
-    const friendship = {
-      requesterId: userId,
-    };
-    const data = await friendService.getMySentRequest(friendship);
+    const data = await friendService.getMySentRequest(userId);
     res.status(200).json(data);
   }
 

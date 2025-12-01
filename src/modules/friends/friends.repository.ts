@@ -36,6 +36,40 @@ class FriendRepository {
     };
   }
 
+  async findSentRequest(userId: string) {
+    // 1. Find where the user is the requester
+    let data = await FriendModel.find({
+      requesterId: userId,
+      status: "pending",
+    }).populate("receiverId requesterId");
+
+    // 2. If none found, try where user is the receiver
+    if (data.length === 0) {
+      data = await FriendModel.find({
+        receiverId: userId,
+        status: "pending",
+      }).populate("receiverId requesterId");
+    }
+
+    if (data.length === 0) return [];
+
+    // 3. Normalize each result
+    return data.map((item) => {
+      const requestedUser =
+        item.requesterId._id.toString() === userId
+          ? item.receiverId
+          : item.requesterId;
+
+      return {
+        friendshipId: item._id,
+        requestedUser,
+        status: item.status,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      };
+    });
+  }
+
   async createFriendRequest(data: any) {
     const friend = new FriendModel(data);
     return friend.save();

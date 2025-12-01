@@ -89,7 +89,8 @@ class FriendController {
 
   async getMyFriends(req: Request, res: Response, _next: NextFunction) {
     const userId = req.user!.userId;
-    friendService.getMyFriends(userId).then((data) => res.status(200).json(data));
+    const data = await friendService.getMyFriends(userId);
+    res.status(200).json(data);
   }
 
   async getAllFriendships(req: Request, res: Response, _next: NextFunction) {

@@ -68,7 +68,7 @@ class FriendService {
   }
 
   async getMyRequests(data) {
-    const friendship = await friendRepository.findFriendship(data);
+    const friendship = await friendRepository.findMyRequests(data);
     return friendship;
   }
 
@@ -78,7 +78,7 @@ class FriendService {
   }
 
   async getMyFriends(userId: string) {
-    const data = await friendRepository.findFriendship(userId);
+    const data = await friendRepository.findMyFriends(userId);
 
     return {
       success: true,

@@ -1,10 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 import { logger } from "@/middlewares/pino-logger";
 import fileUploadUtils from "@/utils/file-upload.utils";
 
 import { notificationService } from "../notification/notification.service";
 import { PostTagModel } from "../tags/tags.model";
+import UserModel from "../user/user.model";
 import PostModel from "./posts.model";
 import { postRepository } from "./posts.repository";
 
@@ -121,6 +122,97 @@ class PostServices {
     return post;
     // return currentPost;
   }
-}
 
+  async toggleLike(postId: string, userId: string) {
+    const postObjectId = new Types.ObjectId(postId);
+    const userObjectId = new Types.ObjectId(userId);
+
+    // 1️⃣ Check if the user already liked the post
+    const post = await PostModel.findOne({
+      "_id": postObjectId,
+      "likedBy.userId": userObjectId,
+    });
+
+    if (post) {
+    // 🔹 User already liked → remove like
+      await PostModel.updateOne(
+        { _id: postObjectId },
+        {
+          $pull: { likedBy: { userId: userObjectId } },
+          $inc: { likes: -1 },
+        },
+      );
+      return { liked: false };
+    }
+    else {
+    // 🔹 User hasn't liked yet → add like
+      await PostModel.updateOne(
+        { _id: postObjectId },
+        {
+          $push: { likedBy: { userId: userObjectId, isLike: true } },
+          $inc: { likes: 1 },
+        },
+      );
+      return { liked: true };
+    }
+  }
+
+  async addComment(postId: string, userId: string, comment: string) {
+    if (!comment || comment.trim().length === 0) {
+      throw new Error("Comment cannot be empty");
+    }
+
+    const postObjectId = new mongoose.Types.ObjectId(postId);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    // 🔹 Fetch user to store snapshot
+    const user = await UserModel.findById(userObjectId).select("fullName");
+    if (!user)
+      throw new Error("User not found");
+
+    const commentData = {
+      userId: userObjectId,
+      fullName: user.fullName, // snapshot on creation
+      comment,
+      createdAt: new Date(),
+    };
+
+    // 🔹 Insert comment
+    const updatedPost = await PostModel.findByIdAndUpdate(
+      postObjectId,
+      {
+        $push: { comments: commentData },
+      },
+      { new: true },
+    )
+      .populate([
+        { path: "userId", select: "fullName email profileImage" },
+        { path: "comments.userId", select: "fullName profileImage" },
+        { path: "likedBy.userId", select: "fullName profileImage" },
+        { path: "taggedFriends.userId", select: "fullName profileImage" },
+        { path: "taggedClubs.clubId", select: "name logo" },
+      ])
+      .lean({ virtuals: true });
+
+    return updatedPost;
+  }
+
+  async getPostComments(postId: string) {
+    const postObjectId = new Types.ObjectId(postId);
+
+    // Fetch comments
+    const post = await PostModel.findById(postObjectId)
+      .select("comments") // only fetch comments
+      .lean(); // return plain JS object
+
+    if (!post) {
+      return { comments: [], count: 0 };
+    }
+
+    const comments = post.comments || [];
+    const count = comments.length;
+
+    return { comments, count };
+  }
+}
 export const postService = new PostServices();

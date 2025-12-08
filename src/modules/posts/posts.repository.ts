@@ -9,124 +9,238 @@ class PostRepository {
   }
 
   async getAllPosts() {
-    return await PostModel.aggregate([
-      {
-        $lookup: {
-          from: "posttags", // collection created by PostTagModel
-          localField: "_id",
-          foreignField: "postId",
-          as: "tags",
-          pipeline: [
-            { $project: { _id: 0, taggedEntityId: 1, taggedEntityType: 1 } },
-          ],
-        },
-      },
-      { $sort: { createdAt: -1 } },
-    ]);
+    const posts = await PostModel.find()
+    .populate([
+      { path: "userId", select: "fullName email profileImage" },
+      { path: "taggedFriends.userId", select: "fullName email profileImage" },
+      { path: "taggedClubs.clubId", select: "name description logo" },
+      { path: "likedBy.userId", select: "fullName profileImage" },
+      { path: "comments.userId", select: "fullName profileImage" },
+    ])
+    .sort({ createdAt: -1 });
+    return posts
   }
 
-  async getAllPostsForUser(userId: string) {
-    const posts = await PostModel.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+  // async getAllPostsForUser(userId: string) {
+  //   const posts = await PostModel.aggregate([
+  //     {
+  //       $match: {
+  //         userId: new mongoose.Types.ObjectId(userId),
+  //       },
+  //     },
 
-      // 🔹 Join with Users collection
-      {
-        $lookup: {
-          from: "users", // ✅ must match the actual MongoDB collection name (lowercase, plural)
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-          pipeline: [
-            { $project: { fullName: 1, email: 1, _id: 0 } },
-          ],
-        },
-      },
-      { $unwind: "$user" }, // optional but makes it cleaner (single object instead of array)
-      {
-        $set: {
-          userId: "$user",
-        },
-      },
-      {
-        $unset: "user",
-      },
+  //     // 1️⃣ Populate userId → post owner
+  //     {
+  //       $lookup: {
+  //         from: "users",
+  //         localField: "userId",
+  //         foreignField: "_id",
+  //         as: "user",
+  //         pipeline: [
+  //           { $project: { fullName: 1, email: 1, profileImage: 1 } },
+  //         ],
+  //       },
+  //     },
+  //     { $unwind: "$user" },
 
-      // 🔹 Join with PostTags collection
-      {
-        $lookup: {
-          from: "posttags",
-          localField: "_id",
-          foreignField: "postId",
-          as: "tags",
-        },
-      },
-      {
-        $lookup: {
-          from: "golfers",
-          localField: "tags.taggedEntityId",
-          foreignField: "_id",
-          as: "golferTags",
-        },
-      },
-      {
-        $lookup: {
-          from: "clubs",
-          localField: "tags.taggedEntityId",
-          foreignField: "_id",
-          as: "clubTags",
-        },
-      },
-      {
-        $addFields: {
-          tags: {
-            $map: {
-              input: "$tags",
-              as: "tag",
-              in: {
-                $mergeObjects: [
-                  "$$tag",
-                  {
-                    entity: {
-                      $cond: [
-                        { $eq: ["$$tag.taggedEntityType", "Golfer"] },
-                        { $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$golferTags",
-                              as: "g",
-                              cond: { $eq: ["$$g._id", "$$tag.taggedEntityId"] },
-                            },
-                          },
-                          0,
-                        ] },
-                        { $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$clubTags",
-                              as: "c",
-                              cond: { $eq: ["$$c._id", "$$tag.taggedEntityId"] },
-                            },
-                          },
-                          0,
-                        ] },
-                      ],
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-      {
-        $project: { golferTags: 0, clubTags: 0 },
-      },
+  //     // 2️⃣ Populate tagged friends
+  //     {
+  //       $lookup: {
+  //         from: "users",
+  //         localField: "taggedFriends.userId",
+  //         foreignField: "_id",
+  //         as: "taggedFriendsData",
+  //         pipeline: [
+  //           { $project: { fullName: 1, email: 1, profileImage: 1 } },
+  //         ],
+  //       },
+  //     },
 
-      { $sort: { createdAt: -1 } },
-    ]);
+  //     // Merge each tagged friend's user data
+  //     {
+  //       $addFields: {
+  //         taggedFriends: {
+  //           $map: {
+  //             input: "$taggedFriends",
+  //             as: "f",
+  //             in: {
+  //               $mergeObjects: [
+  //                 "$$f",
+  //                 {
+  //                   user: {
+  //                     $arrayElemAt: [
+  //                       {
+  //                         $filter: {
+  //                           input: "$taggedFriendsData",
+  //                           as: "u",
+  //                           cond: { $eq: ["$$u._id", "$$f.userId"] },
+  //                         },
+  //                       },
+  //                       0,
+  //                     ],
+  //                   },
+  //                 },
+  //               ],
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
 
-    return posts;
-  }
+  //     // 3️⃣ Populate tagged clubs
+  //     {
+  //       $lookup: {
+  //         from: "clubs",
+  //         localField: "taggedClubs.clubId",
+  //         foreignField: "_id",
+  //         as: "taggedClubsData",
+  //       },
+  //     },
+  //     {
+  //       $addFields: {
+  //         taggedClubs: {
+  //           $map: {
+  //             input: "$taggedClubs",
+  //             as: "c",
+  //             in: {
+  //               $mergeObjects: [
+  //                 "$$c",
+  //                 {
+  //                   club: {
+  //                     $arrayElemAt: [
+  //                       {
+  //                         $filter: {
+  //                           input: "$taggedClubsData",
+  //                           as: "cl",
+  //                           cond: { $eq: ["$$cl._id", "$$c.clubId"] },
+  //                         },
+  //                       },
+  //                       0,
+  //                     ],
+  //                   },
+  //                 },
+  //               ],
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+
+  //     // 4️⃣ Populate likedBy users
+  //     {
+  //       $lookup: {
+  //         from: "users",
+  //         localField: "likedBy.userId",
+  //         foreignField: "_id",
+  //         as: "likedByData",
+  //         pipeline: [
+  //           { $project: { fullName: 1, profileImage: 1 } },
+  //         ],
+  //       },
+  //     },
+  //     {
+  //       $addFields: {
+  //         likedBy: {
+  //           $map: {
+  //             input: "$likedBy",
+  //             as: "l",
+  //             in: {
+  //               $mergeObjects: [
+  //                 "$$l",
+  //                 {
+  //                   user: {
+  //                     $arrayElemAt: [
+  //                       {
+  //                         $filter: {
+  //                           input: "$likedByData",
+  //                           as: "u",
+  //                           cond: { $eq: ["$$u._id", "$$l.userId"] },
+  //                         },
+  //                       },
+  //                       0,
+  //                     ],
+  //                   },
+  //                 },
+  //               ],
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+
+  //     // 5️⃣ Populate comments.userId
+  //     {
+  //       $lookup: {
+  //         from: "users",
+  //         localField: "comments.userId",
+  //         foreignField: "_id",
+  //         as: "commentUsers",
+  //         pipeline: [
+  //           { $project: { fullName: 1, profileImage: 1 } },
+  //         ],
+  //       },
+  //     },
+  //     {
+  //       $addFields: {
+  //         comments: {
+  //           $map: {
+  //             input: "$comments",
+  //             as: "c",
+  //             in: {
+  //               $mergeObjects: [
+  //                 "$$c",
+  //                 {
+  //                   user: {
+  //                     $arrayElemAt: [
+  //                       {
+  //                         $filter: {
+  //                           input: "$commentUsers",
+  //                           as: "u",
+  //                           cond: { $eq: ["$$u._id", "$$c.userId"] },
+  //                         },
+  //                       },
+  //                       0,
+  //                     ],
+  //                   },
+  //                 },
+  //               ],
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+
+  //     // Cleanup temp fields
+  //     {
+  //       $project: {
+  //         taggedFriendsData: 0,
+  //         taggedClubsData: 0,
+  //         likedByData: 0,
+  //         commentUsers: 0,
+  //       },
+  //     },
+
+  //     { $sort: { createdAt: -1 } },
+  //   ]);
+
+  //   return posts;
+  // }
+async getAllPostsForUser(userId: string) {
+  const userObjId = new mongoose.Types.ObjectId(userId);
+
+  const posts = await PostModel.find({ userId: userObjId })
+    .populate([
+      { path: "userId", select: "fullName email profileImage" },
+      { path: "taggedFriends.userId", select: "fullName email profileImage" },
+      { path: "taggedClubs.clubId", select: "name description logo" },
+      { path: "likedBy.userId", select: "fullName profileImage" },
+      { path: "comments.userId", select: "fullName profileImage" },
+    ])
+    .sort({ createdAt: -1 });
+
+  return posts;
+}
+
 
   async togglePostStatus(postId, isActive) {
     const post = await PostModel.findOneAndUpdate({ _id: postId }, { isActive }, { new: true }).lean();

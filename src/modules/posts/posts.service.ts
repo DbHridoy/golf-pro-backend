@@ -2,6 +2,7 @@ import mongoose, { Types } from "mongoose";
 
 import fileUploadUtils from "@/utils/file-upload.utils";
 
+import UserModel from "../user/user.model";
 import PostModel from "./posts.model";
 import { postRepository } from "./posts.repository";
 

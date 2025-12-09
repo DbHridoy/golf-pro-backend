@@ -1,3 +1,5 @@
+import { logger } from "@/middlewares/pino-logger";
+
 import ClubModel from "../club/club.model";
 import PostModel from "../posts/posts.model";
 import UserModel from "../user/user.model";
@@ -8,6 +10,7 @@ class ReportService {
     reporterId: string,
     data: any,
   ): Promise<any> {
+    logger.info( {data},"ReportService: createReport");
     // if (data.reportedUserId && reporterId === data.reportedUserId) {
     //   throw new Error("You cannot report your own profile");
     // }
@@ -15,34 +18,35 @@ class ReportService {
     if (data.reportedClubId) {
       const club = await ClubModel.findById(data.reportedClubId);
       if (club && reporterId === club.userId.toString()) {
-        throw new Error("You cannot report your own club profile");
+        return ("You cannot report your own club profile");
       }
     }
 
     const duplicateReport = await reportRepository.findDuplicateReport(reporterId, data.reportedUserId, data.reportedClubId, data.reportedPostId, data.contentType);
 
     if (duplicateReport) {
-      throw new Error("You have already reported this content");
+      return("You have already reported this content");
     }
 
     if (data.contentType === "profile" && data.targetType === "golfer") {
       const golfer = await UserModel.findById(data.reportedUserId);
       if (!golfer) {
-        throw new Error("Reported golfer not found");
+        return ("Reported golfer not found");
       }
     }
 
     if (data.contentType === "profile" && data.targetType === "club") {
+      logger.info(data.reportedClubId);
       const club = await ClubModel.findById(data.reportedClubId);
       if (!club) {
-        throw new Error("Reported club not found");
+        return ("Reported club not found");
       }
     }
 
     if (data.contentType === "post") {
       const post = await PostModel.findById(data.reportedPostId);
       if (!post) {
-        throw new Error("Reported post not found");
+        return ("Reported post not found");
       }
     }
 

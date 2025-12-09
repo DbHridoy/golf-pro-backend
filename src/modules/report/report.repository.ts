@@ -1,7 +1,10 @@
+import { logger } from "@/middlewares/pino-logger";
+
 import ReportModel from "./report.model";
 
 class ReportRepository {
   async createReport(data: any): Promise<any> {
+    logger.info({ data }, "from report repo");
     const report = new ReportModel(data);
     return await report.save();
   }

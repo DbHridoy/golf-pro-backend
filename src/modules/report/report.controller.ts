@@ -23,8 +23,8 @@ class ReportController {
         }
 
         if (
-          !data.contentType ||
-          !["profile", "post"].includes(data.contentType)
+          !data.contentType
+          || !["profile", "post"].includes(data.contentType)
         ) {
           res.status(400).json({ message: "Invalid content type" });
         }
@@ -34,9 +34,9 @@ class ReportController {
         }
 
         if (
-          data.contentType === "profile" &&
-          !data.reportedUserId &&
-          !data.reportedClubId
+          data.contentType === "profile"
+          && !data.reportedUserId
+          && !data.reportedClubId
         ) {
           res.status(400).json({
             message:
@@ -56,10 +56,11 @@ class ReportController {
           message: "Report submitted successfully",
           data: report,
         });
-      } catch (error: unknown) {
+      }
+      catch (error: unknown) {
         res.status(400).json({ message: error });
       }
-    }
+    },
   );
 
   async getAllReports(req: Request, res: Response): Promise<void> {
@@ -89,7 +90,8 @@ class ReportController {
         message: "Reports retrieved successfully",
         data: result,
       });
-    } catch (error: any) {
+    }
+    catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   }
@@ -110,7 +112,8 @@ class ReportController {
         message: "Report retrieved successfully",
         data: report,
       });
-    } catch (error: any) {
+    }
+    catch (error: any) {
       res.status(404).json({ message: error.message });
     }
   }
@@ -135,7 +138,8 @@ class ReportController {
       res.status(200).json({
         message: "Report deleted successfully",
       });
-    } catch (error: any) {
+    }
+    catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   }

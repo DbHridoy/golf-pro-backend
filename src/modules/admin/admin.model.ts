@@ -6,12 +6,6 @@ const AdminSchema = new Schema({
     required: true,
     ref: "User",
   },
-  fullName: {
-    type: String,
-    trim: true,
-    required: true,
-    maxlength: [100, "Full name cannot exceed 100 characters"],
-  },
   gender: {
     type: String,
    

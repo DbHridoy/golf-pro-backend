@@ -1,18 +1,16 @@
 import type { NextFunction, Request, Response } from "express";
 
 import { HTTPSTATUS } from "@/config/http.config";
+import { logger } from "@/middlewares/pino-logger";
 
-import { clubRepository } from "../club/club.repository";
-import { golferRepository } from "../golfer/golfer.repository";
 import { postService } from "./posts.service";
 
 class PostsController {
   async createPost(req: Request, res: Response, _next: NextFunction) {
     const { body } = req;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    const userId=req.user?.userId
-  
-
+    const userId = req.user?.userId;
+    logger.info(body, "Postbody");
     const post = await postService.createPost(userId, body, files);
 
     return res.status(HTTPSTATUS.CREATED).json({

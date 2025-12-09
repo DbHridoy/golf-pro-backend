@@ -7,7 +7,7 @@ const CommentSchema = new Schema(
     comment: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const LikeSchema = new Schema(
@@ -15,23 +15,7 @@ const LikeSchema = new Schema(
     userId: { type: Types.ObjectId, ref: "User", required: true },
     isLike: { type: Boolean, default: true },
   },
-  { _id: false }
-);
-
-const TaggedFriendSchema = new Schema(
-  {
-    userId: { type: Types.ObjectId, ref: "User" },
-    fullName: { type: String },
-  },
-  { _id: false }
-);
-
-const TaggedClubSchema = new Schema(
-  {
-    clubId: { type: Types.ObjectId, ref: "Club" },
-    name: { type: String },
-  },
-  { _id: false }
+  { _id: false },
 );
 
 const PostSchema = new Schema(
@@ -63,8 +47,8 @@ const PostSchema = new Schema(
     // ============================
     // 🔹 Tagged Users & Clubs
     // ============================
-    taggedFriends: [TaggedFriendSchema],
-    taggedClubs: [TaggedClubSchema],
+    taggedFriends: [{ type: Types.ObjectId, ref: "User" }],
+    taggedClubs: [{ type: Types.ObjectId, ref: "User" }],
 
     // ============================
     // 🔹 Likes
@@ -87,7 +71,7 @@ const PostSchema = new Schema(
     },
     toObject: { virtuals: true },
 
-  }
+  },
 );
 
 //

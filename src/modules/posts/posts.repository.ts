@@ -231,8 +231,8 @@ async getAllPostsForUser(userId: string) {
   const posts = await PostModel.find({ userId: userObjId })
     .populate([
       { path: "userId", select: "fullName email profileImage" },
-      { path: "taggedFriends.userId", select: "fullName email profileImage" },
-      { path: "taggedClubs.clubId", select: "name description logo" },
+      { path: "taggedFriends", select: "fullName email" },
+      { path: "taggedClubs", select: "fullName email" },
       { path: "likedBy.userId", select: "fullName profileImage" },
       { path: "comments.userId", select: "fullName profileImage" },
     ])

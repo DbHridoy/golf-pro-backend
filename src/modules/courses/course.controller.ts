@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 
+import { HttpStatusCode } from "axios";
+
 import { env } from "@/env";
 import { dynamicSearch } from "@/utils/search.utils";
 
@@ -32,32 +34,63 @@ import CourseModel from "./course.model";
 
 export async function searchCourses(req: Request, res: Response) {
   try {
-    const searchData = await dynamicSearch(req, CourseModel);
-    if (searchData.success) {
+    const { search, city, country, page = 1 } = req.query;
+
+    const PAGE_SIZE = 200;
+    const currentPage = Number(page);
+    const skipCount = (currentPage - 1) * PAGE_SIZE;
+
+    // Step 1: Count local courses
+    const localCount = await CourseModel.countDocuments();
+
+    // Step 2: Check if DB already has this page
+    const hasThisPage = localCount >= skipCount + 1;
+
+    // Build filter only for FIND, not for the API CACHE logic
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { courseName: new RegExp(search as string, "i") },
+        { clubName: new RegExp(search as string, "i") },
+      ];
+    }
+    if (city)
+      filter.city = city;
+    if (country)
+      filter.country = country;
+
+    // *******************************************************
+    //  CASE 1 → PAGE EXISTS LOCALLY → RETURN LOCAL DATA
+    // *******************************************************
+    if (hasThisPage) {
+      const localCourses = await CourseModel.find(filter)
+        .skip(skipCount)
+        .limit(PAGE_SIZE)
+        .lean();
+
+      // if filtered search returns empty but page exists locally — DO NOT FETCH API
       return res.status(200).json({
         success: true,
-        data: searchData.results,
+        source: "local",
+        page: currentPage,
+        data: localCourses,
       });
     }
-    const {
-      search,
-      city,
-      country,
-      limit = 20,
-      offset = 0,
-    } = req.query;
+
+    // *******************************************************
+    //  CASE 2 → PAGE DOES NOT EXIST → FETCH FROM API
+    // *******************************************************
+    console.log(`⛳ Fetching page ${currentPage} from Golf API...`);
 
     const apiUrl = new URL("https://www.golfapi.io/api/v2.3/courses");
 
-    // Add query parameters
+    apiUrl.searchParams.append("page", currentPage.toString());
     if (search)
       apiUrl.searchParams.append("search", search as string);
     if (city)
       apiUrl.searchParams.append("city", city as string);
     if (country)
       apiUrl.searchParams.append("country", country as string);
-    apiUrl.searchParams.append("limit", limit as string);
-    apiUrl.searchParams.append("offset", offset as string);
 
     const response = await fetch(apiUrl.toString(), {
       method: "GET",
@@ -75,29 +108,37 @@ export async function searchCourses(req: Request, res: Response) {
 
     const data = await response.json();
 
-    // const courses = data.courses?.map((course: any) => ({
-    //   courseID: course.courseID,
-    //   clubID: course.clubID,
-    //   clubName: course.clubName,
-    //   courseName: course.courseName,
-    //   city: course.city,
-    //   state: course.state,
-    //   country: course.country,
-    //   numHoles: course.numHoles,
-    //   measure: course.measure,
-    //   numTees: course.numTees,
-    // })) || [];
+    if (!data.courses || data.courses.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No new courses found from API",
+        page: currentPage,
+      });
+    }
 
-    const courses = await CourseModel.create(data.courses);
+    // *******************************************************
+    //  Insert or update (prevent duplicates!)
+    // *******************************************************
+    await CourseModel.bulkWrite(
+      data.courses.map((course: any) => ({
+        updateOne: {
+          filter: { courseID: course.courseID },
+          update: { $set: course },
+          upsert: true,
+        },
+      })),
+    );
 
+    // *******************************************************
+    //  Return freshly fetched page
+    // *******************************************************
     return res.status(200).json({
-      courses,
-      metadata: {
-        total: data.numCourses || 0,
-        limit: Number.parseInt(limit as string),
-        offset: Number.parseInt(offset as string),
-        apiRequestsLeft: data.apiRequestsLeft,
-      },
+      success: true,
+      source: "api",
+      page: currentPage,
+      inserted: data.courses.length,
+      data: data.courses,
+      apiRequestsLeft: data.apiRequestsLeft,
     });
   }
   catch (error) {
@@ -117,7 +158,11 @@ export async function getCourseDetails(req: Request, res: Response) {
     const course = await CourseDetails.findOne({ courseID });
 
     if (course) {
-      return res.status(200).json({ course });
+      return res.status(200).json({
+        success: true,
+        message: "From local database",
+        data: course,
+      });
     }
 
     // If not in database, fetch from API
@@ -135,6 +180,8 @@ export async function getCourseDetails(req: Request, res: Response) {
     }
 
     const courseData = await response.json();
+
+    const setCourseData = await CourseDetails.insertMany(courseData);
 
     return res.status(200).json({
       course: courseData,
@@ -185,21 +232,22 @@ export async function getLocalCourses(req: Request, res: Response) {
 
 export async function getCourseCoordinates(req: Request, res: Response) {
   try {
-    const { courseId } = req.params;
+    const { courseID } = req.params;
 
-    const localCourseCoordinates = await CourseCoordinate.findOne({ courseID: courseId });
+    const localCourseCoordinates = await CourseCoordinate.findOne({ courseID });
 
     if (localCourseCoordinates) {
       return res.status(200).json(
         {
           success: true,
+          message: "From local database",
           data: localCourseCoordinates,
         },
       );
     }
 
     // If not in database, fetch from API
-    const apiUrl = `https://www.golfapi.io/api/v2.3/coordinates/${courseId}`;
+    const apiUrl = `https://www.golfapi.io/api/v2.3/coordinates/${courseID}`;
     const response = await fetch(apiUrl, {
       method: "GET",
       headers: {
@@ -219,6 +267,7 @@ export async function getCourseCoordinates(req: Request, res: Response) {
 
     return res.status(200).json({
       success: true,
+      message: "From api",
       data: courseCoordinates,
     });
   }

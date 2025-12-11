@@ -24,7 +24,7 @@ router.get("/courses/search", searchCourses);
 // Get single course details
 router.get("/courses/:courseID", getCourseDetails);
 
-router.get("/coordinates/:courseId", getCourseCoordinates);
+router.get("/coordinates/:courseID", getCourseCoordinates);
 
 // Get previously played courses from local database
 // router.get("/courses/local", getLocalCourses);

@@ -11,6 +11,7 @@ import { notFound } from "@/middlewares/not-found.middleware";
 import rootRouter from "@/routes/index.js";
 
 import { env } from "./env.js";
+import { initializeEventScheduler } from "./services/event-scheduler.service.js";
 
 const app: Application = express();
 
@@ -20,11 +21,11 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true }));
+initializeEventScheduler();
 
 app.get("/", (req, res) => {
   res.json({
-    message:
-      "<<<<<<<<<<<<<<<<<<<<  API is running in full speed!!!  >>>>>>>>>>>>>>>>>>>>>>>>>",
+    message: "<<<<<<<<<<<<<<<<<<<<  API is running in full speed!!!  >>>>>>>>>>>>>>>>>>>>>>>>>",
   });
 });
 

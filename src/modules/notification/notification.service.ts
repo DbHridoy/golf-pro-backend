@@ -13,11 +13,10 @@ export class NotificationService {
       // 1. Store notification in database
       const notification = await notificationRepository.createNotification({
         recipientId: data.recipientId,
+        relatedEntityId: data.relatedEntityId,
         type: data.type,
         title: data.title,
-        body: data.body,
-        payload: data.payload || {},
-        data: data.data || {},
+        message: data.body,
       });
 
       // 2. Get recipient's FCM token
@@ -46,8 +45,7 @@ export class NotificationService {
       // await admin.messaging().send(message); // Uncomment when FCM tokens are available
 
       return notification;
-    }
-    catch (error) {
+    } catch (error) {
       console.error("Error creating/sending notification:", error);
       throw error;
     }
@@ -56,15 +54,18 @@ export class NotificationService {
   /**
    * Get notifications for a user
    */
-  async getUserNotifications(userId: string, options: { page?: number; limit?: number; unreadOnly?: boolean } = {}) {
-    return notificationRepository.getUserNotifications(userId, options);
+  async getUserNotifications(userId: string) {
+    return notificationRepository.getUserNotifications(userId);
   }
 
   /**
    * Mark notification as read
    */
   async markAsRead(notificationId: string, userId: string) {
-    return notificationRepository.markNotificationAsRead(notificationId, userId);
+    return notificationRepository.markNotificationAsRead(
+      notificationId,
+      userId
+    );
   }
 
   /**

@@ -20,7 +20,7 @@ export class NotificationRepository {
    */
   async getUserNotifications(
     userId: string,
-    options: { page?: number; limit?: number; unreadOnly?: boolean } = {}
+    options: { page?: number; limit?: number; unreadOnly?: boolean } = {},
   ) {
     const { page = 1, limit = 20, unreadOnly = false } = options;
     const skip = (page - 1) * limit;
@@ -44,7 +44,7 @@ export class NotificationRepository {
     return NotificationModel.findOneAndUpdate(
       { _id: notificationId, recipientId: userId },
       { isRead: true, readAt: new Date() },
-      { new: true }
+      { new: true },
     );
   }
 
@@ -54,7 +54,7 @@ export class NotificationRepository {
   async markAllNotificationsAsRead(userId: string) {
     return NotificationModel.updateMany(
       { recipientId: userId, isRead: false },
-      { isRead: true, readAt: new Date() }
+      { isRead: true, readAt: new Date() },
     );
   }
 
@@ -64,7 +64,7 @@ export class NotificationRepository {
   async deleteNotification(notificationId: string, userId: string) {
     return NotificationModel.findOneAndDelete({
       _id: notificationId,
-      recipientId: userId
+      recipientId: userId,
     });
   }
 
@@ -74,7 +74,7 @@ export class NotificationRepository {
   async getUnreadCount(userId: string) {
     return NotificationModel.countDocuments({
       recipientId: userId,
-      isRead: false
+      isRead: false,
     });
   }
 }

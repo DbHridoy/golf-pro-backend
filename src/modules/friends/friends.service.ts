@@ -2,6 +2,7 @@ import { logger } from "@/middlewares/pino-logger";
 
 import { notificationService } from "../notification/notification.service";
 import { friendRepository } from "./friends.repository";
+import FriendModel from "./friends.model";
 
 class FriendService {
   async createFriendRequest(data) {
@@ -13,11 +14,8 @@ class FriendService {
         recipientId: data.receiverId,
         type: "friend_request_sent",
         title: "New Friend Request",
-        body: "Someone sent you a friend request",
-        payload: {
-          friendRequestId: friendship._id.toString(),
-          senderName: "Friend", // You'll need to get the actual sender name
-        },
+        message: "Someone sent you a friend request",
+        relatedEntityId: data.requesterId,
       });
     } catch (error) {
       logger.error("Failed to send friend request notification:", error);
@@ -34,20 +32,17 @@ class FriendService {
     const friendship = await friendRepository.acceptFriendRequest(updatedData);
 
     // Send notification to requester
-    // try {
-    //   await notificationService.createAndSendNotification({
-    //     recipientId: data.requesterId,
-    //     type: "friend_request_accepted",
-    //     title: "Friend Request Accepted",
-    //     body: "Your friend request was accepted",
-    //     payload: {
-    //       friendRequestId: friendship._id.toString(),
-    //     },
-    //   });
-    // }
-    // catch (error) {
-    //   logger.error("Failed to send friend acceptance notification:", error);
-    // }
+    try {
+      await notificationService.createAndSendNotification({
+        recipientId: data.requesterId,
+        type: "friend_request_accepted",
+        title: "Friend Request Accepted",
+        message: "Your friend request was accepted",
+        relatedEntityId: friendship._id.toString(),
+      });
+    } catch (error) {
+      logger.error("Failed to send friend acceptance notification:", error);
+    }
 
     return friendship;
   }
@@ -58,25 +53,32 @@ class FriendService {
       status: "rejected",
     };
     const friendship = await friendRepository.rejectFriendRequest(updatedData);
-    // logger.info(friendship, "from service");
+    try {
+      await notificationService.createAndSendNotification({
+        recipientId: data.requesterId,
+        type: "friend_request_rejected",
+        title: "Friend Request Rejected",
+        message: "Your friend request was rejected",
+        relatedEntityId: friendship._id.toString(),
+      });
+    } catch (error) {
+      logger.error("Failed to send friend rejection notification:", error);
+    }
     return friendship;
   }
 
   async getMyRequests(data) {
-    const friendship = await friendRepository.findFriendship(data);
+    const friendship = await friendRepository.findMyRequests(data);
     return friendship;
   }
 
-  getMySentRequest(data) {
-    const friendship = friendRepository.findFriendship(data);
+  async getMySentRequest(userId: string) {
+    const friendship = await friendRepository.findSentRequest(userId);
     return friendship;
   }
 
-  async getMyFriends(userId) {
-    const data = await friendRepository.findFriendship({
-      $or: [{ receiverId: userId }, { requesterId: userId }],
-      status: "accepted",
-    });
+  async getMyFriends(userId: string) {
+    const data = await friendRepository.findMyFriends(userId);
 
     return {
       success: true,
@@ -88,12 +90,10 @@ class FriendService {
   getAllFriendships() {
     return friendRepository.getAllFriendships();
   }
+
   async cancelFriendRequest(data) {
-    const updatedData = {
-      ...data,
-      status: "cancelled",
-    };
-    return await friendRepository.cancelFriendRequest(updatedData);
+    const deletedRequest = await FriendModel.findOneAndDelete(data);
+    return deletedRequest;
   }
 }
 

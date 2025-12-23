@@ -14,7 +14,7 @@ import {
 
 const router = express.Router();
 
-router.use(authMiddleware.authenticate);
+// router.use(authMiddleware.authenticate);
 
 // router.get("/get-courses",getCourses)
 

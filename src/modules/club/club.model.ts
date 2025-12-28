@@ -5,10 +5,6 @@ const ClubSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
-  clubName: {
-    type: String,
-    default: null,
-  },
   country: {
     type: String,
     default: null,

@@ -46,13 +46,13 @@ export class AuthService {
     // Create dependent entity
     switch (user?.role) {
       case "golfer":
-        await new GolferModel({ userId: user._id, fullName: user.fullName }).save();
+        await new GolferModel({ userId: user._id}).save();
         break;
       case "golf_club":
-        await new ClubModel({ userId: user._id, clubName: user.fullName }).save();
+        await new ClubModel({ userId: user._id }).save();
         break;
       default:
-        await new AdminModel({ userId: user?._id, fullName: user?.fullName }).save();
+        await new AdminModel({ userId: user?._id}).save();
         break;
     }
 
@@ -228,93 +228,93 @@ export class AuthService {
   }
 
   // ghin login
-  async ghinLogin({ ghinNo, ghinPassword }) {
-    logger.info(`from service layer - ghinNo: ${ghinNo}, ghinPassword: ${ghinPassword}`);
-    try {
-      const payload = {
-        user: {
-          email_or_ghin: ghinNo,
-          password: ghinPassword,
-        },
-        token: "123",
-      };
-      logger.info(`from service layer - payload: ${JSON.stringify(payload)}`);
-      const response = await axios.post(
-        "https://api.ghin.com/api/v1/golfer_login.json",
-        payload,
-      );
+  // async ghinLogin({ ghinNo, ghinPassword }) {
+  //   logger.info(`from service layer - ghinNo: ${ghinNo}, ghinPassword: ${ghinPassword}`);
+  //   try {
+  //     const payload = {
+  //       user: {
+  //         email_or_ghin: ghinNo,
+  //         password: ghinPassword,
+  //       },
+  //       token: "123",
+  //     };
+  //     logger.info(`from service layer - payload: ${JSON.stringify(payload)}`);
+  //     const response = await axios.post(
+  //       "https://api.ghin.com/api/v1/golfer_login.json",
+  //       payload,
+  //     );
 
-      // ✅ golfers is an array — grab the first item
-      const golfer = response.data?.golfer_user?.golfers?.[0];
-      let user = await authRepository.findUserByEmail(golfer.email, true);
-      if (!user) {
-        const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
-        const newUser = {
-          fullName: golfer.player_name,
-          email: golfer.email,
-          password: hashedPassword,
-          role: "golfer",
-          handicapIndex: golfer.display,
-          isActive: true,
-        };
-        logger.info(`from service layer - newUser: ${JSON.stringify(newUser)}`);
-        user = await authRepository.registerUser(newUser);
-      }
-      else {
-        const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
+  //     // ✅ golfers is an array — grab the first item
+  //     const golfer = response.data?.golfer_user?.golfers?.[0];
+  //     let user = await authRepository.findUserByEmail(golfer.email, true);
+  //     if (!user) {
+  //       const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
+  //       const newUser = {
+  //         fullName: golfer.player_name,
+  //         email: golfer.email,
+  //         password: hashedPassword,
+  //         role: "golfer",
+  //         handicapIndex: golfer.display,
+  //         isActive: true,
+  //       };
+  //       logger.info(`from service layer - newUser: ${JSON.stringify(newUser)}`);
+  //       user = await authRepository.registerUser(newUser);
+  //     }
+  //     else {
+  //       const hashedPassword = await hashingUtils.hashPassword(ghinPassword!); // Use ghinPassword!);
 
-        const newUser = {
-          fullName: golfer.player_name,
-          email: golfer.email,
-          password: hashedPassword,
-          role: "golfer",
-          handicapIndex: golfer.display,
-          isActive: true,
-        };
+  //       const newUser = {
+  //         fullName: golfer.player_name,
+  //         email: golfer.email,
+  //         password: hashedPassword,
+  //         role: "golfer",
+  //         handicapIndex: golfer.display,
+  //         isActive: true,
+  //       };
 
-        await authRepository.updateUser(user.email, newUser);
-      }
-      // const user = await authRepository.findOrCreateUser(userData.email, userData.fullName);
-      const tokenPayload = {
-        fullName: user.fullName,
-        userId: user._id,
-        email: user.email,
-        role: user.role,
-      };
-      const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
-      return {
-        success: true,
-        data: {
-          user: {
-            id: user._id,
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role,
-            handicapIndex: user.handicapIndex,
-            isActive: user.isActive,
-            isEmailVerified: user.isEmailVerified,
-          },
-          accessToken,
-          refreshToken,
-        },
-        message: "Login successful",
-      };
-    }
-    catch (err) {
-      if (err.response) {
-        console.error("Error response:", err.response.status, err.response.data);
-        return { error: err.response.data };
-      }
-      else if (err.request) {
-        console.error("No response received:", err.request);
-        return { error: "No response from server" };
-      }
-      else {
-        console.error("Axios error:", err.message);
-        return { error: err.message };
-      }
-    }
-  }
+  //       await authRepository.updateUser(user.email, newUser);
+  //     }
+  //     // const user = await authRepository.findOrCreateUser(userData.email, userData.fullName);
+  //     const tokenPayload = {
+  //       fullName: user.fullName,
+  //       userId: user._id,
+  //       email: user.email,
+  //       role: user.role,
+  //     };
+  //     const { accessToken, refreshToken } = jwtUtils.generateTokens(tokenPayload);
+  //     return {
+  //       success: true,
+  //       data: {
+  //         user: {
+  //           id: user._id,
+  //           fullName: user.fullName,
+  //           email: user.email,
+  //           role: user.role,
+  //           handicapIndex: user.handicapIndex,
+  //           isActive: user.isActive,
+  //           isEmailVerified: user.isEmailVerified,
+  //         },
+  //         accessToken,
+  //         refreshToken,
+  //       },
+  //       message: "Login successful",
+  //     };
+  //   }
+  //   catch (err) {
+  //     if (err.response) {
+  //       console.error("Error response:", err.response.status, err.response.data);
+  //       return { error: err.response.data };
+  //     }
+  //     else if (err.request) {
+  //       console.error("No response received:", err.request);
+  //       return { error: "No response from server" };
+  //     }
+  //     else {
+  //       console.error("Axios error:", err.message);
+  //       return { error: err.message };
+  //     }
+  //   }
+  // }
 }
 
 export const authService = new AuthService();

@@ -2,14 +2,12 @@ import express from "express";
 
 import authRouter from "@/modules/auth/auth.route";
 import clubRouter from "@/modules/club/club.route";
-import commentsRouter from "@/modules/comments/comments.route";
 import channelRouter from "@/modules/conversation/conversation.route";
 import courseRouter from "@/modules/courses/course.routes";
 import dashboardRouter from "@/modules/dashboard/dashboard.route";
 import eventRouter from "@/modules/events/event.routes";
 import friendsRouter from "@/modules/friends/friends.route";
 import golferRouter from "@/modules/golfer/golfer.route";
-import likesRouter from "@/modules/likes/likes.route";
 import locationRouter from "@/modules/location/location.routes";
 import membershipRouter from "@/modules/memberships/memberships.route";
 import messageRouter from "@/modules/message/message.routes";
@@ -47,14 +45,7 @@ const moduleRoutes = [
     path: "/posts",
     route: postsRouter,
   },
-  {
-    path: "/likes",
-    route: likesRouter,
-  },
-  {
-    path: "/comments",
-    route: commentsRouter,
-  },
+
   {
     path: "/friends",
     route: friendsRouter,
@@ -97,5 +88,5 @@ const moduleRoutes = [
   },
 ];
 
-moduleRoutes.forEach((route) => router.use(route.path, route.route));
+moduleRoutes.forEach(route => router.use(route.path, route.route));
 export default router;

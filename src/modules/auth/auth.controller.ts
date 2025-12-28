@@ -1,16 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 
-import { OAuth2Client } from "google-auth-library";
-import jwt from "jsonwebtoken";
-
 import { HTTPSTATUS } from "@/config/http.config";
 import { ErrorCodeEnum } from "@/enums/error-code.enum";
 import { env } from "@/env";
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { logger } from "@/middlewares/pino-logger";
 import { authService } from "@/modules/auth/auth.service";
-
-import { authRepository } from "./auth.repository";
 // const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export class AuthController {
   // Register
@@ -131,11 +126,11 @@ export class AuthController {
   // });
 
   // ghin login
-  ghinLogin = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { ghinNo, ghinPassword } = req.body;
-    const result = await authService.ghinLogin({ ghinNo, ghinPassword });
-    return res.status(HTTPSTATUS.OK).json(result);
-  });
+  // ghinLogin = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  //   const { ghinNo, ghinPassword } = req.body;
+  //   const result = await authService.ghinLogin({ ghinNo, ghinPassword });
+  //   return res.status(HTTPSTATUS.OK).json(result);
+  // });
 
   // generate refresh token
   // refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {

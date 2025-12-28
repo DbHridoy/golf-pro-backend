@@ -23,12 +23,6 @@ const GolferSchema = new Schema({
     required: true,
     ref: "Golf_club",
   }],
-  fullName: {
-    type: String,
-    trim: true,
-    default: null,
-    maxlength: 100,
-  },
   gender: {
     type: String,
     enum: ["male", "female", "other", "prefer_not_to_say"],

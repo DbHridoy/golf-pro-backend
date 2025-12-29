@@ -81,6 +81,16 @@ class PostsController {
       data: post,
     });
   };
+
+  getSinglePost = async (req: Request, res: Response, next: NextFunction) => {
+    const { postId } = req.params;
+    const post =await postService.getSinglePost(postId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Post fetched successfully",
+      data: post,
+    });
+  };
 }
 
 export const postController = new PostsController();

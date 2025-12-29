@@ -22,6 +22,7 @@ router.patch("/toggle-post-status/:postId", authMiddleware.authenticate, postCon
 router.patch("/toggle-like-status/:postId", authMiddleware.authenticate, postController.toggleLike);
 router.get("/gell-all-comments/:postId", authMiddleware.authenticate, postController.getPostComments);
 router.post("/make-comment/:postId", authMiddleware.authenticate, postController.postComment);
+router.get("/:postId",postController.getSinglePost)
 // router.get("/get-all-likes/:postId", authMiddleware.authenticate, postController.getAllLikesForPost);
 
 export default router;

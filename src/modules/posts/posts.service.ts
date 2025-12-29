@@ -278,5 +278,10 @@ class PostServices {
 
     return { comments, count };
   }
+
+  getSinglePost = async (postId: string) => {
+    const post = await PostModel.findById(postId);
+    return post;
+  };
 }
 export const postService = new PostServices();

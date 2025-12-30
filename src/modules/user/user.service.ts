@@ -27,7 +27,7 @@ export class UserService {
   }
 
   async getUserById(userId: string) {
-    const user = await userRepository.findUserById(userId);
+    const user = await userRepository.getUserById(userId);
     return {
       success: true,
       data: user,

@@ -40,6 +40,15 @@ export class UserController {
     }
   );
 
+  getAllClubs=asyncHandler(async(req,res)=>{
+    const clubs=await userService.getAllClubs()
+    res.status(200).send({
+      success:true,
+      message:"All clubs fetched successfully",
+      data:clubs
+    })
+  })
+
   updateUser = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
       const { params, body } = req;

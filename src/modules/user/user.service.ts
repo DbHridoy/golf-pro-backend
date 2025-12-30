@@ -35,6 +35,11 @@ export class UserService {
     };
   }
 
+  getAllClubs=async()=>{
+    const clubs=await userRepository.getAllClubs()
+    return clubs
+  }
+
   async updateUser(userId: string, updateData: UpdateUserInput["body"]) {
     await userRepository.findUserById(userId);
     const updatedUser = await userRepository.updateUser(userId, updateData);

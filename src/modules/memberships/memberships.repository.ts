@@ -69,6 +69,29 @@ class MembershipRepository {
     return clubs;
   }
 
+  getClubMembersById = async (clubId) => {
+    const members = await MembershipModel.find({
+      clubId,
+      status: "approved",
+    })
+      .populate("golferId", "fullName")
+      .lean();
+
+    const formattedMembers = members.map(member => ({
+      id: member._id,
+      golferId: member.golferId?._id,
+      fullName: member.golferId?.fullName || null,
+      status: member.status,
+      isActive: member.isActive,
+      requestedAt: member.requestedAt,
+      joinedAt: member.joinedAt,
+      respondedAt: member.respondedAt,
+      endedAt: member.endedAt,
+    }));
+
+    return formattedMembers;
+  };
+
   async getAllMembersOfaClub(clubId: string) {
     const members = await MembershipModel.find({
       clubId,
@@ -83,7 +106,7 @@ class MembershipRepository {
     const membership = await MembershipModel.findOneAndUpdate(
       { clubId: data.clubId, userId: data.userId },
       { isActive: false },
-      { new: true }
+      { new: true },
     );
     return membership;
   }
@@ -92,7 +115,7 @@ class MembershipRepository {
     const membership = await MembershipModel.findOneAndUpdate(
       { clubId, userId },
       { isActive: true },
-      { new: true }
+      { new: true },
     );
     return membership;
   }
@@ -106,7 +129,7 @@ class MembershipRepository {
     const membership = await MembershipModel.findOneAndUpdate(
       { golferId },
       { status: "approved" },
-      { new: true }
+      { new: true },
     );
     return membership;
   }
@@ -115,15 +138,16 @@ class MembershipRepository {
     const membership = await MembershipModel.findOneAndUpdate(
       { golferId },
       { requestStatus: "rejected" },
-      { new: true }
+      { new: true },
     );
     return membership;
   }
+
   async findMembersByClubId(clubId: string) {
     console.warn(clubId);
     const members = await MembershipModel.find(
       { clubId, status: "approved" },
-      { golferId: 1 }
+      { golferId: 1 },
     )
       .populate("golferId", "fullName")
       .lean();

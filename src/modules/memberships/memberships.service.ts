@@ -7,7 +7,8 @@ import { membershipRepository } from "./memberships.repository";
 class MembershipService {
   async sendMembershipRequest({ golferId, clubId }: any) {
     const club = await clubRepository.findClubById(clubId);
-    if (!club) return { success: false, message: "Club not found" };
+    if (!club)
+      return { success: false, message: "Club not found" };
     logger.warn({ club }, "Club from member service");
     const clubID = club.userId;
     logger.warn({ clubID }, "ClubID from member service");
@@ -27,7 +28,8 @@ class MembershipService {
   async createMembership({ userId, golferId }: any) {
     logger.info(`into service layer`);
     const club = await clubRepository.findClubByUserId(userId);
-    if (!club) return { success: false, message: "Club not found" };
+    if (!club)
+      return { success: false, message: "Club not found" };
     const clubId = club._id;
     if (!clubId) {
       return { success: false, message: "Club not found" };
@@ -51,6 +53,11 @@ class MembershipService {
     return await membershipRepository.getAllClubsOfaGolfer(golferId);
   }
 
+  getClubMembersById = async (clubId) => {
+    const members =await membershipRepository.getClubMembersById(clubId);
+    return members;
+  };
+
   async getAllMembersOfaClub(clubId: string) {
     return await membershipRepository.getAllMembersOfaClub(clubId);
   }
@@ -66,10 +73,12 @@ class MembershipService {
   deleteMembership(clubId: string, userId: string) {
     return membershipRepository.removeMembership(clubId, userId);
   }
+
   approveMembershipRequest(golferId: string) {
     logger.info(`into service layer`);
     return membershipRepository.approveMembershipRequest(golferId);
   }
+
   rejectMembershipRequest(golferId: string) {
     logger.info(`into service layer`);
     return membershipRepository.rejectMembershipRequest(golferId);

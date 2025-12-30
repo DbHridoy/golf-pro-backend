@@ -11,27 +11,29 @@ class ConversationService {
   async getOrCreatePrivate(userId: string, golferId: string) {
     const existingConv = await ConversationModel.findOne({
       type: "private",
-      members: [userId, golferId],
+      members: { $all: [userId, golferId] },
     });
-    if (existingConv) {
+
+    if (existingConv)
       return existingConv;
-    }
+
     const newPrivateConv = await ConversationModel.create({
       type: "private",
       members: [userId, golferId],
     });
-    logger.info(`from conversation service: ${JSON.stringify(newPrivateConv)}`);
+
     await ConversationParticipantModel.insertMany([
       { convId: newPrivateConv._id, userId },
       { convId: newPrivateConv._id, userId: golferId },
     ]);
+
     return newPrivateConv;
   }
 
   async createChannel(data: any) {
     // Create a new channel
     const admins = await AdminModel.find();
-    data.members.push(...admins.map((admin) => admin.userId));
+    data.members.push(...admins.map(admin => admin.userId));
     logger.info("Members array →", data.members);
     const newChannel = await conversationRepository.createNewChannel(data);
     logger.info("New channel created →", newChannel);
@@ -53,10 +55,11 @@ class ConversationService {
     // Insert participants
     try {
       const inserted = await ConversationParticipantModel.insertMany(
-        participants
+        participants,
       );
       logger.info("Participants inserted successfully →", inserted);
-    } catch (err) {
+    }
+    catch (err) {
       logger.error("INSERT MANY ERROR →", err);
     }
 
@@ -122,6 +125,7 @@ class ConversationService {
   async isParticipant(convId: string, userId: string) {
     return !!(await ConversationParticipantModel.exists({ convId, userId }));
   }
+
   getChannelStats() {
     return ConversationModel.countDocuments({ type: "channel" });
   }

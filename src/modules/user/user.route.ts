@@ -15,6 +15,7 @@ router.post("/change-email", userController.changeEmail); // Change email (TODO:
 
 // Media routes
 router.get("/",  userController.getUsers);
+router.get("/clubs",userController.getAllClubs)
 router.get("/media", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club"]), userController.getUserMedia);
 router.get("/:id", userController.getUserById);
 

@@ -112,6 +112,43 @@ export class UserRepository {
     };
   };
 
+  getAllClubs = async () => {
+    const clubs = await UserModel
+      .find({ role: "golf_club" })
+      .populate("club")
+      .lean();
+
+    const formattedClubs
+      = clubs.map((club) => {
+        const roleData = club.club;
+
+        // remove duplicated / unwanted keys from roleData
+        const {
+          _id: roleId,
+          userId,
+          __v,
+          createdAt: roleCreatedAt,
+          updatedAt: roleUpdatedAt,
+          ...cleanRoleData
+        } = roleData || {};
+
+        return {
+          _id: club._id,
+          fullName: club.fullName,
+          email: club.email,
+          role: club.role,
+          isActive: club.isActive,
+          handicapIndex: club.handicapIndex,
+          createdAt: club.createdAt,
+          updatedAt: club.updatedAt,
+
+          // 🔥 merged at root
+          ...cleanRoleData,
+        };
+      });
+    return formattedClubs;
+  };
+
   // async findUserById(userId: string, options: { select?: string } = {}) {
   //   let query = UserModel.findOne({ _id: userId, isActive: true });
 

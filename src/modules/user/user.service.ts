@@ -21,6 +21,11 @@ export class UserService {
     this.saltRounds = env.SALT_ROUNDS;
   }
 
+  createClub=async(fullName:string,email:string,password:string)=>{
+    const club=await userRepository.createClub(fullName,email,password)
+    return club
+  }
+
   async getUsers(query: GetUsersInput["query"]) {
     const result = await userRepository.getUsers(query);
     return result;
@@ -38,6 +43,10 @@ export class UserService {
   getAllClubs=async()=>{
     const clubs=await userRepository.getAllClubs()
     return clubs
+  }
+  getAllGolfers=async()=>{
+    const golfers=await userRepository.getAllGolfers()
+    return golfers
   }
 
   async updateUser(userId: string, updateData: UpdateUserInput["body"]) {

@@ -27,6 +27,7 @@ export class AuthController {
       data: {
         user: result.data.user,
         accessToken: result.data.accessToken,
+        refressToken: result.data.refreshToken,
       },
       message: result.message,
     });

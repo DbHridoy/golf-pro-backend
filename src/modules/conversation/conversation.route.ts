@@ -3,41 +3,41 @@ import { Router } from "express";
 
 import { authMiddleware } from "@/middlewares/auth.middleware";
 import { logger } from "@/middlewares/pino-logger";
+import { upload } from "@/middlewares/upload.middleware";
 import fileUploadUtils from "@/utils/file-upload.utils";
 
 import { conversationController } from "./conversation.controller";
-import { upload } from "@/middlewares/upload.middleware";
 
 const router = Router();
 router.post(
   "/create-private",
   authMiddleware.authenticate,
-  conversationController.createPrivate
+  conversationController.createPrivate,
 );
 router.post(
   "/create-channel",
   authMiddleware.authenticate,
-  conversationController.createChannel
+  conversationController.createChannel,
 );
 
 // for admin
 router.get(
   "/get-channels",
   authMiddleware.authenticate,
-  conversationController.getAllChannels
+  conversationController.getAllChannels,
 );
 
 // for user
 router.get(
   "/my-conversation",
   authMiddleware.authenticate,
-  conversationController.listMine
+  conversationController.listMine,
 );
 
 router.get(
   "/get-channel-stats",
   authMiddleware.authenticate,
-  conversationController.getChannelStats
+  conversationController.getChannelStats,
 );
 
 router.post(
@@ -55,11 +55,12 @@ router.post(
 
       const url = await fileUploadUtils.uploadToS3(f.buffer, key, f.mimetype);
       return res.json({ url });
-    } catch (err) {
+    }
+    catch (err) {
       logger.error("File upload failed →", err);
       return res.status(500).json({ error: "File upload failed" });
     }
-  }
+  },
 );
 
 export default router;

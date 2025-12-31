@@ -10,6 +10,8 @@ import {
 import { buildDynamicSearch } from "@/utils/dynamic-search-utils";
 import { PaginationHelper } from "@/utils/pagination-helper";
 
+import { authService } from "../auth/auth.service";
+import ClubModel from "../club/club.model";
 import UserModel from "./user.model";
 
 export class UserRepository {
@@ -21,6 +23,13 @@ export class UserRepository {
     "updatedAt",
     "isActive",
   ];
+
+  createClub = async (fullName: string, email: string, password: string) => {
+    // const club = await UserModel.create({ fullName, email, password, role: "golf_club" });
+    const club =await authService.register({ fullName, email, password, role: "golf_club" });
+    // const clubProfile = await ClubModel.create({ userId: club.data.user.id });
+    return club;
+  };
 
   getUsers = async (query: PaginationQuery) => {
     const { filter, search, options } = buildDynamicSearch(UserModel, query);
@@ -71,7 +80,20 @@ export class UserRepository {
   getUserById = async (userId: string) => {
     const user = await UserModel
       .findById(userId)
-      .populate("golfer club admin")
+      .populate([
+        {
+          path: "golfer",
+        },
+        {
+          path: "club",
+          populate: {
+            path: "manager",
+          },
+        },
+        {
+          path: "admin",
+        },
+      ])
       .lean();
 
     if (!user) {
@@ -115,7 +137,12 @@ export class UserRepository {
   getAllClubs = async () => {
     const clubs = await UserModel
       .find({ role: "golf_club" })
-      .populate("club")
+      .populate({
+        path: "club",
+        populate: {
+          path: "manager",
+        },
+      })
       .lean();
 
     const formattedClubs
@@ -147,6 +174,13 @@ export class UserRepository {
         };
       });
     return formattedClubs;
+  };
+
+  getAllGolfers = async () => {
+    const golfers = await UserModel.find({ role: "golfer" }).populate({
+      path: "golfer",
+    }).lean();
+    return golfers;
   };
 
   // async findUserById(userId: string, options: { select?: string } = {}) {

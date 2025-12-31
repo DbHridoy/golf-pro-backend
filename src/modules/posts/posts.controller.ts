@@ -21,7 +21,7 @@ class PostsController {
   }
 
   async getAllPosts(req: Request, res: Response, _next: NextFunction) {
-    const posts = await postService.getAllPosts();
+    const posts = await postService.getAllPosts(req.user!.userId);
     return res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "Posts fetched successfully",
@@ -84,7 +84,7 @@ class PostsController {
 
   getSinglePost = async (req: Request, res: Response, next: NextFunction) => {
     const { postId } = req.params;
-    const post =await postService.getSinglePost(postId);
+    const post = await postService.getSinglePost(postId);
     return res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "Post fetched successfully",

@@ -45,6 +45,10 @@ const ClubSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  manager: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
 }, {
   timestamps: true,
   toJSON: {

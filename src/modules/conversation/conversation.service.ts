@@ -9,25 +9,38 @@ import conversationRepository from "./conversation.repository";
 
 class ConversationService {
   async getOrCreatePrivate(userId: string, golferId: string) {
-    const existingConv = await ConversationModel.findOne({
+  // Try to find an existing private conversation
+    let conv = await ConversationModel.findOne({
       type: "private",
       members: { $all: [userId, golferId] },
-    });
+    }).populate("members");
 
-    if (existingConv)
-      return existingConv;
+    if (!conv) {
+    // Create a new private conversation
+      conv = await ConversationModel.create({
+        type: "private",
+        members: [userId, golferId],
+      });
 
-    const newPrivateConv = await ConversationModel.create({
-      type: "private",
-      members: [userId, golferId],
-    });
+      // Populate members after creation
+      await conv.populate("members");
 
-    await ConversationParticipantModel.insertMany([
-      { convId: newPrivateConv._id, userId },
-      { convId: newPrivateConv._id, userId: golferId },
-    ]);
+      // Add participants
+      await ConversationParticipantModel.insertMany([
+        { convId: conv._id, userId },
+        { convId: conv._id, userId: golferId },
+      ]);
+    }
 
-    return newPrivateConv;
+    // Determine receiverId (the member that is NOT the current user)
+    const receiver = conv.members.find(
+      (member: any) => member._id.toString() !== userId,
+    );
+
+    return {
+      ...conv.toObject(), // convert mongoose doc to plain object
+      receiverId: receiver, // populate with full member object
+    };
   }
 
   async createChannel(data: any) {

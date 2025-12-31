@@ -26,6 +26,7 @@ router.post(
   authMiddleware.authenticate,
   friendController.rejectFriendRequest
 );
+
 router.get(
   "/get-my-requests",
   authMiddleware.authenticate,

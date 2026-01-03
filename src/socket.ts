@@ -91,31 +91,31 @@ export function initSocket(server: HTTPServer) {
         );
         return socket.emit("error", "Not a participant");
       }
-      
+
       const msg = await MessageModel.create({
         convId,
         senderId: userId,
         content,
         messageType: type,
       });
-      
+
       socket.to(convId).emit("new-msg", msg);
     });
     socket.on("disconnect", reason => handleDisconnect(socket, reason));
   });
-  
+
   // console.log(`------------------------body------------------------------`);
   // logger.info(
   //   `User: ${userId}, convId: ${convId}, content: ${content}, type: ${type}`,
   // );
   // console.log(`------------------------body------------------------------`);
-  
+
   // Location events, disconnect, etc.
   // socket.on("location:init", (data) => handleLocationInit(socket, data));
   // socket.on("location:update", (data) => handleLocationUpdate(socket, data));
-      // socket.on("location:disconnect", (data) =>
-      //   handleLocationDisconnect(socket, data)
-      // );
+  // socket.on("location:disconnect", (data) =>
+  //   handleLocationDisconnect(socket, data)
+  // );
   return io;
 }
 
@@ -313,14 +313,13 @@ async function handleLocationDisconnect(socket: Socket, data: any) {
     console.error("Error in handleLocationDisconnect:", error);
   }
 }
-async function handleDisconnect(this: Socket, reason: string) {
+async function handleDisconnect(socket: Socket, reason: string) {
   try {
-    console.log(`Socket disconnected: ${this.id}, reason: ${reason}`);
-
+    console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
     // Find and remove connection
     for (const [userId, socketIds] of activeConnections.entries()) {
-      if (socketIds.has(this.id)) {
-        socketIds.delete(this.id);
+      if (socketIds.has(socket.id)) {
+        socketIds.delete(socket.id);
 
         // If no more connections for this user, mark as offline
         if (socketIds.size === 0) {

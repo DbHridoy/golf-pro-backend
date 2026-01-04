@@ -5,22 +5,25 @@ import { authMiddleware } from "@/middlewares/auth.middleware";
 import { userController } from "./user.controller";
 
 const router = Router();
+// authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]),
 
+router.post("/change-email", userController.changeEmail); // Change email (TODO: Add auth middleware)
+router.post("/create-club", userController.createClub);
 
-router.get("/", authMiddleware.authenticate, authMiddleware.authorize(["admin", "golfer", "golf_club"]), userController.getUsers);
 // router.post("/forgot-password", userController.sendOtp);
 // router.post("/reset-password", userController.sendOtp);
 // router.post("/verify-email", userController.verifyEmail); // verify email
-router.post("/change-email", userController.changeEmail); // Change email (TODO: Add auth middleware)
 
 // Media routes
+router.get("/", userController.getUsers);
+router.get("/clubs", userController.getAllClubs);
 router.get("/media", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club"]), userController.getUserMedia);
+router.get("/golfers", userController.getAllGolfers);
+router.get("/:id", userController.getUserById);
 
 // User CRUD routes
-router.patch("/toggle-status/:userId",userController.toggleActiveStatus)
-router.get("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "admin"]), userController.getUserById);
+router.patch("/toggle-status/:userId", userController.toggleActiveStatus);
 router.patch("/:id", authMiddleware.authenticate, authMiddleware.authorize(["golfer", "golf_club", "admin"]), userController.updateUser);
 router.patch("/:id/change-password", userController.changePassword);
-
 
 export default router;

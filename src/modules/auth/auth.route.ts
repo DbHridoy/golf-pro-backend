@@ -14,6 +14,6 @@ router.post("/set-password", authController.setNewPassword);
 // router.post("/google-login", authController.googleLogin);
 // router.post("/ghin-login", authController.ghinLogin);
 router.post("/refresh", authController.refreshToken);
-router.post("/logout", authMiddleware.authenticate, authController.logout);
+router.post("/logout",  authController.logout);
 
 export default router;

@@ -81,12 +81,12 @@ export async function createEvent(req: Request, res: Response) {
           });
         }
       }
-      else if (userRole === "admin") {
-        const club = await ClubModel.findById(clubId);
-        if (!club) {
-          return res.status(404).json({ message: "Club not found" });
-        }
-      }
+      // else if (userRole === "admin") {
+      //   const club = await ClubModel.findById(clubId);
+      //   if (!club) {
+      //     return res.status(404).json({ message: "Club not found" });
+      //   }
+      // }
     }
 
     // ============================================

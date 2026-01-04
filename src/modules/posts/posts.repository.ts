@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 
+import { logger } from "@/middlewares/pino-logger";
+
+import FriendModel from "../friends/friends.model";
 import PostModel from "./posts.model";
 
 class PostRepository {
@@ -8,17 +11,48 @@ class PostRepository {
     return post;
   }
 
-  async getAllPosts() {
+  getFriendStatus = async (user1: string, user2: string) => {
+    if (!user1 || !user2)
+      return "not sent";
+
+    const friendship = await FriendModel.findOne({
+      $or: [
+        { requesterId: user1, receiverId: user2 },
+        { requesterId: user2, receiverId: user1 },
+      ],
+    });
+
+    if (!friendship)
+      return "not sent";
+
+    return friendship.status; // will return "pending", "accepted", "rejected", or "cancelled"
+  };
+
+  async getAllPosts(currentUserId: string) {
     const posts = await PostModel.find()
-    .populate([
-      { path: "userId", select: "fullName email profileImage" },
-      { path: "taggedFriends.userId", select: "fullName email profileImage" },
-      { path: "taggedClubs.clubId", select: "name description logo" },
-      { path: "likedBy.userId", select: "fullName profileImage" },
-      { path: "comments.userId", select: "fullName profileImage" },
-    ])
-    .sort({ createdAt: -1 });
-    return posts
+      .populate([
+        { path: "userId" },
+        { path: "taggedFriends.userId", select: "fullName email profileImage" },
+        { path: "taggedClubs.clubId", select: "name description logo" },
+        { path: "likedBy.userId", select: "fullName profileImage" },
+        { path: "comments.userId", select: "fullName profileImage" },
+      ])
+      .sort({ createdAt: -1 });
+
+    logger.info({ posts }, "postrepo.getllAllPosts");
+    // return posts;
+    // Attach friendship status for each post relative to current user
+    const postsWithFriendStatus = await Promise.all(
+      posts.map(async (post) => {
+        const friendStatus = await this.getFriendStatus(currentUserId, post.userId?.id);
+        return {
+          ...post.toObject(),
+          friendStatus, // "accepted", "pending", or "not sent"
+        };
+      }),
+    );
+
+    return postsWithFriendStatus;
   }
 
   // async getAllPostsForUser(userId: string) {
@@ -225,22 +259,21 @@ class PostRepository {
 
   //   return posts;
   // }
-async getAllPostsForUser(userId: string) {
-  const userObjId = new mongoose.Types.ObjectId(userId);
+  async getAllPostsForUser(userId: string) {
+    const userObjId = new mongoose.Types.ObjectId(userId);
 
-  const posts = await PostModel.find({ userId: userObjId })
-    .populate([
-      { path: "userId", select: "fullName email profileImage" },
-      { path: "taggedFriends", select: "fullName email" },
-      { path: "taggedClubs", select: "fullName email" },
-      { path: "likedBy.userId", select: "fullName profileImage" },
-      { path: "comments.userId", select: "fullName profileImage" },
-    ])
-    .sort({ createdAt: -1 });
+    const posts = await PostModel.find({ userId: userObjId })
+      .populate([
+        { path: "userId", select: "fullName email profileImage" },
+        { path: "taggedFriends", select: "fullName email" },
+        { path: "taggedClubs", select: "fullName email" },
+        { path: "likedBy.userId", select: "fullName profileImage" },
+        { path: "comments.userId", select: "fullName profileImage" },
+      ])
+      .sort({ createdAt: -1 });
 
-  return posts;
-}
-
+    return posts;
+  }
 
   async togglePostStatus(postId, isActive) {
     const post = await PostModel.findOneAndUpdate({ _id: postId }, { isActive }, { new: true }).lean();

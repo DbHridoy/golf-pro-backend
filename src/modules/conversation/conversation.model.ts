@@ -13,7 +13,7 @@ const ConversationSchema = new Schema(
     },
     clubId: { // ensure this matches your backend payload
       type: Schema.Types.ObjectId,
-      ref: "Club",
+      ref: "User",
     },
     members: [
       {

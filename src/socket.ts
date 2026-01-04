@@ -29,7 +29,8 @@ export function initSocket(server: HTTPServer) {
     try {
       const token = socket.handshake.query?.token;
       logger.info(`Token: ${token}`);
-      if (!token) return next(new Error("No token provided"));
+      if (!token)
+        return next(new Error("No token provided"));
 
       const decoded = jwtUtils.verifyRefreshToken(token);
       const decoded1 = jwtUtils.verifyAccessToken(token);
@@ -42,14 +43,15 @@ export function initSocket(server: HTTPServer) {
         socket.userId = decoded1.userId;
       }
       next();
-    } catch (err) {
+    }
+    catch (err) {
       next(new Error("Invalid token"));
     }
   });
 
   io.on("connection", async (socket: Socket) => {
     const userId = socket.userId;
-    console.log(`✅ User connected: ${userId}, socket: ${socket.id}`);
+    // console.log(`✅ User connected: ${userId}, socket: ${socket.id}`);
 
     // Store connection
     if (!activeConnections.has(userId))
@@ -58,37 +60,34 @@ export function initSocket(server: HTTPServer) {
 
     // Join clubs
     const golfer = await GolferModel.findOne({ userId }).select(
-      "_id clubId isLocationSharingEnabled isOnline"
+      "_id clubId isLocationSharingEnabled isOnline",
     );
     if (golfer) {
-      const clubIds = golfer.clubId.map((id) => id.toString());
+      const clubIds = golfer.clubId.map(id => id.toString());
       userClubs.set(userId, new Set(clubIds));
-      clubIds.forEach((clubId) => socket.join(`club-${clubId}`));
+      clubIds.forEach(clubId => socket.join(`club-${clubId}`));
     }
 
     // Conversation events
     socket.on("join", async ({ convId }) => {
       logger.info(`User ${userId} joined conversation ${convId}`);
       const ok = await ParticipantModel.exists({ convId, userId });
-      if (ok) socket.join(convId);
+      if (ok) {
+        socket.join(convId);
+      }
       else {
         logger.info(
-          `User ${userId} is not a participant of conversation ${convId}`
+          `User ${userId} is not a participant of conversation ${convId}`,
         );
         socket.emit("error", "You are not a participant");
       }
     });
 
     socket.on("send-msg", async ({ convId, content, type }) => {
-      console.log(`------------------------body------------------------------`);
-      logger.info(
-        `User: ${userId}, convId: ${convId}, content: ${content}, type: ${type}`
-      );
-      console.log(`------------------------body------------------------------`);
       const ok = await ParticipantModel.exists({ convId, userId });
       if (!ok) {
         logger.info(
-          `User ${userId} is not a participant of conversation ${convId}`
+          `User ${userId} is not a participant of conversation ${convId}`,
         );
         return socket.emit("error", "Not a participant");
       }
@@ -102,17 +101,21 @@ export function initSocket(server: HTTPServer) {
 
       socket.to(convId).emit("new-msg", msg);
     });
-
-    // Location events, disconnect, etc.
-    // socket.on("location:init", (data) => handleLocationInit(socket, data));
-    // socket.on("location:update", (data) => handleLocationUpdate(socket, data));
-    // socket.on("location:disconnect", (data) =>
-    //   handleLocationDisconnect(socket, data)
-    // );
-
-    socket.on("disconnect", (reason) => handleDisconnect(socket, reason));
+    socket.on("disconnect", reason => handleDisconnect(socket, reason));
   });
 
+  // console.log(`------------------------body------------------------------`);
+  // logger.info(
+  //   `User: ${userId}, convId: ${convId}, content: ${content}, type: ${type}`,
+  // );
+  // console.log(`------------------------body------------------------------`);
+
+  // Location events, disconnect, etc.
+  // socket.on("location:init", (data) => handleLocationInit(socket, data));
+  // socket.on("location:update", (data) => handleLocationUpdate(socket, data));
+  // socket.on("location:disconnect", (data) =>
+  //   handleLocationDisconnect(socket, data)
+  // );
   return io;
 }
 
@@ -138,7 +141,7 @@ async function handleLocationInit(socket: Socket, data: any) {
 
     // Find golfer profile
     const golfer = await GolferModel.findOne({ userId }).select(
-      "clubId isLocationSharingEnabled isOnline"
+      "clubId isLocationSharingEnabled isOnline",
     );
 
     if (!golfer) {
@@ -184,7 +187,8 @@ async function handleLocationInit(socket: Socket, data: any) {
     });
 
     console.log(`Location tracking initialized for user: ${userId}`);
-  } catch (error) {
+  }
+  catch (error) {
     console.error("Error in handleLocationInit:", error);
     socket.emit("location:error", { message: "Internal server error" });
   }
@@ -199,12 +203,12 @@ async function handleLocationUpdate(socket: Socket, data: any) {
 
     // Validate location data
     if (
-      !latitude ||
-      !longitude ||
-      latitude < -90 ||
-      latitude > 90 ||
-      longitude < -180 ||
-      longitude > 180
+      !latitude
+      || !longitude
+      || latitude < -90
+      || latitude > 90
+      || longitude < -180
+      || longitude > 180
     ) {
       socket.emit("location:error", { message: "Invalid coordinates" });
       return;
@@ -212,7 +216,7 @@ async function handleLocationUpdate(socket: Socket, data: any) {
 
     // Find golfer
     const golfer = await GolferModel.findOne({ userId }).select(
-      "_id clubId isLocationSharingEnabled currentEventId"
+      "_id clubId isLocationSharingEnabled currentEventId",
     );
 
     if (!golfer) {
@@ -272,7 +276,8 @@ async function handleLocationUpdate(socket: Socket, data: any) {
     }
 
     socket.emit("location:update-confirmed", { timestamp: new Date() });
-  } catch (error) {
+  }
+  catch (error) {
     console.error("Error in handleLocationUpdate:", error);
     socket.emit("location:error", { message: "Failed to update location" });
   }
@@ -303,18 +308,18 @@ async function handleLocationDisconnect(socket: Socket, data: any) {
     socket.emit("location:disconnected", {
       message: "Location tracking stopped",
     });
-  } catch (error) {
+  }
+  catch (error) {
     console.error("Error in handleLocationDisconnect:", error);
   }
 }
-async function handleDisconnect(this: Socket, reason: string) {
+async function handleDisconnect(socket: Socket, reason: string) {
   try {
-    console.log(`Socket disconnected: ${this.id}, reason: ${reason}`);
-
+    console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
     // Find and remove connection
     for (const [userId, socketIds] of activeConnections.entries()) {
-      if (socketIds.has(this.id)) {
-        socketIds.delete(this.id);
+      if (socketIds.has(socket.id)) {
+        socketIds.delete(socket.id);
 
         // If no more connections for this user, mark as offline
         if (socketIds.size === 0) {
@@ -343,7 +348,8 @@ async function handleDisconnect(this: Socket, reason: string) {
         break;
       }
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error("Error in handleDisconnect:", error);
   }
 }
@@ -378,7 +384,8 @@ export function leaveEventRoom(userId: string, eventId: string) {
  * Broadcast location update (for API calls)
  */
 export function broadcastLocationUpdate(locationData: any) {
-  if (!io) return;
+  if (!io)
+    return;
   io.emit("location:updated", locationData);
 }
 
@@ -393,7 +400,7 @@ export async function getActiveUsersInClub(clubId: string): Promise<any[]> {
       const userClubIds = userClubs.get(userId);
       if (userClubIds?.has(clubId)) {
         const golfer = await GolferModel.findOne({ userId }).select(
-          "_id fullName profileImage currentLocation locationUpdatedAt currentHole currentEventId"
+          "_id fullName profileImage currentLocation locationUpdatedAt currentHole currentEventId",
         );
 
         if (golfer && golfer.currentLocation) {

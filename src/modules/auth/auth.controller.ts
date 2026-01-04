@@ -27,6 +27,7 @@ export class AuthController {
       data: {
         user: result.data.user,
         accessToken: result.data.accessToken,
+        refressToken: result.data.refreshToken,
       },
       message: result.message,
     });
@@ -34,7 +35,7 @@ export class AuthController {
 
   // reset password
   sendOtp = asyncHandler (async (req, res) => {
-    const { email } = req.body; 
+    const { email } = req.body;
     const result = await authService.sendOtp(email);
     logger.info(result);
     res.status(HTTPSTATUS.OK).json(result);
@@ -47,7 +48,7 @@ export class AuthController {
   });
 
   setNewPassword = asyncHandler(async (req, res) => {
-    const { email,newPassword, confirmPassword } = req.body;
+    const { email, newPassword, confirmPassword } = req.body;
 
     // Basic validation
     if (!newPassword || !confirmPassword) {

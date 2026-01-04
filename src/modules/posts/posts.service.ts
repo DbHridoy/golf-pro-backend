@@ -165,17 +165,17 @@ class PostServices {
     }
   }
 
-  async getAllPosts() {
-    const posts = await postRepository.getAllPosts();
+  async getAllPosts(currentUserId: string) {
+    const posts = await postRepository.getAllPosts(currentUserId);
     return posts;
   }
 
-  async getAllPostsForUser(userId) {
+  async getAllPostsForUser(userId: string) {
     const posts = await postRepository.getAllPostsForUser(userId);
     return posts;
   }
 
-  async togglePostStatus(postId) {
+  async togglePostStatus(postId: string) {
     const currentPost = await postRepository.getSinglePost(postId);
     if (!currentPost)
       return null;
@@ -278,5 +278,10 @@ class PostServices {
 
     return { comments, count };
   }
+
+  getSinglePost = async (postId: string) => {
+    const post = await PostModel.findById(postId);
+    return post;
+  };
 }
 export const postService = new PostServices();

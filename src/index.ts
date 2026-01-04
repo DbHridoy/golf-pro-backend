@@ -18,21 +18,21 @@ const server = createServer(app);
 initSocket(server);
 
 // Initialize Socket.io
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-  transports: ["websocket", "polling"], // WebSocket primary, polling fallback
-  // reconnection: true,
-  // reconnectionDelay: 1000,
-  // reconnectionDelayMax: 5000,
-  // reconnectionAttempts: 5,
-});
+// const io = new SocketIOServer(server, {
+//   cors: {
+//     origin: "*",
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   },
+//   transports: ["websocket", "polling"], // WebSocket primary, polling fallback
+//   // reconnection: true,
+//   // reconnectionDelay: 1000,
+//   // reconnectionDelayMax: 5000,
+//   // reconnectionAttempts: 5,
+// });
 
 // Initialize socket service
-initializeSocket(io);
+// initializeSocket(io);
 
 // Start the server
 server.listen(port, "0.0.0.0", async () => {

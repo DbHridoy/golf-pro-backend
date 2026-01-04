@@ -9,29 +9,44 @@ import conversationRepository from "./conversation.repository";
 
 class ConversationService {
   async getOrCreatePrivate(userId: string, golferId: string) {
-    const existingConv = await ConversationModel.findOne({
+  // Try to find an existing private conversation
+    let conv = await ConversationModel.findOne({
       type: "private",
-      members: [userId, golferId],
-    });
-    if (existingConv) {
-      return existingConv;
+      members: { $all: [userId, golferId] },
+    }).populate("members");
+
+    if (!conv) {
+    // Create a new private conversation
+      conv = await ConversationModel.create({
+        type: "private",
+        members: [userId, golferId],
+      });
+
+      // Populate members after creation
+      await conv.populate("members");
+
+      // Add participants
+      await ConversationParticipantModel.insertMany([
+        { convId: conv._id, userId },
+        { convId: conv._id, userId: golferId },
+      ]);
     }
-    const newPrivateConv = await ConversationModel.create({
-      type: "private",
-      members: [userId, golferId],
-    });
-    logger.info(`from conversation service: ${JSON.stringify(newPrivateConv)}`);
-    await ConversationParticipantModel.insertMany([
-      { convId: newPrivateConv._id, userId },
-      { convId: newPrivateConv._id, userId: golferId },
-    ]);
-    return newPrivateConv;
+
+    // Determine receiverId (the member that is NOT the current user)
+    const receiver = conv.members.find(
+      (member: any) => member._id.toString() !== userId,
+    );
+
+    return {
+      ...conv.toObject(), // convert mongoose doc to plain object
+      receiverId: receiver, // populate with full member object
+    };
   }
 
   async createChannel(data: any) {
     // Create a new channel
     const admins = await AdminModel.find();
-    data.members.push(...admins.map((admin) => admin.userId));
+    data.members.push(...admins.map(admin => admin.userId));
     logger.info("Members array →", data.members);
     const newChannel = await conversationRepository.createNewChannel(data);
     logger.info("New channel created →", newChannel);
@@ -53,10 +68,11 @@ class ConversationService {
     // Insert participants
     try {
       const inserted = await ConversationParticipantModel.insertMany(
-        participants
+        participants,
       );
       logger.info("Participants inserted successfully →", inserted);
-    } catch (err) {
+    }
+    catch (err) {
       logger.error("INSERT MANY ERROR →", err);
     }
 
@@ -122,6 +138,7 @@ class ConversationService {
   async isParticipant(convId: string, userId: string) {
     return !!(await ConversationParticipantModel.exists({ convId, userId }));
   }
+
   getChannelStats() {
     return ConversationModel.countDocuments({ type: "channel" });
   }

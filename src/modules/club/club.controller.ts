@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { HTTPSTATUS } from "@/config/http.config";
 import { asyncHandler } from "@/middlewares/async-handler.middleware";
+import { logger } from "@/middlewares/pino-logger";
 
 import { clubRepository } from "./club.repository";
 import { clubService } from "./club.service";
@@ -35,12 +36,43 @@ export class ClubController {
     return res.status(HTTPSTATUS.OK).json(result);
   });
 
+  updateClub = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const { body } = req;
+    const clubId = req.params.clubId;
+
+    // Pass req.files to the service for file handling
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const result = await clubService.updateClubProfile(clubId, body, files);
+
+    return res.status(HTTPSTATUS.OK).json(result);
+  });
+
   getAllClubs = asyncHandler(async (req, res) => {
     const allClubs = await clubRepository.getAllClubs();
     res.status(HTTPSTATUS.OK).json({
       success: true,
       message: "All clubs fetched successfully",
       data: allClubs,
+    });
+  });
+
+  assignClubManager = asyncHandler(async (req, res) => {
+    const { clubId, managerId } = req.body;
+
+    if (!clubId || !managerId) {
+      return res.status(400).json({
+        success: false,
+        message: "clubId and managerId are required",
+      });
+    }
+
+    const result = await clubService.assignClubManager(clubId, managerId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Club manager assigned successfully",
+      data: result,
     });
   });
 }

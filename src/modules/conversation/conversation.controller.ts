@@ -22,6 +22,7 @@ class ConversationController {
 
   createChannel = asyncHandler(async (req, res) => {
     const { body } = req;
+    logger.info({body}, "from conversation controller");
     const channel = {
       type: "channel",
       title: body.title,

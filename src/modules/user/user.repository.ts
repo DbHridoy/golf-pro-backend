@@ -7,8 +7,11 @@ import {
   BadRequestException,
   NotFoundException,
 } from "@/utils/app-error.utils";
+import { buildDynamicSearch } from "@/utils/dynamic-search-utils";
 import { PaginationHelper } from "@/utils/pagination-helper";
 
+import { authService } from "../auth/auth.service";
+import ClubModel from "../club/club.model";
 import UserModel from "./user.model";
 
 export class UserRepository {
@@ -21,81 +24,186 @@ export class UserRepository {
     "isActive",
   ];
 
-  async getUsers(query: PaginationQuery): Promise<PaginatedResponse<IUser>> {
-    const paginateOptions = PaginationHelper.parsePaginationParams(query);
+  createClub = async (fullName: string, email: string, password: string) => {
+    // const club = await UserModel.create({ fullName, email, password, role: "golf_club" });
+    const club =await authService.register({ fullName, email, password, role: "golf_club" });
+    // const clubProfile = await ClubModel.create({ userId: club.data.user.id });
+    return club;
+  };
 
-    // console.log("Response from repository function");
-    const searchFilter = PaginationHelper.createSearchFilter(
-      query,
-      this.searchableFields
-    );
+  getUsers = async (query: PaginationQuery) => {
+    const { filter, search, options } = buildDynamicSearch(UserModel, query);
 
-    // console.log("Searhc filters: ", searchFilter);
+    const users = await UserModel
+      .find({ ...filter, ...search }, null, options)
+      .populate("golfer club admin")
+      .lean();
 
-    logger.info(paginateOptions, " ", searchFilter, "Debugging");
+    const formattedUsers = users.map((user) => {
+      const roleData
+        = user.role === "golfer"
+          ? user.golfer
+          : user.role === "golf_club"
+            ? user.club
+            : user.role === "admin"
+              ? user.admin
+              : null;
 
-    if (query.role && typeof query.role === "string") {
-      const validRoles = ["golfer", "golf_club", "admin"];
-      if (validRoles.includes(query.role)) {
-        searchFilter.role = query.role;
-      }
-    }
+      // remove duplicated / unwanted keys from roleData
+      const {
+        _id: roleId,
+        userId,
+        __v,
+        createdAt: roleCreatedAt,
+        updatedAt: roleUpdatedAt,
+        ...cleanRoleData
+      } = roleData || {};
 
-    if (query.isActive !== undefined) {
-      searchFilter.isActive = Boolean(query.isActive);
-    }
+      return {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        handicapIndex: user.handicapIndex,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
 
-    if (query.isEmailVerified !== undefined) {
-      searchFilter.isEmailVerified =
-        query.isEmailVerified === "true" || query.isEmailVerified === true;
-    }
-
-    if (paginateOptions.sort) {
-      const sortKeys = Object.keys(paginateOptions.sort);
-
-      const invalidSortFields = sortKeys.filter(
-        (field) => !this.sortableFields.includes(field)
-      );
-
-      if (invalidSortFields.length > 0) {
-        logger.warn(`Invalid sort fields: ${invalidSortFields.join(", ")}`);
-        throw new BadRequestException(
-          `Invalid sort fields: ${invalidSortFields.join(", ")}`,
-          ErrorCodeEnum.PAGINATION_INVALID_SORT_FIELD
-        );
-      }
-    }
-    const result = await UserModel.paginate(searchFilter, {
-      ...paginateOptions,
-      lean: false,
-      leanWithId: false,
-      populate: paginateOptions.populate,
+        // 🔥 merged at root
+        ...cleanRoleData,
+      };
     });
-    logger.debug(result);
-    return PaginationHelper.formatResponse(result);
-  }
 
-  async findUserById(userId: string, options: { select?: string } = {}) {
-    let query = UserModel.findOne({ _id: userId, isActive: true });
+    return formattedUsers;
+  };
 
-    if (options.select) {
-      query = query.select(options.select);
-    }
-
-    const user = await query.lean();
+  getUserById = async (userId: string) => {
+    const user = await UserModel
+      .findById(userId)
+      .populate([
+        {
+          path: "golfer",
+        },
+        {
+          path: "club",
+          populate: {
+            path: "manager",
+          },
+        },
+        {
+          path: "admin",
+        },
+      ])
+      .lean();
 
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new Error("User not found");
     }
 
-    return user;
-  }
+    const roleData
+      = user.role === "golfer"
+        ? user.golfer
+        : user.role === "golf_club"
+          ? user.club
+          : user.role === "admin"
+            ? user.admin
+            : null;
+
+    // clean role-specific metadata
+    const {
+      _id: roleId,
+      userId: roleUserId,
+      __v,
+      createdAt: roleCreatedAt,
+      updatedAt: roleUpdatedAt,
+      ...cleanRoleData
+    } = roleData || {};
+
+    return {
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      handicapIndex: user.handicapIndex,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+
+      // 🔥 merged role fields at root
+      ...cleanRoleData,
+    };
+  };
+
+  getAllClubs = async () => {
+    const clubs = await UserModel
+      .find({ role: "golf_club" })
+      .populate({
+        path: "club",
+        populate: {
+          path: "manager",
+        },
+      })
+      .lean();
+
+    const formattedClubs
+      = clubs.map((club) => {
+        const roleData = club.club;
+
+        // remove duplicated / unwanted keys from roleData
+        const {
+          _id: roleId,
+          userId,
+          __v,
+          createdAt: roleCreatedAt,
+          updatedAt: roleUpdatedAt,
+          ...cleanRoleData
+        } = roleData || {};
+
+        return {
+          _id: club._id,
+          fullName: club.fullName,
+          email: club.email,
+          role: club.role,
+          isActive: club.isActive,
+          handicapIndex: club.handicapIndex,
+          createdAt: club.createdAt,
+          updatedAt: club.updatedAt,
+
+          // 🔥 merged at root
+          ...cleanRoleData,
+        };
+      });
+    return formattedClubs;
+  };
+
+  getAllGolfers = async () => {
+    const golfers = await UserModel.find({ role: "golfer" }).populate({
+      path: "golfer",
+    }).lean();
+    return golfers;
+  };
+
+  // async findUserById(userId: string, options: { select?: string } = {}) {
+  //   let query = UserModel.findOne({ _id: userId, isActive: true });
+
+  //   if (options.select) {
+  //     query = query.select(options.select);
+  //   }
+
+  //   const user = await query.lean();
+
+  //   if (!user) {
+  //     throw new NotFoundException("User not found");
+  //   }
+
+  //   return user;
+  // }
 
   async updateUser(userId: string, updateData: Partial<IUser>): Promise<IUser> {
     const user = await UserModel.findOneAndUpdate(
       { _id: userId, isActive: true },
       { $set: updateData },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).lean();
 
     if (!user) {
@@ -157,17 +265,19 @@ export class UserRepository {
       lastLoginAt: new Date(),
     });
   }
+
   async toggleUserStatus(userId) {
     logger.info(`userid from userrepo ${userId}`);
     // Get the current user first
     const user = await UserModel.findById(userId);
-    if (!user) throw new Error("User not found");
+    if (!user)
+      throw new Error("User not found");
 
     // Toggle the status
     const toggledUser = await UserModel.findOneAndUpdate(
       { _id: userId },
       { isActive: !user.isActive },
-      { new: true }
+      { new: true },
     ).lean();
 
     return toggledUser;

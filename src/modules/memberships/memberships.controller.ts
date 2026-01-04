@@ -1,4 +1,5 @@
 import { HTTPSTATUS } from "@/config/http.config";
+import { asyncHandler } from "@/middlewares/async-handler.middleware";
 import { logger } from "@/middlewares/pino-logger";
 
 import { golferRepository } from "../golfer/golfer.repository";
@@ -57,7 +58,15 @@ class MembershipController {
     });
   }
 
-
+  getClubMembersById = asyncHandler(async (req, res) => {
+    const clubId = req.params.clubId;
+    const members = await membershipService.getClubMembersById(clubId)
+    res.status(200).send({
+      success: true,
+      message: "All members fetched successfully",
+      data: members,
+    });
+  });
 
   async rejectMembershipRequest(req: any, res: any) {
     const { golferId } = req.body!;

@@ -477,13 +477,13 @@ class DashboardService {
   }
 
   async getMembersOfaClub(clubId: string) {
-    const club = await clubRepository.findClubById(clubId);
-    if (!club) {
-      throw new Error("Club not found");
-    }
-    logger.info({ club }, "club from dashboard service");
-    const clubUserId = club.userId;
-    const clubMembers = membershipRepository.findMembersByClubId(clubUserId);
+    // const club = await clubRepository.findClubById(clubId);
+    // if (!club) {
+    //   throw new Error("Club not found");
+    // }
+    // logger.info({ club }, "club from dashboard service");
+    // const clubUserId = club.userId;
+    const clubMembers = membershipRepository.findMembersByClubId(clubId);
     return clubMembers;
   }
 

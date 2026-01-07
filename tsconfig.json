@@ -2,11 +2,13 @@
   "compilerOptions": {
     "target": "esnext",
     "baseUrl": "./src",
-    "rootDir": ".",
-    "module": "commonjs",
+    "rootDir": "./",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "paths": {
       "@/*": ["*"]
     },
+    "typeRoots": ["./src/types", "./node_modules/@types"],
     "strict": true,
     "noImplicitAny": true,
     "outDir": "dist",
@@ -14,6 +16,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
+
   },
   "include": [
     "./*.js",

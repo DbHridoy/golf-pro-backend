@@ -47,5 +47,17 @@
     "scss",
     "pcss",
     "postcss"
+  ],
+  "CodeGPT.apiKey": "CodeGPT Enterprise",
+  "cSpell.words": [
+    "adminsdk",
+    "bango",
+    "clubdocket",
+    "ghin",
+    "HTTPSTATUS",
+    "maxlength",
+    "Participations",
+    "Signups",
+    "stableford"
   ]
 }

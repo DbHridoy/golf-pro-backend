@@ -1,0 +1,27 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "clean",
+    "dev",
+    "events",
+    "fix-branch",
+    "hridoy",
+    "main"
+  ],
+  "parent": {
+    "clean": "main",
+    "dev": "main",
+    "events": "main",
+    "fix-branch": "main",
+    "hridoy": "main",
+    "main": null
+  },
+  "order": [
+    "main",
+    "clean",
+    "dev",
+    "events",
+    "fix-branch",
+    "hridoy"
+  ]
+}

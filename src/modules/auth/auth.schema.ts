@@ -1,0 +1,14 @@
+import { z } from "zod";
+
+
+export const createUserSchema = z.object({
+  fullName: z.string(),
+  email: z.email(),
+  role: z.enum(["golfer", "golf_club", "admin"]),
+  password: z.string(),
+});
+
+export const loginUserSchema = z.object({
+  email: z.email(),
+  password: z.string(),
+});
